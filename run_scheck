@@ -1,0 +1,38 @@
+#! /bin/bash
+
+if [ $#argv != 2 ]; then
+	echo "usage: run_scheck top_block gds_file"
+	exit
+fi
+
+export TOP=$1
+export CURRENT_GDS=$2
+export MAGIC_GDS_FLATTEN_CELLS="\
+	sky130_fd_pr__*[A-Z]*\
+"
+
+if [ ! -f $CURRENT_GDS ]; then
+	echo "Error: File not found: $CURRENT_GDS"
+	exit
+fi
+
+which magic >& /dev/null
+if [[ $status != 0 ]]; then
+	echo "Error: Could not execute magic."
+fi
+
+which netgen >& /dev/null
+if [[ $status != 0 ]]; then
+	echo "Error: Could not execute netgen."
+fi
+
+rm -rf {well,nowell}/*.ext
+
+magic -dnull -noc -rcfile magicrc.sky130A gds.spice.tcl < /dev/null |& tee well/ext.gds.out
+sed -f remove_well.sed well/$TOP.gds.spice | \
+	awk -f remove_disconnect.awk - > well/$TOP.gds.nodisconnect.spice
+
+magic -dnull -noc -rcfile magicrc.sky130A.nowell gds.spice.tcl < /dev/null |& tee nowell/ext.gds.out
+awk -f remove_disconnect.awk nowell/$TOP.gds.spice > nowell/$TOP.gds.nodisconnect.spice
+
+netgen -batch source setup_file.nowell.tcl |& tee nowell/lvs.nowell.out
