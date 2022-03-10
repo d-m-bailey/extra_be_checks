@@ -1,38 +1,96 @@
 #! /bin/bash
+#   run_scheck: Detect well only connections in GDS file
 
-if [ $#argv != 2 ]; then
-	echo "usage: run_scheck top_block gds_file"
+#   Copyright 2022 D. Mitch Bailey  cvc at shuharisystem dot com
+
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#   
+#       http://www.apache.org/licenses/LICENSE-2.0
+#   
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+
+# Overview:
+#  1. Extract gds_file with well connectivity.
+#  2. Remove well connections and disconnected nets.
+#  3. Extract gds_file without well connectivity.
+#  4. Remove disconnected nets.
+#  
+#  Add cells to be flattened before extract to 'flatten' file
+#  Add cells not to be flattened during compare to 'noflatten' file
+
+# Use cases
+# run_scheck top_block gds_file	: extract and then compare
+# run_scheck top_block		: use previous extraction results to compare
+if [ $# -lt 1 -o $# -gt 2 ]; then
+	echo "usage: run_scheck top_block [gds_file]"
 	exit
 fi
 
 export TOP=$1
-export CURRENT_GDS=$2
-export MAGIC_GDS_FLATTEN_CELLS="\
-	sky130_fd_pr__*[A-Z]*\
-"
 
-if [ ! -f $CURRENT_GDS ]; then
-	echo "Error: File not found: $CURRENT_GDS"
-	exit
-fi
+# Add any cells that should be flattened before extraction to 'flatten'. globbing allowed.
+export MAGIC_GDS_FLATTEN_CELLS="`cat flatten 2>/dev/null`"
 
+# Verify that magic and netgen are executable.
 which magic >& /dev/null
-if [[ $status != 0 ]]; then
+if [[ $? != 0 ]]; then
 	echo "Error: Could not execute magic."
+	exit 1
 fi
-
 which netgen >& /dev/null
-if [[ $status != 0 ]]; then
+if [[ $? != 0 ]]; then
 	echo "Error: Could not execute netgen."
+	exit 1
 fi
 
-rm -rf {well,nowell}/*.ext
+#  Create extraction result directories. No error if they already exist.
+mkdir -p well nowell
 
-magic -dnull -noc -rcfile magicrc.sky130A gds.spice.tcl < /dev/null |& tee well/ext.gds.out
-sed -f remove_well.sed well/$TOP.gds.spice | \
-	awk -f remove_disconnect.awk - > well/$TOP.gds.nodisconnect.spice
+if [ $# == 1 ]; then
+	# No gds_file so LVS only. Check for existing extraction results.
+	if [ ! -f well/$TOP.gds.nowell.spice ]; then
+		echo "Error: missing well/$TOP.gds.nowell.spice"
+		echo "Specify gds_file to create"
+		echo "usage: run_scheck top_block [gds_file]"
+		exit
+	fi
+	if [ ! -f nowell/$TOP.gds.nowell.spice ]; then
+		echo "Error: missing nowell/$TOP.gds.nowell.spice"
+		echo "Specify gds_file to create"
+		echo "usage: run_scheck top_block [gds_file]"
+		exit
+	fi
+else
+	# Specified gds_file, so extract it.
+	export CURRENT_GDS=$2
 
-magic -dnull -noc -rcfile magicrc.sky130A.nowell gds.spice.tcl < /dev/null |& tee nowell/ext.gds.out
-awk -f remove_disconnect.awk nowell/$TOP.gds.spice > nowell/$TOP.gds.nodisconnect.spice
+	if [ ! -f $CURRENT_GDS ]; then
+		echo "Error: File not found: $CURRENT_GDS"
+		exit 2
+	fi
 
-netgen -batch source setup_file.nowell.tcl |& tee nowell/lvs.nowell.out
+	# Remove any previous extraction results
+	rm -rf {well,nowell}/*.ext
+
+	export RUN_DIR=well
+	#  1. Extract gds_file with well connectivity
+	magic -dnull -noc -rcfile magicrc.sky130A gds.spice.tcl < /dev/null | tee $RUN_DIR/ext.gds.out 2>&1
+	#  2. Remove well connections and disconnected nets.
+	sed -f remove_well.sed well/$TOP.gds.spice | \
+		awk -f remove_disconnect.awk - > well/$TOP.gds.nowell.spice
+
+	export RUN_DIR=nowell
+	#  3. Extract gds_file without well connectivity
+	magic -dnull -noc -rcfile magicrc.sky130A.nowell gds.spice.tcl < /dev/null | tee $RUN_DIR/ext.gds.out 2>&1
+	#  4. Remove disconnected nets.
+	awk -f remove_disconnect.awk nowell/$TOP.gds.spice > nowell/$TOP.gds.nowell.spice
+fi
+
+#  5. Compare
+netgen -batch source setup_file.nowell.lvs | tee nowell/lvs.nowell.out 2>&1

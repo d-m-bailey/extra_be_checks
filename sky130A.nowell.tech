@@ -17,6 +17,7 @@ version
  version 1.0.264-0-g27ecf1c
  description "SkyWater SKY130: Open Source rules and DRC"
  requires magic-8.3.111
+ modified to ignore well connections by D.M.Bailey
 end
 
 #------------------------------------------------------------------------
@@ -2276,6 +2277,9 @@ style  sky130 variants (vendor),()
  ignore PADDIFFID
  ignore PADMETALID
  ignore PADCENTERID
+ ignore DNWELL
+ ignore SUBCUT
+ ignore NWELL
 
  #layer pnp NWELL,WELLTXT,WELLPIN
  #and PNPID
