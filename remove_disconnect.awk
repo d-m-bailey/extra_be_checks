@@ -18,9 +18,16 @@
 # instance_lines: all the lines for the current instance
 # device_lines: all the lines for all instances in the current subckt
 
-# Dictionaries   
+# Dictionaries
 # port_order: maps 'port' to port_order for current subckt
 # connections: maps 'subckt "&" port_order' to number of connections
+
+BEGIN {
+	# initialize autoincrement arrays
+	delete port_lines[0]
+	delete device_lines[0]
+	delete instance_lines[0]
+}
 
 /^\+/ {
 	# continuation line: either a port or an instance
@@ -89,7 +96,9 @@
 	print current;
 	delete port_order;
 	delete port_lines;
+	delete port_lines[0];  # reinitialize array
 	delete device_lines;
+	delete device_lines[0];  # reinitialize array
 	next;
 }
 
@@ -133,7 +142,8 @@ function SaveInstance(subckt, parent) {
 			device_lines[length(device_lines)+1] = $0;
 		}
 	}
-        delete instance_lines;
+	delete instance_lines;
+	delete instance_lines[0];  # reinitialize array
 	# restore the current line
 	$0 = current;
 }
