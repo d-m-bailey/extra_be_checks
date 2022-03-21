@@ -79,17 +79,21 @@ else
 	rm -rf {well,nowell}/*.ext
 
 	export RUN_DIR=well
+	echo "Extracting layout with well in background process. See $RUN_DIR/$TOP.ext.gds.out."
 	#  1. Extract gds_file with well connectivity
-	magic -dnull -noc -rcfile magicrc.sky130A gds.spice.tcl < /dev/null | tee $RUN_DIR/ext.gds.out 2>&1
-	#  2. Remove well connections and disconnected nets.
+	( magic -dnull -noc -rcfile magicrc.sky130A gds.spice.tcl < /dev/null > $RUN_DIR/$TOP.ext.gds.out 2>&1; \
+	#  2. Remove well connections and disconnected nets.; \
 	sed -f remove_well.sed well/$TOP.gds.spice | \
-		awk -f remove_disconnect.awk - > well/$TOP.gds.nowell.spice
+		awk -f remove_disconnect.awk - > well/$TOP.gds.nowell.spice ) &
 
 	export RUN_DIR=nowell
+	echo "Extracting layout without well in background process. See $RUN_DIR/$TOP.ext.gds.out."
 	#  3. Extract gds_file without well connectivity
-	magic -dnull -noc -rcfile magicrc.sky130A.nowell gds.spice.tcl < /dev/null | tee $RUN_DIR/ext.gds.out 2>&1
-	#  4. Remove disconnected nets.
-	awk -f remove_disconnect.awk nowell/$TOP.gds.spice > nowell/$TOP.gds.nowell.spice
+	( magic -dnull -noc -rcfile magicrc.sky130A.nowell gds.spice.tcl < /dev/null > $RUN_DIR/$TOP.ext.gds.out 2>&1; \
+	#  4. Remove disconnected nets.; \
+	awk -f remove_disconnect.awk nowell/$TOP.gds.spice > nowell/$TOP.gds.nowell.spice ) &
+
+	wait
 fi
 
 #  5. Compare
