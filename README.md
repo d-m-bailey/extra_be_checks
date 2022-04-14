@@ -30,3 +30,9 @@ You can also add cells the `flatten` file to flatten before extraction.
 Also runs CVC-RV if the `top_cell` is `user_project_wrapper` or `user_analog_project_wrapper`.
 CVC results will be in `well/cvc_<top_cell>.log` with error details in `well/cvc_<top_cell>.error.gz`.
 May need to change net definitions in `<top_cell>.power`.
+
+Requires:
+magic
+netgen
+cvc
+(all included in openlane docker container).
