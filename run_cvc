@@ -3,8 +3,8 @@
 export DESIGN_NAME=$1
 export RESULTS_DIR=well
 
-if [[ ! -f $RESULTS_DIR/$TOP_LAYOUT.cdl ]] ; then
-	./spi2cdl $RESULTS_DIR/$TOP_LAYOUT.gds.spice > $RESULTS_DIR/$TOP_LAYOUT.cdl
+if [[ ! -f $RESULTS_DIR/$DESIGN_NAME.cdl ]] ; then
+	./spi2cdl $RESULTS_DIR/$DESIGN_NAME.gds.spice > $RESULTS_DIR/$DESIGN_NAME.cdl
 fi
 
 cvc cvcrc.sky130A
