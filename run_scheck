@@ -1,5 +1,5 @@
 #! /bin/bash
-#   run_scheck: Detect well only connections in GDS file
+#   run_scheck: Detect well only connections in GDS file. Also run CVC for user_*project_wrapper.
 
 #   Copyright 2022 D. Mitch Bailey  cvc at shuharisystem dot com
 
@@ -20,6 +20,8 @@
 #  2. Remove well connections and disconnected nets.
 #  3. Extract gds_file without well connectivity.
 #  4. Remove disconnected nets.
+#  5. Compare
+#  6. CVC
 #  
 #  Add cells to be flattened before extract to 'flatten' file
 #  Add cells not to be flattened during compare to 'noflatten' file
@@ -98,3 +100,8 @@ fi
 
 #  5. Compare
 netgen -batch source setup_file.nowell.lvs | tee nowell/lvs.nowell.out 2>&1
+
+#  6. CVC
+if [ $TOP = user_project_wrapper -o $TOP == user_analog_project_wrapper ]; then
+	./run_cvc $TOP
+fi
