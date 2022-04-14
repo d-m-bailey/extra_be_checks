@@ -26,3 +26,7 @@ netgen normally flattens unmatched cells which can lead to confusing results at 
 To avoid this, create a file `noflatten`, that contains the names of cells not to be flattened.
 Rerunning without specifing `gds_file` is faster because only LVS will be run. 
 You can also add cells the `flatten` file to flatten before extraction.
+
+Also runs CVC-RV if the `top_cell` is `user_project_wrapper` or `user_analog_project_wrapper`.
+CVC results will be in `well/cvc_<top_cell>.log` with error details in `well/cvc_<top_cell>.error.gz`.
+May need to change net definitions in `<top_cell>.power`.
