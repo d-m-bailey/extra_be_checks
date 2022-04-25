@@ -17,11 +17,11 @@ D condiode
 #R sky130_fd_pr__res_generic_m3 R=l/w*0.047
 #R sky130_fd_pr__res_generic_m4 R=l/w*0.047
 #R sky130_fd_pr__res_generic_nd R=l/w*0.029
-R sky130_fd_pr__res_generic_m1 R=l/w
-R sky130_fd_pr__res_generic_m2 R=l/w
-R sky130_fd_pr__res_generic_m3 R=l/w
-R sky130_fd_pr__res_generic_m4 R=l/w
-R sky130_fd_pr__res_generic_m5 R=l/w
+R sky130_fd_pr__res_generic_m1 model=switch_on
+R sky130_fd_pr__res_generic_m2 model=switch_on
+R sky130_fd_pr__res_generic_m3 model=switch_on
+R sky130_fd_pr__res_generic_m4 model=switch_on
+R sky130_fd_pr__res_generic_m5 model=switch_on
 R sky130_fd_pr__res_generic_nd R=l/w*120
 R sky130_fd_pr__res_generic_nd__hv R=l/w*114
 R sky130_fd_pr__res_generic_pd__hv R=l/w*191
