@@ -13,6 +13,8 @@ gds read $::env(CURRENT_GDS)
 load $::env(TOP) -dereference
 cd $::env(RUN_DIR)
 extract do local
+extract no capacitance
+extract no coupling
 extract unique
 extract
 
