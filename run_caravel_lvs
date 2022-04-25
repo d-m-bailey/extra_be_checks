@@ -1,0 +1,105 @@
+#! /bin/bash
+#   run_caravel_lvs: extract (if necessary) and run lvs with netgen 
+
+#   Copyright 2022 D. Mitch Bailey  cvc at shuharisystem dot com
+
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#   
+#       http://www.apache.org/licenses/LICENSE-2.0
+#   
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+
+# Overview:
+#  1. Extract gds_file (if given)
+#  2. Remove well connections and disconnected nets.
+#  3. Extract gds_file without well connectivity.
+#  4. Remove disconnected nets.
+#  
+#  Add verilog files to 'verilog_files'
+#  Add spice files to 'spice_files'
+#  Add cells to be flattened before extract to 'flatten' file
+#  Add cells not to be flattened during compare to 'noflatten' file
+
+# Use cases
+# run_caravel_lvs top_netlist_block netlist top_layout_block gds_file : extract and then compare
+# run_caravel_lvs top_netlist_block netlist top_layout_block	   : compare
+if [ $# -lt 3 -o $# -gt 4 ]; then
+	echo "usage: run_caravel_lvs top_netlist_block netlist top_layout_block [gds_file]"
+	exit
+fi
+
+export TOP_NET=$1
+export NETLIST=$2
+export TOP_LAYOUT=$3
+
+# Add any cells that should be flattened before extraction to 'flatten'. globbing allowed.
+export MAGIC_GDS_FLATTEN_CELLS="`cat flatten 2>/dev/null`"
+
+# Verify that magic and netgen are executable.
+if [ $# == 4 ]; then  # only if gds is specified
+	which magic >& /dev/null
+	if [[ $? != 0 ]]; then
+		echo "Error: Could not execute magic."
+		exit 1
+	fi
+fi
+which netgen >& /dev/null
+if [[ $? != 0 ]]; then
+	echo "Error: Could not execute netgen."
+	exit 1
+fi
+
+#  Create extraction result directories. No error if they already exist.
+EXT_DIR=$TOP_LAYOUT.ext
+mkdir -p $EXT_DIR
+
+if [ $# == 3 ]; then
+	# No gds_file so LVS only. Check for existing extraction results.
+	if [ ! -f $EXT_DIR/$TOP_LAYOUT.gds.spice ]; then
+		echo "Error: missing $EXT_DIR/$TOP_LAYOUT.gds.spice"
+		echo "Specify gds_file to create"
+		echo "usage: run_caravel_lvs top_netlist_block netlist top_layout_block [gds_file]"
+		exit
+	fi
+else
+	# Specified gds_file, so extract it.
+	export CURRENT_GDS=$4
+
+	if [ ! -f $CURRENT_GDS ]; then
+		echo "Error: File not found: $CURRENT_GDS"
+		exit 2
+	fi
+
+	# Remove any previous extraction results
+	rm -rf $EXT_DIR/*.ext
+
+	#  1. Extract gds_file 
+	#  Note: uses the same extraction commands as sconnect, so symbolic links to the EXT_DIR may be used
+	env TOP=$TOP_LAYOUT RUN_DIR=$EXT_DIR magic -dnull -noc -rcfile magicrc.sky130A gds.spice.tcl < /dev/null | tee $EXT_DIR/ext.gds.out 2>&1
+fi
+
+#  5. Compare
+awk '\
+BEGIN { \
+	print "set ::env(MAGIC_EXT_USE_GDS) 1"; \
+} \
+FILENAME == "spice_files" && $1 !~ /^#/ { \
+	print "puts \"Reading spice netlist file", $1 "\"";  \
+	print "readnet spice", $1, 1; \
+} \
+FILENAME == "verilog_files" && $1 !~ /^#/ { \
+	print "puts \"Reading verilog netlist file", $1 "\"";  \
+	print "readnet verilog", $1, 1; \
+} \
+END { \
+	print "lvs {'$EXT_DIR/$TOP_LAYOUT.gds.spice' '$TOP_LAYOUT'} {'$NETLIST' '$TOP_NET'} sky130A_setup.tcl '$TOP_NET'.lvs.log -json -noflatten=noflatten"
+}' spice_file[s] verilog_file[s] /dev/null > setup_file_$TOP_NET.lvs
+
+netgen -batch source setup_file_$TOP_NET.lvs | tee lvs.$TOP_NET.out 2>&1
+

@@ -1,3 +1,9 @@
 well
 nowell
 noflatten
+*.ext
+*.lvs.log*
+*.lvs.json
+default.cvcrc
+lvs.*.out
+setup_file_*.lvs

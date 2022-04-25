@@ -1,0 +1,1 @@
+lvs "$::env(EXT_DIR)/$::env(LAYOUT_TOP).gds.spice $::env(LAYOUT_TOP)" "$::env(NETLIST) $::env(NET_TOP)" sky130A_setup.tcl $::env(NET_TOP).lvs.log -json -noflatten=noflatten

@@ -1,0 +1,9 @@
+$::env(PDK_ROOT)/sky130A/libs.ref/sky130_fd_sc_hd/spice/sky130_fd_sc_hd.spice
+$::env(PDK_ROOT)/sky130A/libs.ref/sky130_fd_sc_hvl/spice/sky130_fd_sc_hvl.spice
+#$::env(PDK_ROOT)/sky130A/libs.ref/sky130_fd_io/spice/sky130_fd_io.spice
+#$::env(PDK_ROOT)/sky130A/libs.ref/sky130_fd_io/spice/sky130_ef_io.spice
+./sky130_fd_io.spice
+./sky130_ef_io.spice
+#$::env(PDK_ROOT)/sky130A/libs.ref/sky130_sram_macros/spice/sky130_sram_1kbyte_1rw1r_32x256_8.spice
+$::env(PDK_ROOT)/sky130A/libs.ref/sky130_sram_macros/spice/sky130_sram_2kbyte_1rw1r_32x512_8.spice
+./simple_por.spice

@@ -87,6 +87,8 @@ else
 	#  2. Remove well connections and disconnected nets.; \
 	sed -f remove_well.sed well/$TOP.gds.spice | \
 		awk -f remove_disconnect.awk - > well/$TOP.gds.nowell.spice ) &
+	# set link for lvs
+	ln -s well $TOP.ext
 
 	export RUN_DIR=nowell
 	echo "Extracting layout without well in background process. See $RUN_DIR/$TOP.ext.gds.out."
@@ -102,6 +104,9 @@ fi
 netgen -batch source setup_file.nowell.lvs | tee nowell/lvs.nowell.out 2>&1
 
 #  6. CVC
-if [ $TOP = user_project_wrapper -o $TOP == user_analog_project_wrapper ]; then
+if [ $TOP = user_project_wrapper \
+		-o $TOP = user_analog_project_wrapper
+		-o $TOP = caravan
+		-o $TOP = caravel ]; then
 	./run_cvc $TOP
 fi
