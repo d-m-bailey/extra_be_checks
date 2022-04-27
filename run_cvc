@@ -4,6 +4,7 @@ export DESIGN_NAME=$1
 export RESULTS_DIR=well
 
 if [[ ! -f $RESULTS_DIR/$DESIGN_NAME.cdl ]] ; then
+	echo "Creating $RESULTS_DIR/$DESIGN_NAME.cdl"
 	./spi2cdl $RESULTS_DIR/$DESIGN_NAME.gds.spice > $RESULTS_DIR/$DESIGN_NAME.cdl
 fi
 
