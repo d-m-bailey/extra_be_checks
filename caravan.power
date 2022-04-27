@@ -16,4 +16,4 @@ vssd1 power 0.0
 vssd2 power 0.0
 vssio power 0.0
 vssio_2 power 0.0
-mprj_io[18] power 0.0
+mprj_io[18] power 3.3

@@ -6,4 +6,4 @@ $::env(PDK_ROOT)/sky130A/libs.ref/sky130_fd_sc_hvl/spice/sky130_fd_sc_hvl.spice
 ./sky130_ef_io.spice
 #$::env(PDK_ROOT)/sky130A/libs.ref/sky130_sram_macros/spice/sky130_sram_1kbyte_1rw1r_32x256_8.spice
 $::env(PDK_ROOT)/sky130A/libs.ref/sky130_sram_macros/spice/sky130_sram_2kbyte_1rw1r_32x512_8.spice
-./simple_por.spice
+../caravel/xschem/simple_por.spice

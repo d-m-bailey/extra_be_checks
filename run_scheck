@@ -105,8 +105,10 @@ netgen -batch source setup_file.nowell.lvs | tee nowell/lvs.nowell.out 2>&1
 
 #  6. CVC
 if [ $TOP = user_project_wrapper \
-		-o $TOP = user_analog_project_wrapper
-		-o $TOP = caravan
+		-o $TOP = user_analog_project_wrapper \
+		-o $TOP = caravan \
 		-o $TOP = caravel ]; then
+	# force recreation of cdl
+	rm well/$TOP.cdl
 	./run_cvc $TOP
 fi
