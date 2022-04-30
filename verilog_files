@@ -19,6 +19,7 @@
 ../verilog/gl/user_proj_example.v
 ../caravel/verilog/gl/caravel_clocking.v
 ../caravel/verilog/gl/chip_io.v
+../caravel/verilog/gl/chip_io_alt.v
 ../caravel/verilog/gl/digital_pll.v
 ../caravel/verilog/gl/gpio_control_block.v
 ../caravel/verilog/gl/gpio_logic_high.v

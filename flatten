@@ -1,7 +1,7 @@
 *_nmos_m*
 *_pmos_m*
 *_cdns_*
-*_example_*
+*sky130_fd_pr__*_example_*
 *sky130_fd_pr__*[A-Z]*
 *sky130_ef_io__com*
 *sky130_ef_io__connect*

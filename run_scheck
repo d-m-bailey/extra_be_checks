@@ -88,7 +88,9 @@ else
 	sed -f remove_well.sed well/$TOP.gds.spice | \
 		awk -f remove_disconnect.awk - > well/$TOP.gds.nowell.spice ) &
 	# set link for lvs
-	ln -s well $TOP.ext
+	if [ ! -e $TOP.ext ]; then
+		ln -s well $TOP.ext
+	fi
 
 	export RUN_DIR=nowell
 	echo "Extracting layout without well in background process. See $RUN_DIR/$TOP.ext.gds.out."
