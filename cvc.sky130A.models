@@ -5,7 +5,10 @@ R short model=switch_on
 
 D sky130_fd_pr__diode_pw2nd_05v5 
 D sky130_fd_pr__diode_pw2nd_11v0 
+D sky130_fd_pr__diode_pw2nd_05v5_nvt 
 D sky130_fd_pr__diode_pd2nw_05v5
+D sky130_fd_pr__diode_pd2nw_05v5_lvt
+D sky130_fd_pr__diode_pd2nw_11v0
 D sky130_fd_pr__model__parasitic__diode_ps2dn
 D sky130_fd_pr__model__parasitic__diode_ps2nw
 D sky130_fd_pr__model__parasitic__diode_pw2dn
@@ -17,6 +20,7 @@ D condiode
 #R sky130_fd_pr__res_generic_m3 R=l/w*0.047
 #R sky130_fd_pr__res_generic_m4 R=l/w*0.047
 #R sky130_fd_pr__res_generic_nd R=l/w*0.029
+R sky130_fd_pr__res_generic_l1 model=switch_on
 R sky130_fd_pr__res_generic_m1 model=switch_on
 R sky130_fd_pr__res_generic_m2 model=switch_on
 R sky130_fd_pr__res_generic_m3 model=switch_on
@@ -47,6 +51,7 @@ MP sky130_fd_pr__pfet_g5v0d10v5 Vth=-0.2
 C sky130_fd_pr__cap_mim_m3_1
 C sky130_fd_pr__cap_mim_m3_2
 C sky130_fd_pr__cap_var
+C sky130_fd_pr__cap_var_lvt
 
 Q sky130_fd_pr__pnp_05v5
 
