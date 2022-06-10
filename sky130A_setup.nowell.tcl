@@ -358,6 +358,9 @@ if { [info exist ::env(MAGIC_EXT_USE_GDS)] && $::env(MAGIC_EXT_USE_GDS) } {
 #---------------------------------------------------------------
 
 foreach cell $cells1 {
+    if {[regexp {sky130_ef_sc_[^_]+__decap_[[:digit:]]+} $cell match]} {
+	property "-circuit1 $cell" parallel enable
+    }
     if {[regexp {sky130_fd_sc_[^_]+__decap_[[:digit:]]+} $cell match]} {
 	property "-circuit1 $cell" parallel enable
     }
@@ -378,6 +381,9 @@ foreach cell $cells1 {
     }
 }
 foreach cell $cells2 {
+    if {[regexp {sky130_ef_sc_[^_]+__decap_[[:digit:]]+} $cell match]} {
+	property "-circuit2 $cell" parallel enable
+    }
     if {[regexp {sky130_fd_sc_[^_]+__decap_[[:digit:]]+} $cell match]} {
 	property "-circuit2 $cell" parallel enable
     }
