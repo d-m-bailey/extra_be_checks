@@ -2,7 +2,7 @@
 *_pmos_m*
 *_cdns_*
 *sky130_fd_pr__*_example_*
-*sky130_fd_pr__*[A-Z]*
+*sky130_fd_pr__*_[A-Z0-9][A-Z0-9]*
 *sky130_ef_io__com*
 *sky130_ef_io__connect*
 *sky130_ef_io__corner*
