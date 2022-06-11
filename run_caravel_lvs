@@ -103,3 +103,8 @@ END { \
 
 netgen -batch source setup_file_$TOP_NET.lvs | tee lvs.$TOP_NET.out 2>&1
 
+grep 'will not flatten' $TOP_NET.lvs.log > $TOP_NET.unflattened
+if [ -s $TOP_NET.unflattened ]; then
+	echo "Warning: device level LVS incomplete due to the following unflattened cells:"
+	cat $TOP_NET.unflattened
+fi
