@@ -7,3 +7,4 @@ noflatten
 default.cvcrc
 lvs.*.out
 setup_file_*.lvs
+*.unflattened
