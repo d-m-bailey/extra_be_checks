@@ -10,6 +10,11 @@ puts "Flattening [gds flatglob]"
 gds flatten yes
 gds read $::env(CURRENT_GDS)
 
+foreach cell $::env(ABSTRACT_CELLS) {
+	load $cell -dereference
+	property LEFview true
+}
+
 load $::env(TOP) -dereference
 cd $::env(RUN_DIR)
 extract do local

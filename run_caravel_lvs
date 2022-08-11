@@ -40,6 +40,8 @@ export TOP_LAYOUT=$3
 
 # Add any cells that should be flattened before extraction to 'flatten'. globbing allowed.
 export MAGIC_GDS_FLATTEN_CELLS="`cat flatten 2>/dev/null`"
+# Add any empty cells that should be extracted as black-boxes to 'abstract'.
+export ABSTRACT_CELLS="`cat abstract 2>/dev/null`"
 
 # Verify that magic and netgen are executable.
 if [ $# == 4 ]; then  # only if gds is specified
