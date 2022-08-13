@@ -1,0 +1,154 @@
+#! /bin/bash
+#   run_hier_check: Checks layout hierarchy against verilog
+
+#   Copyright 2022 D. Mitch Bailey  cvc at shuharisystem dot com
+
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#   
+#       http://www.apache.org/licenses/LICENSE-2.0
+#   
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+
+# Overview:
+#  1. Extract verilog hierarchy, limit to TOP_CIRCUIT and child subcircuits.
+#  2. Extract gds/oas hierachy.
+#  3. Compare
+#  
+#  Add verilog files to 'verilog_files'
+
+# Use case
+# run_hier_check top_netlist_block netlist gds_file [prefix]
+if [ $# -lt 3 -o $# -gt 5 ]; then
+	echo "usage: run_hier_check top_netlist_block netlist gds_file [primitive_prefix [gds_prefix]]"
+	exit
+fi
+
+export TOP_NET=$1
+export NETLIST=$2
+export LAYOUT=$3
+PRIMITIVE_PREFIX_FILTER='-e s/\<sky130_([^/_]*_)*_//'
+if [ $# -ge 4 ]; then  # only if prefix is specified
+	PRIMITIVE_PREFIX_FILTER="-e s/\\<$4//g"
+fi
+GDS_PREFIX_FILTER='-e s/^([A-Z0-9][A-Z0-9]_)*// -e s/\/([A-Z0-9][A-Z0-9]_)*/\//'
+if [ $# -eq 5 ]; then  # only if prefix is specified
+	GDS_PREFIX_FILTER="-e s/^($5)*// -e s/\/($5)*/\//"
+fi
+
+sed '/^[ 	]*module[ 	].*[^ 	](/s/(/ (/' $NETLIST `cat verilog_files | grep -v ^#` | \
+	awk -v top=$TOP_NET '\
+		$1 == "module" { \
+			if ( $2 in modules ) { \
+				print "Duplicate module definition", $2 > "/dev/tty"; \
+			} \
+			module = $2; \
+			next; \
+		} \
+		$1 ~ /^\/\// { \
+			next; \
+		}  \
+		/ \(/ && ! /^[ 		]*\/\*/ { \
+			key = module "/" $1; \
+			if ( key in hier ) { \
+				hier[key] += 1; \
+			} else { \
+				subcells[module] = subcells[module] " " $1; \
+				hier[key] = 1; \
+			} \
+		} \
+		END { \
+			print_subckt[top] = 1; \
+			AddPrintSubckts(subcells[top]); \
+			for ( key in hier ) { \
+				split(key, path, "/"); \
+				if ( path[1] in print_subckt ) { \
+					print key, hier[key]; \
+				} \
+			} \
+		}\
+		function AddPrintSubckts(subckt_list,  subckts, subckt_it) { \
+			subcell_count = split(subckt_list, subckts); \
+			for ( subckt_it in subckts ) { \
+				print_subckt[subckts[subckt_it]] = 1; \
+				AddPrintSubckts(subcells[subckts[subckt_it]]); \
+			} \
+		}' - | \
+	grep -v // | \
+	sed -E $PRIMITIVE_PREFIX_FILTER | \
+	sort > verilog.hier
+
+if [ ${LAYOUT##*.} == "gz" ]; then
+	CAT=zcat
+	BASE_LAYOUT=${LAYOUT%.gz}
+else
+	CAT=cat
+	BASE_LAYOUT=$LAYOUT
+fi
+EXT=${BASE_LAYOUT##*.}
+if [ "$EXT" == "txt" ]; then
+	TEXT_FILE=$BASE_LAYOUT	
+elif [ "$EXT" == "gds" ]; then
+	TEXT_FILE=${BASE_LAYOUT%.gds}.$$.txt
+elif [ "$EXT" == "oas" ]; then
+	TEXT_FILE=${BASE_LAYOUT%.oas}.$$.txt
+fi
+if [ "$OUTPUT" != "$BASE_LAYOUT" ]; then
+cat > gds2txt.py <<-EOF
+	import pya
+	
+	app = pya.Application.instance()
+	opt = pya.SaveLayoutOptions()
+	view = pya.Layout()
+	
+	input_layout = "$LAYOUT"
+	output = "$TEXT_FILE"
+	# Setting the name of the output file and setting the substitution character
+	print("[INFO] Changing from " + input_layout + " to " + output)
+	opt.set_format_from_filename(output)
+	opt.oasis_substitution_char=''
+	
+	# Reading the input file and writing it to the output file name
+	view.read(input_layout)
+	view.write(output, opt)
+	
+	app.exit(0)
+EOF
+	klayout -b -rm gds2txt.py
+	gzip $TEXT_FILE
+	CAT=zcat
+fi
+
+$CAT $TEXT_FILE | \
+awk ' \
+	/^STRNAME/ { \
+		module = $2; \
+	} \
+	/^SNAME/ { \
+		key = module "/" $2; \
+		if ( key in hier ) { \
+			hier[key] += 1; \
+		} else { \
+			hier[key] = 1; \
+		} \
+	} \
+	END { \
+		for ( key in hier ) { \
+			print key, hier[key]; \
+		} \
+	}' - | \
+	sed -E $GDS_PREFIX_FILTER $PRIMITIVE_PREFIX_FILTER | \
+	sort -u > layout.hier
+
+comm -23 verilog.hier layout.hier | \
+	awk '{print $1}' | \
+	fgrep -f - verilog.hier layout.hier
+
+if [ "$TEXT_FILE" != "$BASE_LAYOUT" ]; then
+	rm $TEXT_FILE.gz
+fi
