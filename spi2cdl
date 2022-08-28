@@ -1,29 +1,29 @@
 #! /bin/bash
 
 awk '
-/^X.*__diode.*=/ {
+/^X.*pr__diode.*=/ {
         print "D" $0;
         next;
 }
-/^X.*__special_[^ _]*fet.*=/ || /^X.*__.fet.*=/ || /^X.*__esd_.fet.*=/ {
+/^X.*pr__special_[^ _]*fet.*=/ || /^X.*pr__.fet.*=/ || /^X.*pr__esd_.fet.*=/ {
         print "M" $0;
         next;
 }
-/^X.*__pnp_.*=/ {
+/^X.*pr__pnp_.*=/ {
         print "Q" $0;
         next;
 }
-/^X.*__cap_mim_.*=/ {
+/^X.*pr__cap_mim_.*=/ {
         print "C" $0;
         next;
 }
-/^X.*__cap_var.*=/ {
+/^X.*pr__cap_var.*=/ {
 	bulk = $4;
 	$4 = "";
         print "C" $0, "$SUB=" bulk;
         next;
 }
-/^X.*__res_.*=/ {
+/^X.*pr__res_.*=/ {
 	bulk = $4;
 	$4 = "";
         print "R" $0, "$SUB=" bulk;
