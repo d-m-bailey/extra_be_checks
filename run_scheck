@@ -55,7 +55,7 @@ if [[ $? != 0 ]]; then
 fi
 
 #  Create extraction result directories. No error if they already exist.
-mkdir -p $TOP.ext $TOP.nowell
+mkdir -p $TOP.ext $TOP.nowell.ext
 
 if [ $# == 1 ]; then
 	# No gds_file so LVS only. Check for existing extraction results.
@@ -65,8 +65,8 @@ if [ $# == 1 ]; then
 		echo "usage: run_scheck top_block [gds_file]"
 		exit
 	fi
-	if [ ! -f $TOP.nowell/$TOP.gds.nowell.spice ]; then
-		echo "Error: missing $TOP.nowell/$TOP.gds.nowell.spice"
+	if [ ! -f $TOP.nowell.ext/$TOP.gds.nowell.spice ]; then
+		echo "Error: missing $TOP.nowell.ext/$TOP.gds.nowell.spice"
 		echo "Specify gds_file to create"
 		echo "usage: run_scheck top_block [gds_file]"
 		exit
@@ -81,7 +81,7 @@ else
 	fi
 
 	# Remove any previous extraction results
-	rm -rf {$TOP.ext,$TOP.nowell}/*.ext
+	rm -rf {$TOP.ext,$TOP.nowell.ext}/*.ext
 
 	export RUN_DIR=$TOP.ext
 	echo "Extracting layout with well in background process. See $TOP.ext.log."
@@ -92,12 +92,12 @@ else
 		awk -f scripts/remove_disconnect.awk - > $TOP.ext/$TOP.gds.nowell.spice ) &
 	# set link for lvs
 
-	export RUN_DIR=$TOP.nowell
-	echo "Extracting layout without well in background process. See $TOP.nowell.log."
+	export RUN_DIR=$TOP.nowell.ext
+	echo "Extracting layout without well in background process. See $TOP.nowell.ext.log."
 	#  3. Extract gds_file without well connectivity
-	( magic -dnull -noc -rcfile tech/magicrc.sky130B.nowell scripts/gds.spice.tcl < /dev/null > $TOP.nowell.log 2>&1; \
+	( magic -dnull -noc -rcfile tech/magicrc.sky130B.nowell scripts/gds.spice.tcl < /dev/null > $TOP.nowell.ext.log 2>&1; \
 	#  4. Remove disconnected nets.; \
-	awk -f scripts/remove_disconnect.awk $TOP.nowell/$TOP.gds.spice > $TOP.nowell/$TOP.gds.nowell.spice ) &
+	awk -f scripts/remove_disconnect.awk $TOP.nowell.ext/$TOP.gds.spice > $TOP.nowell.ext/$TOP.gds.nowell.spice ) &
 
 	wait
 fi
