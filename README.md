@@ -1,7 +1,11 @@
 # extra_be_checks
 Scripts to run additional back-end checks on gds files.
 
-INSTALLTION:
+INSTALLATION:
+Requires:
+- magic 3.8.319  https://github.com/RTimothyEdwards/magic.git
+- netgen 1.5.227  https://github.com/RTimothyEdwards/netgen.git
+- cvc 1.1.3  https://github.com/d-m-bailey/cvc.git
 
 In your `caravel_user_project` or `caravel_user_project_analog`
 ```
