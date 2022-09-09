@@ -1,11 +1,9 @@
 *.ext
-*.cvc.log
+*.log
 *.cvc.error.gz
 *.cvc.debug.gz
-*.ext.log
-*.lvs.log
-*.lvs.report
-*.lvs.json
+*.report
+*.json
 default.cvcrc
 setup_file_*.lvs
 *.unflattened

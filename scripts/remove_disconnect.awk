@@ -120,6 +120,7 @@ function SaveInstance(subckt, parent) {
 	#  device_lines: appends the modified instance_lines
 	#  instance_lines: resets after processing
 	net_number = 0;
+	used_count = 0;
 	# save the current line
 	current = $0;
 	for (instance_line_it = 1; instance_line_it <= length(instance_lines); instance_line_it++ ) {
@@ -132,10 +133,17 @@ function SaveInstance(subckt, parent) {
 			if ( connection_key in connections && connections[connection_key] == 0 ) {
 				# if the parent port is unused, removed it
 				$net_it = "";
-			} else if ( $net_it in port_order ) {
-				# if this net is a port, count it
-				connections[subckt "&" port_order[$net_it]] += 1;
+			} else if ( $net_it != parent ) {
+				used_count += 1;
+				if ( $net_it in port_order ) {
+					# if this net is a port, count it
+					connections[subckt "&" port_order[$net_it]] += 1;
+				}
 			}
+		}
+		# ignore one line instances that have all ports removed
+		if ( length(instance_lines) == 1 && used_count == 0 ) {
+			continue;
 		}
 		# only keep lines that have nets remaining
 		if ( ! /^\+ *$/ ) {
