@@ -1,6 +1,15 @@
 # extra_be_checks
 Scripts to run additional back-end checks on gds files.
 
+INSTALLTION:
+
+In your `caravel_user_project` or `caravel_user_project_analog`
+```
+git clone -b mpw-7 https://github.com/d-m-bailey/extra_be_checks.git
+cd extra_be_checks
+./run_be_checks
+```
+
 `run_be_checks` should run with the default user_project_wrapper or user_analog_project_wrapper.
 
 1. Soft connection check: find high resistance connections (i.e. soft connections) through n/pwell.
