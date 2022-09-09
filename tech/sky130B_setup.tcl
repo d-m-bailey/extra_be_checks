@@ -1,6 +1,6 @@
 #---------------------------------------------------------------
 # Setup file for netgen LVS
-# SkyWater sky130A
+# SkyWater sky130B
 #---------------------------------------------------------------
 permute default
 property default
@@ -323,36 +323,36 @@ foreach dev $devices {
 # e.g., ignore class "-circuit2 sky130_fc_sc_hd__decap_3"
 #---------------------------------------------------------------
 
-if { [info exist ::env(MAGIC_EXT_USE_GDS)] && $::env(MAGIC_EXT_USE_GDS) } {
-    foreach cell $cells1 {
+#if { [info exist ::env(MAGIC_EXT_USE_GDS)] && $::env(MAGIC_EXT_USE_GDS) } {
+    #foreach cell $cells1 {
 #        if {[regexp {sky130_fd_sc_[^_]+__decap_[[:digit:]]+} $cell match]} {
 #            ignore class "-circuit1 $cell"
 #        }
-        if {[regexp {sky130_fd_sc_[^_]+__fill_[[:digit:]]+} $cell match]} {
-            ignore class "-circuit1 $cell"
-        }
-        if {[regexp {sky130_fd_sc_[^_]+__tapvpwrvgnd_[[:digit:]]+} $cell match]} {
-            ignore class "-circuit1 $cell"
-        }
-        if {[regexp {sky130_ef_sc_[^_]+__fakediode_[[:digit:]]+} $cell match]} {
-            ignore class "-circuit1 $cell"
-        }
-    }
-    foreach cell $cells2 {
+        #if {[regexp {sky130_fd_sc_[^_]+__fill_[[:digit:]]+} $cell match]} {
+            #ignore class "-circuit1 $cell"
+        #}
+        #if {[regexp {sky130_fd_sc_[^_]+__tapvpwrvgnd_[[:digit:]]+} $cell match]} {
+            #ignore class "-circuit1 $cell"
+        #}
+        #if {[regexp {sky130_ef_sc_[^_]+__fakediode_[[:digit:]]+} $cell match]} {
+            #ignore class "-circuit1 $cell"
+        #}
+    #}
+    #foreach cell $cells2 {
 #        if {[regexp {sky130_fd_sc_[^_]+__decap_[[:digit:]]+} $cell match]} {
 #            ignore class "-circuit2 $cell"
 #        }
-        if {[regexp {sky130_fd_sc_[^_]+__fill_[[:digit:]]+} $cell match]} {
-            ignore class "-circuit2 $cell"
-        }
-        if {[regexp {sky130_fd_sc_[^_]+__tapvpwrvgnd_[[:digit:]]+} $cell match]} {
-            ignore class "-circuit2 $cell"
-        }
-        if {[regexp {sky130_ef_sc_[^_]+__fakediode_[[:digit:]]+} $cell match]} {
-            ignore class "-circuit2 $cell"
-        }
-    }
-}
+        #if {[regexp {sky130_fd_sc_[^_]+__fill_[[:digit:]]+} $cell match]} {
+            #ignore class "-circuit2 $cell"
+        #}
+        #if {[regexp {sky130_fd_sc_[^_]+__tapvpwrvgnd_[[:digit:]]+} $cell match]} {
+            #ignore class "-circuit2 $cell"
+        #}
+        #if {[regexp {sky130_ef_sc_[^_]+__fakediode_[[:digit:]]+} $cell match]} {
+            #ignore class "-circuit2 $cell"
+        #}
+    #}
+#}
 
 #---------------------------------------------------------------
 # Allow the fill, decap, etc., cells to be parallelized

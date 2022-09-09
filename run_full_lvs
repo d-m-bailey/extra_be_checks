@@ -1,5 +1,5 @@
 #! /bin/bash
-#   run_caravel_lvs: extract (if necessary) and run lvs with netgen 
+#   run_full_lvs: extract (if necessary) and run lvs with netgen 
 
 #   Copyright 2022 D. Mitch Bailey  cvc at shuharisystem dot com
 
@@ -27,10 +27,10 @@
 #  Add cells not to be flattened during compare to 'noflatten' file
 
 # Use cases
-# run_caravel_lvs top_netlist_block netlist top_layout_block gds_file : extract and then compare
-# run_caravel_lvs top_netlist_block netlist top_layout_block	   : compare
+# run_full_lvs top_netlist_block netlist top_layout_block gds_file : extract and then compare
+# run_full_lvs top_netlist_block netlist top_layout_block	   : compare
 if [ $# -lt 3 -o $# -gt 4 ]; then
-	echo "usage: run_caravel_lvs top_netlist_block netlist top_layout_block [gds_file]"
+	echo "usage: run_full_lvs top_netlist_block netlist top_layout_block [gds_file]"
 	exit
 fi
 
@@ -39,9 +39,9 @@ export NETLIST=$2
 export TOP_LAYOUT=$3
 
 # Add any cells that should be flattened before extraction to 'flatten'. globbing allowed.
-export MAGIC_GDS_FLATTEN_CELLS="`cat flatten 2>/dev/null`"
+export MAGIC_GDS_FLATTEN_CELLS="`cat flatten 2>/dev/null | grep -v '^#'`"
 # Add any empty cells that should be extracted as black-boxes to 'abstract'.
-export ABSTRACT_CELLS="`cat abstract 2>/dev/null`"
+export ABSTRACT_CELLS="`cat abstract 2>/dev/null | grep -v '^#'`"
 
 # Verify that magic and netgen are executable.
 if [ $# == 4 ]; then  # only if gds is specified
@@ -66,7 +66,7 @@ if [ $# == 3 ]; then
 	if [ ! -f $EXT_DIR/$TOP_LAYOUT.gds.spice ]; then
 		echo "Error: missing $EXT_DIR/$TOP_LAYOUT.gds.spice"
 		echo "Specify gds_file to create"
-		echo "usage: run_caravel_lvs top_netlist_block netlist top_layout_block [gds_file]"
+		echo "usage: run_full_lvs top_netlist_block netlist top_layout_block [gds_file]"
 		exit
 	fi
 else
@@ -83,14 +83,12 @@ else
 
 	#  1. Extract gds_file 
 	#  Note: uses the same extraction commands as sconnect, so symbolic links to the EXT_DIR may be used
-	env TOP=$TOP_LAYOUT RUN_DIR=$EXT_DIR magic -dnull -noc -rcfile magicrc.sky130A gds.spice.tcl < /dev/null | tee $EXT_DIR/ext.gds.out 2>&1
+	env TOP=$TOP_LAYOUT RUN_DIR=$EXT_DIR magic -dnull -noc -rcfile tech/magicrc.sky130B scripts/gds.spice.tcl < /dev/null | \
+		tee $TOP_LAYOUT.ext.log 2>&1
 fi
 
 #  5. Compare
 awk '\
-BEGIN { \
-	print "set ::env(MAGIC_EXT_USE_GDS) 1"; \
-} \
 FILENAME == "spice_files" && $1 !~ /^#/ { \
 	print "puts \"Reading spice netlist file", $1 "\"";  \
 	print "readnet spice", $1, 1; \
@@ -100,12 +98,13 @@ FILENAME == "verilog_files" && $1 !~ /^#/ { \
 	print "readnet verilog", $1, 1; \
 } \
 END { \
-	print "lvs {'$EXT_DIR/$TOP_LAYOUT.gds.spice' '$TOP_LAYOUT'} {'$NETLIST' '$TOP_NET'} sky130A_setup.tcl '$TOP_NET'.lvs.log -json -noflatten=noflatten"
+	print "lvs {'$EXT_DIR/$TOP_LAYOUT.gds.spice' '$TOP_LAYOUT'} {'$NETLIST' '$TOP_NET'} tech/sky130B_setup.tcl '$TOP_NET'.lvs.report -blackbox -json -noflatten=noflatten"
 }' spice_file[s] verilog_file[s] /dev/null > setup_file_$TOP_NET.lvs
 
-netgen -batch source setup_file_$TOP_NET.lvs | tee lvs.$TOP_NET.out 2>&1
+netgen -batch source setup_file_$TOP_NET.lvs | \
+	tee $TOP_NET.lvs.log 2>&1
 
-grep 'will not flatten' $TOP_NET.lvs.log > $TOP_NET.unflattened
+grep 'will not flatten' $TOP_NET.lvs.report > $TOP_NET.unflattened
 if [ -s $TOP_NET.unflattened ]; then
 	echo "Warning: device level LVS incomplete due to the following unflattened cells:"
 	cat $TOP_NET.unflattened

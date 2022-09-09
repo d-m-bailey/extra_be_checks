@@ -1,4 +1,4 @@
-puts stdout "Sourcing design magicrc.sky130A.nowell for technology sky130A ..."
+puts stdout "Sourcing design magicrc.sky130B for technology sky130B ..."
 
 # Put grid on 0.005 pitch.  This is important, as some commands don't
 # rescale the grid automatically (such as lef read?).
@@ -19,8 +19,8 @@ catch {random seed}
 # scale in the model files.
 ext2spice scale off
 
-# loading technology without well connectivity
-tech load ./sky130A.nowell.tech
+# loading technology with well connectivity
+tech load tech/sky130B.tech
 
 # set units to lambda grid 
 snap lambda

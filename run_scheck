@@ -21,9 +21,10 @@
 #  3. Extract gds_file without well connectivity.
 #  4. Remove disconnected nets.
 #  5. Compare
-#  6. CVC
 #  
-#  Add cells to be flattened before extract to 'flatten' file
+#  Add cells to be flattened before extract to 'flatglob' file
+#  Add cells to be extracted as black-boxes to 'abstract' file
+#  Add cells to be flattened during compare to 'flatten' file
 #  Add cells not to be flattened during compare to 'noflatten' file
 
 # Use cases
@@ -37,9 +38,9 @@ fi
 export TOP=$1
 
 # Add any cells that should be flattened before extraction to 'flatten'. globbing allowed.
-export MAGIC_GDS_FLATTEN_CELLS="`cat flatten 2>/dev/null`"
+export FLATGLOB_CELLS="`cat flatglob 2>/dev/null | grep -v '^#'`"
 # Add any empty cells that should be extracted as black-boxes to 'abstract'.
-export ABSTRACT_CELLS="`cat abstract 2>/dev/null`"
+export ABSTRACT_CELLS="`cat abstract 2>/dev/null | grep -v '^#'`"
 
 # Verify that magic and netgen are executable.
 which magic >& /dev/null
@@ -54,18 +55,18 @@ if [[ $? != 0 ]]; then
 fi
 
 #  Create extraction result directories. No error if they already exist.
-mkdir -p well nowell
+mkdir -p $TOP.ext $TOP.nowell
 
 if [ $# == 1 ]; then
 	# No gds_file so LVS only. Check for existing extraction results.
-	if [ ! -f well/$TOP.gds.nowell.spice ]; then
-		echo "Error: missing well/$TOP.gds.nowell.spice"
+	if [ ! -f $TOP.ext/$TOP.gds.nowell.spice ]; then
+		echo "Error: missing $TOP.ext/$TOP.gds.nowell.spice"
 		echo "Specify gds_file to create"
 		echo "usage: run_scheck top_block [gds_file]"
 		exit
 	fi
-	if [ ! -f nowell/$TOP.gds.nowell.spice ]; then
-		echo "Error: missing nowell/$TOP.gds.nowell.spice"
+	if [ ! -f $TOP.nowell/$TOP.gds.nowell.spice ]; then
+		echo "Error: missing $TOP.nowell/$TOP.gds.nowell.spice"
 		echo "Specify gds_file to create"
 		echo "usage: run_scheck top_block [gds_file]"
 		exit
@@ -80,39 +81,26 @@ else
 	fi
 
 	# Remove any previous extraction results
-	rm -rf {well,nowell}/*.ext
+	rm -rf {$TOP.ext,$TOP.nowell}/*.ext
 
-	export RUN_DIR=well
-	echo "Extracting layout with well in background process. See $RUN_DIR/$TOP.ext.gds.out."
+	export RUN_DIR=$TOP.ext
+	echo "Extracting layout with well in background process. See $TOP.ext.log."
 	#  1. Extract gds_file with well connectivity
-	( magic -dnull -noc -rcfile magicrc.sky130A gds.spice.tcl < /dev/null > $RUN_DIR/$TOP.ext.gds.out 2>&1; \
+	( magic -dnull -noc -rcfile tech/magicrc.sky130B scripts/gds.spice.tcl < /dev/null > $TOP.ext.log 2>&1; \
 	#  2. Remove well connections and disconnected nets.; \
-	sed -f remove_well.sed well/$TOP.gds.spice | \
-		awk -f remove_disconnect.awk - > well/$TOP.gds.nowell.spice ) &
+	sed -f scripts/remove_well.sed $TOP.ext/$TOP.gds.spice | \
+		awk -f scripts/remove_disconnect.awk - > $TOP.ext/$TOP.gds.nowell.spice ) &
 	# set link for lvs
-	if [ ! -e $TOP.ext ]; then
-		ln -s well $TOP.ext
-	fi
 
-	export RUN_DIR=nowell
-	echo "Extracting layout without well in background process. See $RUN_DIR/$TOP.ext.gds.out."
+	export RUN_DIR=$TOP.nowell
+	echo "Extracting layout without well in background process. See $TOP.nowell.log."
 	#  3. Extract gds_file without well connectivity
-	( magic -dnull -noc -rcfile magicrc.sky130A.nowell gds.spice.tcl < /dev/null > $RUN_DIR/$TOP.ext.gds.out 2>&1; \
+	( magic -dnull -noc -rcfile tech/magicrc.sky130B.nowell scripts/gds.spice.tcl < /dev/null > $TOP.nowell.log 2>&1; \
 	#  4. Remove disconnected nets.; \
-	awk -f remove_disconnect.awk nowell/$TOP.gds.spice > nowell/$TOP.gds.nowell.spice ) &
+	awk -f scripts/remove_disconnect.awk $TOP.nowell/$TOP.gds.spice > $TOP.nowell/$TOP.gds.nowell.spice ) &
 
 	wait
 fi
 
 #  5. Compare
-netgen -batch source setup_file.nowell.lvs | tee nowell/lvs.nowell.out 2>&1
-
-#  6. CVC
-if [ $TOP = user_project_wrapper \
-		-o $TOP = user_analog_project_wrapper \
-		-o $TOP = caravan \
-		-o $TOP = caravel ]; then
-	# force recreation of cdl
-	rm well/$TOP.cdl
-	./run_cvc $TOP
-fi
+netgen -batch source tech/setup_file.soft.lvs | tee $TOP.soft.log 2>&1

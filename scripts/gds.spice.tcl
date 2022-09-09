@@ -2,7 +2,7 @@
 # well connectivity is detemined by tech file specified in magicrc.
 # output directory set by environment variable RUN_DIR
 
-foreach cell $::env(MAGIC_GDS_FLATTEN_CELLS) {
+foreach cell $::env(FLATGLOB_CELLS) {
 	gds flatglob $cell
 }
 # list cells to be flattened

@@ -17,13 +17,13 @@
 
 # Overview:
 #  1. Extract verilog hierarchy, limit to TOP_CIRCUIT and child subcircuits.
-#  2. Extract gds/oas hierachy.
+#  2. Extract gds/oas hierachy, if necessary.
 #  3. Compare
 #  
 #  Add verilog files to 'verilog_files'
 
 # Use case
-# run_hier_check top_netlist_block netlist gds_file [prefix]
+# run_hier_check top_netlist_block netlist gds_file [primitive_prefix [gds_prefix]]
 if [ $# -lt 3 -o $# -gt 5 ]; then
 	echo "usage: run_hier_check top_netlist_block netlist gds_file [primitive_prefix [gds_prefix]]"
 	exit
@@ -42,46 +42,46 @@ if [ $# -eq 5 ]; then  # only if prefix is specified
 fi
 
 sed '/^[ 	]*module[ 	].*[^ 	](/s/(/ (/' $NETLIST `cat verilog_files | grep -v ^#` | \
-	awk -v top=$TOP_NET '\
-		$1 == "module" { \
-			if ( $2 in modules ) { \
-				print "Duplicate module definition", $2 > "/dev/tty"; \
-			} \
-			module = $2; \
-			next; \
-		} \
-		$1 ~ /^\/\// { \
-			next; \
-		}  \
-		/ \(/ && ! /^[ 		]*\/\*/ { \
-			key = module "/" $1; \
-			if ( key in hier ) { \
-				hier[key] += 1; \
-			} else { \
-				subcells[module] = subcells[module] " " $1; \
-				hier[key] = 1; \
-			} \
-		} \
-		END { \
-			print_subckt[top] = 1; \
-			AddPrintSubckts(subcells[top]); \
-			for ( key in hier ) { \
-				split(key, path, "/"); \
-				if ( path[1] in print_subckt ) { \
-					print key, hier[key]; \
-				} \
-			} \
-		}\
-		function AddPrintSubckts(subckt_list,  subckts, subckt_it) { \
-			subcell_count = split(subckt_list, subckts); \
-			for ( subckt_it in subckts ) { \
-				print_subckt[subckts[subckt_it]] = 1; \
-				AddPrintSubckts(subcells[subckts[subckt_it]]); \
-			} \
+	awk -v top=$TOP_NET '
+		$1 == "module" {
+			if ( $2 in modules ) {
+				print "Duplicate module definition", $2 > "/dev/tty";
+			}
+			module = $2;
+			next;
+		}
+		$1 ~ /^\/\// {
+			next;
+		}
+		/ \(/ && ! /^[ 		]*\/\*/ {
+			key = module "/" $1;
+			if ( key in hier ) {
+				hier[key] += 1;
+			} else {
+				subcells[module] = subcells[module] " " $1;
+				hier[key] = 1;
+			}
+		}
+		END {
+			print_subckt[top] = 1;
+			AddPrintSubckts(subcells[top]);
+			for ( key in hier ) {
+				split(key, path, "/");
+				if ( path[1] in print_subckt ) {
+					print key, hier[key];
+				}
+			}
+		}
+		function AddPrintSubckts(subckt_list,  subckts, subckt_it) {
+			subcell_count = split(subckt_list, subckts);
+			for ( subckt_it in subckts ) {
+				print_subckt[subckts[subckt_it]] = 1;
+				AddPrintSubckts(subcells[subckts[subckt_it]]);
+			}
 		}' - | \
 	grep -v // | \
 	sed -E $PRIMITIVE_PREFIX_FILTER | \
-	sort > verilog.hier
+	sort > $TOP_NET.verilog.hier
 
 if [ ${LAYOUT##*.} == "gz" ]; then
 	CAT=zcat
@@ -93,12 +93,9 @@ fi
 EXT=${BASE_LAYOUT##*.}
 if [ "$EXT" == "txt" ]; then
 	TEXT_FILE=$BASE_LAYOUT	
-elif [ "$EXT" == "gds" ]; then
-	TEXT_FILE=${BASE_LAYOUT%.gds}.$$.txt
-elif [ "$EXT" == "oas" ]; then
-	TEXT_FILE=${BASE_LAYOUT%.oas}.$$.txt
-fi
-if [ "$OUTPUT" != "$BASE_LAYOUT" ]; then
+elif [ "$EXT" == "gds" -o "$EXT" == "oas" ]; then
+	TEXT_FILE=gds_text/$TOP_NET.gds.txt
+	echo "Creating $TEXT_FILE.gz from $LAYOUT..."
 cat > gds2txt.py <<-EOF
 	import pya
 	
@@ -125,30 +122,27 @@ EOF
 fi
 
 $CAT $TEXT_FILE | \
-awk ' \
-	/^STRNAME/ { \
-		module = $2; \
-	} \
-	/^SNAME/ { \
-		key = module "/" $2; \
-		if ( key in hier ) { \
-			hier[key] += 1; \
-		} else { \
-			hier[key] = 1; \
-		} \
-	} \
-	END { \
-		for ( key in hier ) { \
-			print key, hier[key]; \
-		} \
+awk '
+	/^STRNAME/ {
+		module = $2;
+	}
+	/^SNAME/ {
+		key = module "/" $2;
+		if ( key in hier ) {
+			hier[key] += 1;
+		} else {
+			hier[key] = 1;
+		}
+	}
+	END {
+		for ( key in hier ) {
+			print key, hier[key];
+		}
 	}' - | \
 	sed -E $GDS_PREFIX_FILTER $PRIMITIVE_PREFIX_FILTER | \
-	sort -u > layout.hier
+	sort -u > $TOP_NET.layout.hier
 
-comm -23 verilog.hier layout.hier | \
+comm -23 $TOP_NET.verilog.hier $TOP_NET.layout.hier | \
 	awk '{print $1}' | \
-	fgrep -f - verilog.hier layout.hier
+	fgrep -f - $TOP_NET.verilog.hier $TOP_NET.layout.hier
 
-if [ "$TEXT_FILE" != "$BASE_LAYOUT" ]; then
-	rm $TEXT_FILE.gz
-fi

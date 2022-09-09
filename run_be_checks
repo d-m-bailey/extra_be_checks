@@ -1,0 +1,83 @@
+#! /bin/bash
+#   run_be_checks: Runs scheck, full_lvs and for digital designs cvc-rv.
+
+#   Copyright 2022 D. Mitch Bailey  cvc at shuharisystem dot com
+
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#   
+#       http://www.apache.org/licenses/LICENSE-2.0
+#   
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+
+# Overview:
+#  1. Run soft connection check
+#  2. Run full lvs
+#  3. Run cvc for digital designs
+#  
+#  Add cells to be flattened before extract to 'flatglob' file
+#  Add cells to be extracted as black-boxes to 'abstract' file
+#  Add cells to be flattened during compare to 'flatten' file
+#  Add cells not to be flattened during compare to 'noflatten' file
+
+#  verilog_files defaults to the contents of ../verilog/gl
+#  spice_files contains common spice libraries, but may need to be changed.
+
+# Use cases
+# run_be_checks top_block netlist_file gds_file	: extract, then check
+# run_be_checks top_block netlist_file		: use previous extraction results to compare
+# run_be_checks 				: use previous extraction results to compare
+if [ $# -eq 0 ]; then
+	export LAYOUT=$(ls ../gds/user_*wrapper.gds* | head -1)
+	file=${LAYOUT##.*/}
+	export TOP=${file%%.gds*}
+	if [[ "$TOP" == user_project_wrapper ]]; then
+		export NETLIST=../verilog/gl/$TOP.v
+	else
+		export NETLIST=../xschem/$TOP.spice
+	fi
+elif [ $# -lt 2 -o $# -gt 3 ]; then
+	echo "usage: run_be_checks top_block netlist_file [gds_file]"
+	exit
+else
+	export TOP=$1
+	export NETLIST=$2
+	if [ $# -eq 3 ]; then
+		export LAYOUT=$3
+	else
+		export LAYOUT=
+	fi
+fi
+
+echo "TOP: $TOP"
+echo "NETLIST: $NETLIST"
+echo "LAYOUT: $LAYOUT"
+
+if [[ ! -f verilog_files ]]; then
+	ls ../verilog/gl/* > verilog_files
+fi
+
+./run_scheck $TOP $LAYOUT
+
+./run_full_lvs $TOP $NETLIST $TOP $LAYOUT
+
+if [[ $TOP = "user_project_wrapper" ]]; then
+	./run_cvc $TOP
+fi
+
+echo "Soft check result"
+tail -n 10 $TOP.lvs.soft.report | awk '/Circuit/,/dummy/'
+
+echo "LVS result"
+tail -n 10 $TOP.lvs.report | awk '/Circuit/,/dummy/'
+
+if [[ $TOP = "user_project_wrapper" ]]; then
+	echo "CVC result"
+	grep 'CVC: Total:' $TOP.cvc.log 
+fi
+	
