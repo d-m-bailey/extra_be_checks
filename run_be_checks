@@ -70,14 +70,17 @@ if [[ $TOP = "user_project_wrapper" ]]; then
 	./run_cvc $TOP
 fi
 
-echo "Soft check result"
-tail -n 10 $TOP.lvs.soft.report | awk '/Circuit/,/dummy/'
+echo "
+Soft check result:"
+tail -n 10 $TOP.soft.log | awk '/Result/,/Logging/' | grep -v ^Logging
 
-echo "LVS result"
-tail -n 10 $TOP.lvs.report | awk '/Circuit/,/dummy/'
+echo "
+LVS result:"
+tail -n 10 $TOP.lvs.log | awk '/Result/,/Logging/' | grep -v ^Logging
 
 if [[ $TOP = "user_project_wrapper" ]]; then
-	echo "CVC result"
+	echo "
+CVC result:"
 	grep 'CVC: Total:' $TOP.cvc.log 
 fi
 	
