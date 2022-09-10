@@ -64,7 +64,7 @@ fi
 
 ./run_scheck $TOP $LAYOUT
 
-./run_full_lvs $TOP $NETLIST $TOP $LAYOUT
+./run_full_lvs $TOP $NETLIST $TOP
 
 if [[ $TOP = "user_project_wrapper" ]]; then
 	./run_cvc $TOP

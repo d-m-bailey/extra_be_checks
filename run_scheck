@@ -86,21 +86,44 @@ else
 	export RUN_DIR=$TOP.ext
 	echo "Extracting layout with well in background process. See $TOP.ext.log."
 	#  1. Extract gds_file with well connectivity
-	( magic -dnull -noc -rcfile tech/magicrc.sky130B scripts/gds.spice.tcl < /dev/null > $TOP.ext.log 2>&1; \
+	( date "+BEGIN: %c" > $TOP.ext.log; \
+	start_time=$SECONDS; \
+	magic -dnull -noc -rcfile tech/magicrc.sky130B scripts/gds.spice.tcl < /dev/null >> $TOP.ext.log 2>&1; \
 	#  2. Remove well connections and disconnected nets.; \
 	sed -f scripts/remove_well.sed $TOP.ext/$TOP.gds.spice | \
-		awk -f scripts/remove_disconnect.awk - > $TOP.ext/$TOP.gds.nowell.spice ) &
-	# set link for lvs
+		awk -f scripts/remove_disconnect.awk - > $TOP.ext/$TOP.gds.nowell.spice; \
+	date "+END: %c" >> $TOP.ext.log; \
+	runtime=$(( SECONDS - start_time )); \
+	hours=$((runtime / 3600)); \
+	minutes=$(( (runtime % 3600) / 60 )); \
+	seconds=$(( (runtime % 3600) % 60 )); \
+	awk "END {printf \"Runtime: %d:%02d:%02d (hh:mm:ss)\n\", $hours, $minutes, $seconds}" /dev/null >> $TOP.ext.log ) &
 
 	export RUN_DIR=$TOP.nowell.ext
 	echo "Extracting layout without well in background process. See $TOP.nowell.ext.log."
 	#  3. Extract gds_file without well connectivity
-	( magic -dnull -noc -rcfile tech/magicrc.sky130B.nowell scripts/gds.spice.tcl < /dev/null > $TOP.nowell.ext.log 2>&1; \
+	( date "+BEGIN: %c" > $TOP.nowell.ext.log; \
+	start_time=$SECONDS; \
+	magic -dnull -noc -rcfile tech/magicrc.sky130B.nowell scripts/gds.spice.tcl < /dev/null > $TOP.nowell.ext.log 2>&1; \
 	#  4. Remove disconnected nets.; \
-	awk -f scripts/remove_disconnect.awk $TOP.nowell.ext/$TOP.gds.spice > $TOP.nowell.ext/$TOP.gds.nowell.spice ) &
+	awk -f scripts/remove_disconnect.awk $TOP.nowell.ext/$TOP.gds.spice > $TOP.nowell.ext/$TOP.gds.nowell.spice; \
+	date "+END: %c" >> $TOP.nowell.ext.log; \
+	runtime=$(( SECONDS - start_time )); \
+	hours=$((runtime / 3600)); \
+	minutes=$(( (runtime % 3600) / 60 )); \
+	seconds=$(( (runtime % 3600) % 60 )); \
+	awk "END {printf \"Runtime: %d:%02d:%02d (hh:mm:ss)\n\", $hours, $minutes, $seconds}" /dev/null >> $TOP.nowell.ext.log ) &
 
 	wait
 fi
 
 #  5. Compare
-netgen -batch source tech/setup_file.soft.lvs | tee $TOP.soft.log 2>&1
+date "+BEGIN: %c" > $TOP.soft.log
+start_time=$SECONDS
+netgen -batch source tech/setup_file.soft.lvs | tee -a $TOP.soft.log 2>&1
+date "+END: %c" >> $TOP.soft.log
+runtime=$(( SECONDS - start_time ))
+hours=$((runtime / 3600))
+minutes=$(( (runtime % 3600) / 60 ))
+seconds=$(( (runtime % 3600) % 60 ))
+awk "END {printf \"Runtime: %d:%02d:%02d (hh:mm:ss)\n\", $hours, $minutes, $seconds}" /dev/null >> $TOP.soft.log

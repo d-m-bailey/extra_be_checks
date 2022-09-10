@@ -39,7 +39,7 @@ export NETLIST=$2
 export TOP_LAYOUT=$3
 
 # Add any cells that should be flattened before extraction to 'flatten'. globbing allowed.
-export MAGIC_GDS_FLATTEN_CELLS="`cat flatten 2>/dev/null | grep -v '^#'`"
+export FLATGLOB_CELLS="`cat flatglob 2>/dev/null | grep -v '^#'`"
 # Add any empty cells that should be extracted as black-boxes to 'abstract'.
 export ABSTRACT_CELLS="`cat abstract 2>/dev/null | grep -v '^#'`"
 
@@ -83,8 +83,18 @@ else
 
 	#  1. Extract gds_file 
 	#  Note: uses the same extraction commands as sconnect, so symbolic links to the EXT_DIR may be used
+	date "+BEGIN: %c" > $TOP_LAYOUT.ext.log
+	start_time=$SECONDS
+
 	env TOP=$TOP_LAYOUT RUN_DIR=$EXT_DIR magic -dnull -noc -rcfile tech/magicrc.sky130B scripts/gds.spice.tcl < /dev/null | \
-		tee $TOP_LAYOUT.ext.log 2>&1
+		tee -a $TOP_LAYOUT.ext.log 2>&1
+
+	date "+END: %c" >> $TOP_LAYOUT.ext.log
+	runtime=$(( SECONDS - start_time ))
+	hours=$((runtime / 3600))
+	minutes=$(( (runtime % 3600) / 60 ))
+	seconds=$(( (runtime % 3600) % 60 ))
+	awk "END {printf \"Runtime: %d:%02d:%02d (hh:mm:ss)\n\", $hours, $minutes, $seconds}" /dev/null >> $TOP_LAYOUT.ext.log
 fi
 
 #  5. Compare
@@ -101,11 +111,20 @@ END { \
 	print "lvs {'$EXT_DIR/$TOP_LAYOUT.gds.spice' '$TOP_LAYOUT'} {'$NETLIST' '$TOP_NET'} tech/sky130B_setup.tcl '$TOP_NET'.lvs.report -blackbox -json -noflatten=noflatten"
 }' spice_file[s] verilog_file[s] /dev/null > setup_file_$TOP_NET.lvs
 
+date "+BEGIN: %c" > $TOP_NET.lvs.log
+start_time=$SECONDS
+
 netgen -batch source setup_file_$TOP_NET.lvs | \
-	tee $TOP_NET.lvs.log 2>&1
+	tee -a $TOP_NET.lvs.log 2>&1
 
 grep 'will not flatten' $TOP_NET.lvs.report > $TOP_NET.unflattened
 if [ -s $TOP_NET.unflattened ]; then
-	echo "Warning: device level LVS incomplete due to the following unflattened cells:"
-	cat $TOP_NET.unflattened
+	echo "Warning: device level LVS incomplete due to $(cat $TOP_NET.unflattened | wc -l) unflattened cell(s): see $TOP_NET.unflattened"
 fi
+
+date "+END: %c" >> $TOP_NET.lvs.log
+runtime=$(( SECONDS - start_time ))
+hours=$((runtime / 3600))
+minutes=$(( (runtime % 3600) / 60 ))
+seconds=$(( (runtime % 3600) % 60 ))
+awk "END {printf \"Runtime: %d:%02d:%02d (hh:mm:ss)\n\", $hours, $minutes, $seconds}" /dev/null >> $TOP_NET.lvs.log
