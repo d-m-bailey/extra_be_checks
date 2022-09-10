@@ -117,9 +117,21 @@ start_time=$SECONDS
 netgen -batch source setup_file_$TOP_NET.lvs | \
 	tee -a $TOP_NET.lvs.log 2>&1
 
-grep 'will not flatten' $TOP_NET.lvs.report > $TOP_NET.unflattened
+awk '
+/Circuit 1 .* will not flatten/ {print $4, "is a black box in the layout"}
+/Circuit 2 .* will not flatten/ {print $4, "is a black box in the netlist"}
+' $TOP_NET.lvs.report > $TOP_NET.unflattened
+awk '
+/__fill/ {next}
+/__tapvpwrvgnd/ {next}
+/__fakediode/ {next}
+/sky130_fd_pr__/ {next}
+/Matching pins/ {print $4, "is a black box in the layout and netlist"}
+' $TOP_NET.lvs.log >> $TOP_NET.unflattened
 if [ -s $TOP_NET.unflattened ]; then
-	echo "Warning: device level LVS incomplete due to $(cat $TOP_NET.unflattened | wc -l) unflattened cell(s): see $TOP_NET.unflattened"
+	echo "Warning: device level LVS may be incomplete due to $(cat $TOP_NET.unflattened | wc -l) unflattened cell(s): see $TOP_NET.unflattened" | \
+		tee -a $TOP_NET.lvs.report | \
+		tee -a $TOP_NET.lvs.log
 fi
 
 date "+END: %c" >> $TOP_NET.lvs.log
