@@ -101,18 +101,26 @@ else
 fi
 
 #  5. Compare
-awk '\
-FILENAME == "spice_files" && $1 !~ /^#/ { \
-	print "puts \"Reading spice netlist file", $1 "\"";  \
-	print "readnet spice", $1, 1; \
-} \
-FILENAME == "verilog_files" && $1 !~ /^#/ { \
-	print "puts \"Reading verilog netlist file", $1 "\"";  \
-	print "readnet verilog", $1, 1; \
-} \
-END { \
-	print "lvs {'$EXT_DIR/$TOP_LAYOUT.gds.spice' '$TOP_LAYOUT'} {'$NETLIST' '$TOP_NET'} tech/sky130B_setup.tcl '$TOP_NET'.lvs.report -blackbox -json -noflatten=noflatten"
-}' spice_file[s] verilog_file[s] /dev/null > setup_file_$TOP_NET.lvs
+cp tech/sky130B_setup.tcl $TOP_NET.sky130B_setup.tcl
+awk '
+FILENAME == "flatten" && ! /^#/ {
+	print "puts stdout \"Flattening", $1 "\"";
+	print "flatten class {-circuit1", $1, "}";
+	print "flatten class {-circuit2", $1, "}";
+}' flatte[n] /dev/null >> $TOP_NET.sky130B_setup.tcl
+
+awk '
+FILENAME == "spice_files" && $1 !~ /^#/ {
+	print "puts \"Reading spice netlist file", $1 "\"";
+	print "readnet spice", $1, 1;
+}
+FILENAME == "verilog_files" && $1 !~ /^#/ {
+	print "puts \"Reading verilog netlist file", $1 "\"";
+	print "readnet verilog", $1, 1;
+}
+END {
+	print "lvs {'$EXT_DIR/$TOP_LAYOUT.gds.spice' '$TOP_LAYOUT'} {'$NETLIST' '$TOP_NET'} '$TOP_NET'.sky130B_setup.tcl '$TOP_NET'.lvs.report -blackbox -json -noflatten=noflatten"
+}' spice_file[s] verilog_file[s] flatte[n] /dev/null > setup_file_$TOP_NET.lvs
 
 date "+BEGIN: %c" > $TOP_NET.lvs.log
 start_time=$SECONDS
