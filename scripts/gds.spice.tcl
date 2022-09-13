@@ -17,9 +17,8 @@ foreach cell $::env(ABSTRACT_CELLS) {
 
 load $::env(TOP) -dereference
 cd $::env(RUN_DIR)
+extract no all
 extract do local
-extract no capacitance
-extract no coupling
 extract unique
 extract
 

@@ -81,7 +81,7 @@ else
 	fi
 
 	# Remove any previous extraction results
-	rm -rf {$TOP.ext,$TOP.nowell.ext}/*.ext
+	rm -rf {$TOP.ext,$TOP.nowell.ext}/*.ext{,.gz}
 
 	export RUN_DIR=$TOP.ext
 	echo "Extracting layout with well in background process. See $TOP.ext.log."
@@ -115,6 +115,9 @@ else
 	awk "END {printf \"Runtime: %d:%02d:%02d (hh:mm:ss)\n\", $hours, $minutes, $seconds}" /dev/null >> $TOP.nowell.ext.log ) &
 
 	wait
+
+	# Compress large ext files
+	gzip `find . -name '*.ext' -size +1M`
 fi
 
 #  5. Compare

@@ -5,7 +5,8 @@ export RESULTS_DIR=$DESIGN_NAME.ext
 
 if [[ ! -f $RESULTS_DIR/$DESIGN_NAME.cdl ]] ; then
 	echo "Creating $RESULTS_DIR/$DESIGN_NAME.cdl"
-	./spi2cdl $RESULTS_DIR/$DESIGN_NAME.gds.spice > $RESULTS_DIR/$DESIGN_NAME.cdl
+	./spi2cdl $RESULTS_DIR/$DESIGN_NAME.gds.spice | \
+		gzip -c > $RESULTS_DIR/$DESIGN_NAME.cdl.gz
 fi
 
 start_time=$SECONDS

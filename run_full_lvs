@@ -79,7 +79,7 @@ else
 	fi
 
 	# Remove any previous extraction results
-	rm -rf $EXT_DIR/*.ext
+	rm -rf $EXT_DIR/*.ext{,.gz}
 
 	#  1. Extract gds_file 
 	#  Note: uses the same extraction commands as sconnect, so symbolic links to the EXT_DIR may be used
@@ -95,6 +95,9 @@ else
 	minutes=$(( (runtime % 3600) / 60 ))
 	seconds=$(( (runtime % 3600) % 60 ))
 	awk "END {printf \"Runtime: %d:%02d:%02d (hh:mm:ss)\n\", $hours, $minutes, $seconds}" /dev/null >> $TOP_LAYOUT.ext.log
+
+	# Compress large ext files
+	gzip `find . -name '*.ext' -size +1M`
 fi
 
 #  5. Compare
