@@ -2,6 +2,8 @@
 # well connectivity is detemined by tech file specified in magicrc.
 # output directory set by environment variable RUN_DIR
 
+puts "Extracting with top ports connected by name (analog)"
+
 foreach cell $::env(FLATGLOB_CELLS) {
 	gds flatglob $cell
 }
@@ -19,10 +21,11 @@ load $::env(TOP) -dereference
 cd $::env(RUN_DIR)
 extract no all
 extract do local
-extract unique
+extract unique notopports
 extract
 
 ext2spice lvs
+ext2spice short resistor
 ext2spice -o $::env(TOP).gds.spice $::env(TOP).ext
 feedback save $::env(TOP)-ext2gds.spice.feedback.txt
 

@@ -32,6 +32,7 @@ R sky130_fd_pr__res_generic_pd__hv R=l/w*191
 R sky130_fd_pr__res_generic_po R=l/w*48
 R sky130_fd_pr__res_xhigh_po R=l/w*2000
 R sky130_fd_pr__res_high_po R=l/w*2000
+R sky130_fd_pr__reram_reram_cell R=10
 
 MN sky130_fd_pr__nfet_01v8 Vth=0.2 Vgs=1.8 Vds=1.8
 MN sky130_fd_pr__nfet_01v8_lvt Vth=0.1 Vgs=1.8 Vds=1.8

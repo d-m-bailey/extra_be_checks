@@ -29,6 +29,10 @@ awk '
         print "R" $0, "$SUB=" bulk;
         next;
 }
+/^X.*sky130_fd_pr__reram_reram_cell.*=/ {
+        print "R" $0;
+        next;
+}
  {
         print $0;
 }' $1

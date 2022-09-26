@@ -29,14 +29,22 @@
 # Use cases
 # run_full_lvs top_netlist_block netlist top_layout_block gds_file : extract and then compare
 # run_full_lvs top_netlist_block netlist top_layout_block	   : compare
-if [ $# -lt 3 -o $# -gt 4 ]; then
-	echo "usage: run_full_lvs top_netlist_block netlist top_layout_block [gds_file]"
+if [ $# -lt 1 -o $# -gt 4 ]; then
+	echo "usage: run_full_lvs top_netlist_block [netlist [top_layout_block [gds_file]]]"
 	exit
 fi
 
 export TOP_NET=$1
-export NETLIST=$2
-export TOP_LAYOUT=$3
+if [ $# -ge 2 ]; then
+	export NETLIST=$2
+else
+	export NETLIST=../verilog/gl/$TOP_NET.v
+fi
+if [ $# -ge 3 ]; then
+	export TOP_LAYOUT=$3
+else
+	export TOP_LAYOUT=$TOP_NET
+fi
 
 # Add any cells that should be flattened before extraction to 'flatten'. globbing allowed.
 export FLATGLOB_CELLS="`cat flatglob 2>/dev/null | grep -v '^#'`"
@@ -61,7 +69,7 @@ fi
 EXT_DIR=$TOP_LAYOUT.ext
 mkdir -p $EXT_DIR
 
-if [ $# == 3 ]; then
+if [ $# -lt 4 ]; then
 	# No gds_file so LVS only. Check for existing extraction results.
 	if [ ! -f $EXT_DIR/$TOP_LAYOUT.gds.spice ]; then
 		echo "Error: missing $EXT_DIR/$TOP_LAYOUT.gds.spice"
@@ -86,7 +94,15 @@ else
 	date "+BEGIN: %c" > $TOP_LAYOUT.ext.log
 	start_time=$SECONDS
 
-	env TOP=$TOP_LAYOUT RUN_DIR=$EXT_DIR magic -dnull -noc -rcfile tech/magicrc.sky130B scripts/gds.spice.tcl < /dev/null | \
+	if [ ${NETLIST##*.} == "spice" ]; then
+		echo "Extracting as analog. Top ports connected by name."
+		EXT_TYPE=analog
+	else
+		echo "Extracting as digital. Top ports unique."
+		EXT_TYPE=digital
+	fi
+
+	env TOP=$TOP_LAYOUT RUN_DIR=$EXT_DIR magic -dnull -noc -rcfile tech/magicrc.sky130B scripts/gds.$EXT_TYPE.spice.tcl < /dev/null | \
 		tee -a $TOP_LAYOUT.ext.log 2>&1
 
 	date "+END: %c" >> $TOP_LAYOUT.ext.log

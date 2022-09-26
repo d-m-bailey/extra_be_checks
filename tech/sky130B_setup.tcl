@@ -423,8 +423,9 @@ foreach cell $cells1 {
                 ([lsearch $cells2 $cellname] >= 0) && \
                 ([lsearch $cells1 $cellname] < 0)} {
             equate classes "-circuit1 $cell" "-circuit2 $cellname"
-	    puts stdout "Matching pins of $cell in circuit 1 and $cellname in circuit 2"
-	    equate pins "-circuit1 $cell" "-circuit2 $cellname"
+	    puts stdout "Equating $cell in circuit 1 and $cellname in circuit 2"
+	    #puts stdout "Matching pins of $cell in circuit 1 and $cellname in circuit 2"
+	    #equate pins "-circuit1 $cell" "-circuit2 $cellname"
         }
     }
 }
@@ -435,8 +436,9 @@ foreach cell $cells2 {
                 ([lsearch $cells1 $cellname] >= 0) && \
                 ([lsearch $cells2 $cellname] < 0)} {
             equate classes "-circuit1 $cellname" "-circuit2 $cell"
-	    puts stdout "Matching pins of $cellname in circuit 1 and $cell in circuit 2"
-	    equate pins "-circuit1 $cellname" "-circuit2 $cell"
+	    puts stdout "Equating $cellname in circuit 1 and $cell in circuit 2"
+	    #puts stdout "Matching pins of $cellname in circuit 1 and $cell in circuit 2"
+	    #equate pins "-circuit1 $cellname" "-circuit2 $cell"
         }
     }
 }

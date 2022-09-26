@@ -36,6 +36,11 @@ if [ $# -lt 1 -o $# -gt 2 ]; then
 fi
 
 export TOP=$1
+if [ ${TOP/*analog*/analog} == analog ]; then
+	export EXT_TYPE=analog
+else
+	export EXT_TYPE=digital
+fi
 
 # Add any cells that should be flattened before extraction to 'flatten'. globbing allowed.
 export FLATGLOB_CELLS="`cat flatglob 2>/dev/null | grep -v '^#'`"
@@ -88,7 +93,7 @@ else
 	#  1. Extract gds_file with well connectivity
 	( date "+BEGIN: %c" > $TOP.ext.log; \
 	start_time=$SECONDS; \
-	magic -dnull -noc -rcfile tech/magicrc.sky130B scripts/gds.spice.tcl < /dev/null >> $TOP.ext.log 2>&1; \
+	magic -dnull -noc -rcfile tech/magicrc.sky130B scripts/gds.$EXT_TYPE.spice.tcl < /dev/null >> $TOP.ext.log 2>&1; \
 	#  2. Remove well connections and disconnected nets.; \
 	sed -f scripts/remove_well.sed $TOP.ext/$TOP.gds.spice | \
 		awk -f scripts/remove_disconnect.awk - > $TOP.ext/$TOP.gds.nowell.spice; \
@@ -104,7 +109,7 @@ else
 	#  3. Extract gds_file without well connectivity
 	( date "+BEGIN: %c" > $TOP.nowell.ext.log; \
 	start_time=$SECONDS; \
-	magic -dnull -noc -rcfile tech/magicrc.sky130B.nowell scripts/gds.spice.tcl < /dev/null > $TOP.nowell.ext.log 2>&1; \
+	magic -dnull -noc -rcfile tech/magicrc.sky130B.nowell scripts/gds.$EXT_TYPE.spice.tcl < /dev/null > $TOP.nowell.ext.log 2>&1; \
 	#  4. Remove disconnected nets.; \
 	awk -f scripts/remove_disconnect.awk $TOP.nowell.ext/$TOP.gds.spice > $TOP.nowell.ext/$TOP.gds.nowell.spice; \
 	date "+END: %c" >> $TOP.nowell.ext.log; \
