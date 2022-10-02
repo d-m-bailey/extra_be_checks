@@ -29,6 +29,18 @@
 # Use cases
 # run_full_lvs top_netlist_block netlist top_layout_block gds_file : extract and then compare
 # run_full_lvs top_netlist_block netlist top_layout_block	   : compare
+if [[ -z "${LOG_ROOT}" ]]; then
+    LOG_ROOT=$(pwd)
+fi
+
+if [[ -z "${SIGNOFF_ROOT}" ]]; then
+    SIGNOFF_ROOT=$(pwd)
+fi
+
+if [[ -z "${LVS_ROOT}" ]]; then
+    LVS_ROOT=$(pwd)
+fi
+
 if [ $# -lt 1 -o $# -gt 4 ]; then
 	echo "usage: run_full_lvs top_netlist_block [netlist [top_layout_block [gds_file]]]"
 	exit
@@ -47,9 +59,9 @@ else
 fi
 
 # Add any cells that should be flattened before extraction to 'flatten'. globbing allowed.
-export FLATGLOB_CELLS="`cat flatglob 2>/dev/null | grep -v '^#'`"
+export FLATGLOB_CELLS="`cat $LVS_ROOT/flatglob 2>/dev/null | grep -v '^#'`"
 # Add any empty cells that should be extracted as black-boxes to 'abstract'.
-export ABSTRACT_CELLS="`cat abstract 2>/dev/null | grep -v '^#'`"
+export ABSTRACT_CELLS="`cat $LVS_ROOT/abstract 2>/dev/null | grep -v '^#'`"
 
 # Verify that magic and netgen are executable.
 if [ $# == 4 ]; then  # only if gds is specified
@@ -91,7 +103,7 @@ else
 
 	#  1. Extract gds_file 
 	#  Note: uses the same extraction commands as sconnect, so symbolic links to the EXT_DIR may be used
-	date "+BEGIN: %c" > $TOP_LAYOUT.ext.log
+	date "+BEGIN: %c" > $LOG_ROOT/$TOP_LAYOUT.ext.log
 	start_time=$SECONDS
 
 	if [ ${NETLIST##*.} == "spice" ]; then
@@ -102,28 +114,28 @@ else
 		EXT_TYPE=digital
 	fi
 
-	env TOP=$TOP_LAYOUT RUN_DIR=$EXT_DIR magic -dnull -noc -rcfile tech/magicrc.sky130B scripts/gds.$EXT_TYPE.spice.tcl < /dev/null | \
-		tee -a $TOP_LAYOUT.ext.log 2>&1
+	env TOP=$TOP_LAYOUT RUN_DIR=$EXT_DIR magic -dnull -noc -rcfile $PDK_ROOT/$PDK/libs.tech/magic/$PDK.magicrc $LVS_ROOT/scripts/gds.$EXT_TYPE.spice.tcl < /dev/null | \
+		tee -a $LOG_ROOT/$TOP_LAYOUT.ext.log 2>&1
 
-	date "+END: %c" >> $TOP_LAYOUT.ext.log
+	date "+END: %c" >> $LOG_ROOT/$TOP_LAYOUT.ext.log
 	runtime=$(( SECONDS - start_time ))
 	hours=$((runtime / 3600))
 	minutes=$(( (runtime % 3600) / 60 ))
 	seconds=$(( (runtime % 3600) % 60 ))
-	awk "END {printf \"Runtime: %d:%02d:%02d (hh:mm:ss)\n\", $hours, $minutes, $seconds}" /dev/null >> $TOP_LAYOUT.ext.log
+	awk "END {printf \"Runtime: %d:%02d:%02d (hh:mm:ss)\n\", $hours, $minutes, $seconds}" /dev/null >> $LOG_ROOT/$TOP_LAYOUT.ext.log
 
 	# Compress large ext files
 	gzip `find . -name '*.ext' -size +1M`
 fi
 
 #  5. Compare
-cp tech/sky130B_setup.tcl $TOP_NET.sky130B_setup.tcl
+cp $LVS_ROOT/tech/sky130B_setup.tcl $LVS_ROOT/$TOP_NET.sky130B_setup.tcl
 awk '
 FILENAME == "flatten" && ! /^#/ {
 	print "puts stdout \"Flattening", $1 "\"";
 	print "flatten class {-circuit1", $1, "}";
 	print "flatten class {-circuit2", $1, "}";
-}' flatte[n] /dev/null >> $TOP_NET.sky130B_setup.tcl
+}' $LVS_ROOT/flatte[n] /dev/null >> $LVS_ROOT/$TOP_NET.sky130B_setup.tcl
 
 awk '
 FILENAME == "spice_files" && $1 !~ /^#/ {
@@ -135,35 +147,35 @@ FILENAME == "verilog_files" && $1 !~ /^#/ {
 	print "readnet verilog", $1, 1;
 }
 END {
-	print "lvs {'$EXT_DIR/$TOP_LAYOUT.gds.spice' '$TOP_LAYOUT'} {'$NETLIST' '$TOP_NET'} '$TOP_NET'.sky130B_setup.tcl '$TOP_NET'.lvs.report -blackbox -json -noflatten=noflatten"
-}' spice_file[s] verilog_file[s] flatte[n] /dev/null > setup_file_$TOP_NET.lvs
+	print "lvs {'$EXT_DIR/$TOP_LAYOUT.gds.spice' '$TOP_LAYOUT'} {'$NETLIST' '$TOP_NET'} '$LVS_ROOT/$TOP_NET'.sky130B_setup.tcl '$SIGNOFF_ROOT/$TOP_NET'.lvs.report -blackbox -json -noflatten=noflatten"
+}' $LVS_ROOT/spice_file[s] $LVS_ROOT/verilog_file[s] $LVS_ROOT/flatte[n] /dev/null > $LVS_ROOT/setup_file_$TOP_NET.lvs
 
-date "+BEGIN: %c" > $TOP_NET.lvs.log
+date "+BEGIN: %c" > $LOG_ROOT/$TOP_NET.lvs.log
 start_time=$SECONDS
 
-netgen -batch source setup_file_$TOP_NET.lvs | \
-	tee -a $TOP_NET.lvs.log 2>&1
+netgen -batch source $LVS_ROOT/setup_file_$TOP_NET.lvs | \
+	tee -a $LOG_ROOT/$TOP_NET.lvs.log 2>&1
 
 awk '
 /Circuit 1 .* will not flatten/ {print $4, "is a black box in the layout"}
 /Circuit 2 .* will not flatten/ {print $4, "is a black box in the netlist"}
-' $TOP_NET.lvs.report > $TOP_NET.unflattened
+' $SIGNOFF_ROOT/$TOP_NET.lvs.report > $LVS_ROOT/$TOP_NET.unflattened
 awk '
 /__fill/ {next}
 /__tapvpwrvgnd/ {next}
 /__fakediode/ {next}
 /sky130_fd_pr__/ {next}
 /Matching pins/ {print $4, "is a black box in the layout and netlist"}
-' $TOP_NET.lvs.log >> $TOP_NET.unflattened
-if [ -s $TOP_NET.unflattened ]; then
+' $LOG_ROOT/$TOP_NET.lvs.log >> $LVS_ROOT/$TOP_NET.unflattened
+if [ -s $LVS_ROOT/$TOP_NET.unflattened ]; then
 	echo "Warning: device level LVS may be incomplete due to $(cat $TOP_NET.unflattened | wc -l) unflattened cell(s): see $TOP_NET.unflattened" | \
-		tee -a $TOP_NET.lvs.report | \
-		tee -a $TOP_NET.lvs.log
+		tee -a $SIGNOFF_ROOT/$TOP_NET.lvs.report | \
+		tee -a $LOG_ROOT/$TOP_NET.lvs.log
 fi
 
-date "+END: %c" >> $TOP_NET.lvs.log
+date "+END: %c" >> $LOG_ROOT/$TOP_NET.lvs.log
 runtime=$(( SECONDS - start_time ))
 hours=$((runtime / 3600))
 minutes=$(( (runtime % 3600) / 60 ))
 seconds=$(( (runtime % 3600) % 60 ))
-awk "END {printf \"Runtime: %d:%02d:%02d (hh:mm:ss)\n\", $hours, $minutes, $seconds}" /dev/null >> $TOP_NET.lvs.log
+awk "END {printf \"Runtime: %d:%02d:%02d (hh:mm:ss)\n\", $hours, $minutes, $seconds}" /dev/null >> $LOG_ROOT/$TOP_NET.lvs.log
