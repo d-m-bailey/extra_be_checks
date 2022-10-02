@@ -129,6 +129,10 @@ else
 fi
 
 #  5. Compare
+if [ ! -f verilog_files ]; then
+	touch verilog_files
+fi
+
 cp $LVS_ROOT/tech/sky130B_setup.tcl $LVS_ROOT/$TOP_NET.sky130B_setup.tcl
 awk '
 FILENAME == "flatten" && ! /^#/ {
