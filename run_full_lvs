@@ -78,7 +78,7 @@ if [[ $? != 0 ]]; then
 fi
 
 #  Create extraction result directories. No error if they already exist.
-EXT_DIR=$TOP_LAYOUT.ext
+EXT_DIR=$LVS_ROOT/$TOP_LAYOUT.ext
 mkdir -p $EXT_DIR
 
 if [ $# -lt 4 ]; then
