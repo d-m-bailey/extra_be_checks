@@ -118,7 +118,7 @@ else
 		EXT_TYPE=digital
 	fi
 
-	env TOP=$TOP_LAYOUT RUN_DIR=$EXT_DIR magic -dnull -noc -rcfile tech/magicrc.sky130B scripts/gds.$EXT_TYPE.spice.tcl < /dev/null | \
+	env TOP=$TOP_LAYOUT RUN_DIR=$EXT_DIR magic -dnull -noc -rcfile $LVS_ROOT/tech/magicrc.sky130B $LVS_ROOT/scripts/gds.$EXT_TYPE.spice.tcl < /dev/null | \
 		tee -a $LOG_ROOT/$TOP_LAYOUT.ext.log 2>&1
 
 	date "+END: %c" >> $LOG_ROOT/$TOP_LAYOUT.ext.log
