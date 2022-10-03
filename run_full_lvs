@@ -135,6 +135,7 @@ fi
 #  5. Compare
 cp $LVS_ROOT/tech/sky130B_setup.tcl $WORK_ROOT/$TOP_NET.sky130B_setup.tcl
 shopt -s nullglob
+
 awk '
 ! /^#/ {
 	print "puts stdout \"Flattening", $1 "\"";
