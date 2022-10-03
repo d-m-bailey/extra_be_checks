@@ -20,7 +20,7 @@ catch {random seed}
 ext2spice scale off
 
 # loading technology without well connectivity
-tech load tech/sky130B.nowell.tech
+tech load $::env(LVS_ROOT)/tech/sky130B.nowell.tech
 
 # set units to lambda grid 
 snap lambda

@@ -35,6 +35,12 @@ if [ $# -lt 1 -o $# -gt 2 ]; then
 	exit
 fi
 
+: "${LOG_ROOT:=$(pwd)}"
+: "${LVS_ROOT:=$(pwd)}"
+: "${SIGNOFF_ROOT:=$(pwd)}"
+: "${WORK_ROOT:=$(pwd)}"
+export LOG_ROOT LVS_ROOT SIGNOFF_ROOT WORK_ROOT
+
 export TOP=$1
 if [ ${TOP/*analog*/analog} == analog ]; then
 	export EXT_TYPE=analog
@@ -43,9 +49,9 @@ else
 fi
 
 # Add any cells that should be flattened before extraction to 'flatten'. globbing allowed.
-export FLATGLOB_CELLS="`cat flatglob 2>/dev/null | grep -v '^#'`"
+export FLATGLOB_CELLS="`cat $WORK_ROOT/flatglob 2>/dev/null | grep -v '^#'`"
 # Add any empty cells that should be extracted as black-boxes to 'abstract'.
-export ABSTRACT_CELLS="`cat abstract 2>/dev/null | grep -v '^#'`"
+export ABSTRACT_CELLS="`cat $WORK_ROOT/abstract 2>/dev/null | grep -v '^#'`"
 
 # Verify that magic and netgen are executable.
 which magic >& /dev/null
@@ -60,18 +66,18 @@ if [[ $? != 0 ]]; then
 fi
 
 #  Create extraction result directories. No error if they already exist.
-mkdir -p $TOP.ext $TOP.nowell.ext
+mkdir -p $WORK_ROOT/$TOP.ext $WORK_ROOT/$TOP.nowell.ext
 
 if [ $# == 1 ]; then
 	# No gds_file so LVS only. Check for existing extraction results.
-	if [ ! -f $TOP.ext/$TOP.gds.nowell.spice ]; then
-		echo "Error: missing $TOP.ext/$TOP.gds.nowell.spice"
+	if [ ! -f $WORK_ROOT/$TOP.ext/$TOP.gds.nowell.spice ]; then
+		echo "Error: missing $WORK_ROOT/$TOP.ext/$TOP.gds.nowell.spice"
 		echo "Specify gds_file to create"
 		echo "usage: run_scheck top_block [gds_file]"
 		exit
 	fi
-	if [ ! -f $TOP.nowell.ext/$TOP.gds.nowell.spice ]; then
-		echo "Error: missing $TOP.nowell.ext/$TOP.gds.nowell.spice"
+	if [ ! -f $WORK_ROOT/$TOP.nowell.ext/$TOP.gds.nowell.spice ]; then
+		echo "Error: missing $WORK_ROOT/$TOP.nowell.ext/$TOP.gds.nowell.spice"
 		echo "Specify gds_file to create"
 		echo "usage: run_scheck top_block [gds_file]"
 		exit
@@ -86,52 +92,52 @@ else
 	fi
 
 	# Remove any previous extraction results
-	rm -rf {$TOP.ext,$TOP.nowell.ext}/*.ext{,.gz}
+	rm -rf $WORK_ROOT/{$TOP.ext,$TOP.nowell.ext}/*.ext{,.gz}
 
-	export RUN_DIR=$TOP.ext
-	echo "Extracting layout with well in background process. See $TOP.ext.log."
+	export RUN_DIR=$WORK_ROOT/$TOP.ext
+	echo "Extracting layout with well in background process. See $LOG_ROOT/$TOP.ext.log."
 	#  1. Extract gds_file with well connectivity
-	( date "+BEGIN: %c" > $TOP.ext.log; \
+	( date "+BEGIN: %c" > $LOG_ROOT/$TOP.ext.log; \
 	start_time=$SECONDS; \
-	magic -dnull -noc -rcfile tech/magicrc.sky130B scripts/gds.$EXT_TYPE.spice.tcl < /dev/null >> $TOP.ext.log 2>&1; \
+	magic -dnull -noc -rcfile $LVS_ROOT/tech/magicrc.sky130B $LVS_ROOT/scripts/gds.$EXT_TYPE.spice.tcl < /dev/null >> $LOG_ROOT/$TOP.ext.log 2>&1; \
 	#  2. Remove well connections and disconnected nets.; \
-	sed -f scripts/remove_well.sed $TOP.ext/$TOP.gds.spice | \
-		awk -f scripts/remove_disconnect.awk - > $TOP.ext/$TOP.gds.nowell.spice; \
-	date "+END: %c" >> $TOP.ext.log; \
+	sed -f $LVS_ROOT/scripts/remove_well.sed $RUN_DIR/$TOP.gds.spice | \
+		awk -f $LVS_ROOT/scripts/remove_disconnect.awk - > $RUN_DIR/$TOP.gds.nowell.spice; \
+	date "+END: %c" >> $LOG_ROOT/$TOP.ext.log; \
 	runtime=$(( SECONDS - start_time )); \
 	hours=$((runtime / 3600)); \
 	minutes=$(( (runtime % 3600) / 60 )); \
 	seconds=$(( (runtime % 3600) % 60 )); \
-	awk "END {printf \"Runtime: %d:%02d:%02d (hh:mm:ss)\n\", $hours, $minutes, $seconds}" /dev/null >> $TOP.ext.log ) &
+	printf "Runtime: %d:%02d:%02d (hh:mm:ss)\n" $hours $minutes $seconds >> $LOG_ROOT/$TOP.ext.log ) &
 
-	export RUN_DIR=$TOP.nowell.ext
-	echo "Extracting layout without well in background process. See $TOP.nowell.ext.log."
+	export RUN_DIR=$WORK_ROOT/$TOP.nowell.ext
+	echo "Extracting layout without well in background process. See $LOG_ROOT/$TOP.nowell.ext.log."
 	#  3. Extract gds_file without well connectivity
-	( date "+BEGIN: %c" > $TOP.nowell.ext.log; \
+	( date "+BEGIN: %c" > $LOG_ROOT/$TOP.nowell.ext.log; \
 	start_time=$SECONDS; \
-	magic -dnull -noc -rcfile tech/magicrc.sky130B.nowell scripts/gds.$EXT_TYPE.spice.tcl < /dev/null > $TOP.nowell.ext.log 2>&1; \
+	magic -dnull -noc -rcfile $LVS_ROOT/tech/magicrc.sky130B.nowell $LVS_ROOT/scripts/gds.$EXT_TYPE.spice.tcl < /dev/null > $LOG_ROOT/$TOP.nowell.ext.log 2>&1; \
 	#  4. Remove disconnected nets.; \
-	awk -f scripts/remove_disconnect.awk $TOP.nowell.ext/$TOP.gds.spice > $TOP.nowell.ext/$TOP.gds.nowell.spice; \
-	date "+END: %c" >> $TOP.nowell.ext.log; \
+	awk -f $LVS_ROOT/scripts/remove_disconnect.awk $RUN_DIR/$TOP.gds.spice > $RUN_DIR/$TOP.gds.nowell.spice; \
+	date "+END: %c" >> $LOG_ROOT/$TOP.nowell.ext.log; \
 	runtime=$(( SECONDS - start_time )); \
 	hours=$((runtime / 3600)); \
 	minutes=$(( (runtime % 3600) / 60 )); \
 	seconds=$(( (runtime % 3600) % 60 )); \
-	awk "END {printf \"Runtime: %d:%02d:%02d (hh:mm:ss)\n\", $hours, $minutes, $seconds}" /dev/null >> $TOP.nowell.ext.log ) &
+	printf "Runtime: %d:%02d:%02d (hh:mm:ss)\n" $hours $minutes $seconds >> $LOG_ROOT/$TOP.nowell.ext.log ) &
 
 	wait
 
 	# Compress large ext files
-	gzip `find . -name '*.ext' -size +1M`
+	find . -name '*.ext' -size +1M -exec gzip {} \;
 fi
 
 #  5. Compare
-date "+BEGIN: %c" > $TOP.soft.log
+date "+BEGIN: %c" > $LOG_ROOT/$TOP.soft.log
 start_time=$SECONDS
-netgen -batch source tech/setup_file.soft.lvs | tee -a $TOP.soft.log 2>&1
-date "+END: %c" >> $TOP.soft.log
+netgen -batch source $LVS_ROOT/tech/setup_file.soft.lvs | tee -a $LOG_ROOT/$TOP.soft.log 2>&1
+date "+END: %c" >> $LOG_ROOT/$TOP.soft.log
 runtime=$(( SECONDS - start_time ))
 hours=$((runtime / 3600))
 minutes=$(( (runtime % 3600) / 60 ))
 seconds=$(( (runtime % 3600) % 60 ))
-awk "END {printf \"Runtime: %d:%02d:%02d (hh:mm:ss)\n\", $hours, $minutes, $seconds}" /dev/null >> $TOP.soft.log
+printf "Runtime: %d:%02d:%02d (hh:mm:ss)\n" $hours $minutes $seconds >> $LOG_ROOT/$TOP.soft.log

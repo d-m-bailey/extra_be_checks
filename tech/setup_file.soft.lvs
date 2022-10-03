@@ -1,1 +1,1 @@
-lvs "$::env(TOP).ext/$::env(TOP).gds.nowell.spice $::env(TOP)" "$::env(TOP).nowell.ext/$::env(TOP).gds.nowell.spice $::env(TOP)" tech/sky130B_setup.tcl $::env(TOP).lvs.soft.report -json -noflatten=noflatten
+lvs "$::env(WORK_ROOT)/$::env(TOP).ext/$::env(TOP).gds.nowell.spice $::env(TOP)" "$::env(WORK_ROOT)/$::env(TOP).nowell.ext/$::env(TOP).gds.nowell.spice $::env(TOP)" $::env(LVS_ROOT)/tech/sky130B_setup.tcl $::env(SIGNOFF_ROOT)/$::env(TOP).lvs.soft.report -json -noflatten=noflatten

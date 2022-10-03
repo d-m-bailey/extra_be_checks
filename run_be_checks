@@ -32,22 +32,22 @@
 # run_be_checks top_block netlist_file gds_file	: extract, then check
 # run_be_checks top_block netlist_file		: use previous extraction results to compare
 # run_be_checks 				: use previous extraction results to compare
-if [ $# -eq 0 ]; then
-	export LAYOUT=$(ls ../gds/user_*wrapper.gds* | head -1)
+if [[ $# -eq 0 ]]; then
+	export LAYOUT=$(ls gds/user_*wrapper.gds* | head -1)
 	file=${LAYOUT##.*/}
 	export TOP=${file%%.gds*}
 	if [[ "$TOP" == user_project_wrapper ]]; then
-		export NETLIST=../verilog/gl/$TOP.v
+		export NETLIST=verilog/gl/$TOP.v
 	else
-		export NETLIST=../xschem/$TOP.spice
+		export NETLIST=xschem/$TOP.spice
 	fi
-elif [ $# -lt 2 -o $# -gt 3 ]; then
-	echo "usage: run_be_checks top_block netlist_file [gds_file]"
+elif [[ $# -lt 2 || $# -gt 3 ]]; then
+	echo "usage: run_be_checks [top_block netlist_file [gds_file]]"
 	exit
 else
 	export TOP=$1
 	export NETLIST=$2
-	if [ $# -eq 3 ]; then
+	if [[ $# -eq 3 ]]; then
 		export LAYOUT=$3
 	else
 		export LAYOUT=
@@ -58,29 +58,35 @@ echo "TOP: $TOP"
 echo "NETLIST: $NETLIST"
 echo "LAYOUT: $LAYOUT"
 
-if [[ ! -f verilog_files ]]; then
-	ls ../verilog/gl/* > verilog_files
+: "${LOG_ROOT:=$(pwd)}"
+: "${LVS_ROOT:=$(pwd)}"
+: "${SIGNOFF_ROOT:=$(pwd)}"
+: "${WORK_ROOT:=$(pwd)}"
+export LOG_ROOT LVS_ROOT SIGNOFF_ROOT WORK_ROOT
+
+if [[ ( ! -f $WORK_DIR/verilog_files ) && ( -d verilog/gl ) && ( $(ls verilog/gl | wc -l) -gt 0 ) ]]; then
+	ls verilog/gl/* > $WORK_DIR/verilog_files
 fi
 
-./run_scheck $TOP $LAYOUT
+$LVS_ROOT/run_scheck $TOP $LAYOUT
 
-./run_full_lvs $TOP $NETLIST $TOP
+$LVS_ROOT/run_full_lvs $TOP $NETLIST $TOP
 
 if [[ $TOP = "user_project_wrapper" ]]; then
-	./run_cvc $TOP
+	$LVS_ROOT/run_cvc $TOP
 fi
 
 echo "
 Soft check result:"
-tail -n 10 $TOP.soft.log | awk '/Result/,/Logging/' | grep -v ^Logging
+tail -n 20 $LOG_ROOT/$TOP.soft.log | awk '/Final result/,/Logging/' | grep -v ^Logging
 
 echo "
 LVS result:"
-tail -n 10 $TOP.lvs.log | awk '/Result/,/Logging/' | grep -v ^Logging
+tail -n 20 $LOG_ROOT/$TOP.lvs.log | awk '/Final result/,/Logging/' | grep -v ^Logging
 
 if [[ $TOP = "user_project_wrapper" ]]; then
 	echo "
 CVC result:"
-	grep 'CVC: Total:' $TOP.cvc.log 
+	grep 'CVC: Total:' $LOG_ROOT/$TOP.cvc.log 
 fi
 	

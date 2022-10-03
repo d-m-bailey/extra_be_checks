@@ -41,7 +41,16 @@ if [ $# -eq 5 ]; then  # only if prefix is specified
 	GDS_PREFIX_FILTER="-e s/^($5)*// -e s/\/($5)*/\//"
 fi
 
-sed '/^[ 	]*module[ 	].*[^ 	](/s/(/ (/' $NETLIST `cat verilog_files | grep -v ^#` | \
+: "${LOG_ROOT:=$(pwd)}"
+: "${LVS_ROOT:=$(pwd)}"
+: "${SIGNOFF_ROOT:=$(pwd)}"
+: "${WORK_ROOT:=$(pwd)}"
+export LOG_ROOT LVS_ROOT SIGNOFF_ROOT WORK_ROOT
+
+date "+BEGIN: %c" 
+start_time=$SECONDS
+
+sed '/^[ 	]*module[ 	].*[^ 	](/s/(/ (/' $NETLIST `cat $WORK_ROOT/verilog_files | grep -v ^#` | \
 	awk -v top=$TOP_NET '
 		$1 == "module" {
 			if ( $2 in modules ) {
@@ -81,7 +90,7 @@ sed '/^[ 	]*module[ 	].*[^ 	](/s/(/ (/' $NETLIST `cat verilog_files | grep -v ^#
 		}' - | \
 	grep -v // | \
 	sed -E $PRIMITIVE_PREFIX_FILTER | \
-	sort > $TOP_NET.verilog.hier
+	sort > $WORK_ROOT/$TOP_NET.verilog.hier
 
 if [ ${LAYOUT##*.} == "gz" ]; then
 	CAT=zcat
@@ -94,9 +103,10 @@ EXT=${BASE_LAYOUT##*.}
 if [ "$EXT" == "txt" ]; then
 	TEXT_FILE=$BASE_LAYOUT	
 elif [ "$EXT" == "gds" -o "$EXT" == "oas" ]; then
-	TEXT_FILE=gds_text/$TOP_NET.gds.txt
-	echo "Creating $TEXT_FILE.gz from $LAYOUT..."
-cat > gds2txt.py <<-EOF
+	TEXT_FILE=$WORK_ROOT/gds_text/$TOP_NET.gds.txt
+	mkdir -p $WORK_ROOT/gds_text
+	echo "Creating $WORK_ROOT/gds_text/$TEXT_FILE.gz from $LAYOUT..."
+cat > $WORK_ROOT/gds2txt.py <<-EOF
 	import pya
 	
 	app = pya.Application.instance()
@@ -116,7 +126,7 @@ cat > gds2txt.py <<-EOF
 	
 	app.exit(0)
 EOF
-	klayout -b -rm gds2txt.py
+	klayout -b -rm $WORK_ROOT/gds2txt.py
 	gzip $TEXT_FILE
 	CAT=zcat
 fi
@@ -140,9 +150,15 @@ awk '
 		}
 	}' - | \
 	sed -E $GDS_PREFIX_FILTER $PRIMITIVE_PREFIX_FILTER | \
-	sort -u > $TOP_NET.layout.hier
+	sort -u > $WORK_DIR/$TOP_NET.layout.hier
 
-comm -23 $TOP_NET.verilog.hier $TOP_NET.layout.hier | \
+comm -23 $WORK_DIR/$TOP_NET.verilog.hier $WORK_DIR/$TOP_NET.layout.hier | \
 	awk '{print $1}' | \
-	fgrep -f - $TOP_NET.verilog.hier $TOP_NET.layout.hier
+	fgrep -f - $WORK_DIR/$TOP_NET.verilog.hier $WORK_DIR/$TOP_NET.layout.hier
 
+date "+END: %c" 
+runtime=$(( SECONDS - start_time ))
+hours=$((runtime / 3600))
+minutes=$(( (runtime % 3600) / 60 ))
+seconds=$(( (runtime % 3600) % 60 ))
+printf "Runtime: %d:%02d:%02d (hh:mm:ss)\n" $hours $minutes $seconds
