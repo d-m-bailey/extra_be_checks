@@ -3,6 +3,8 @@
 # output directory set by environment variable RUN_DIR
 
 puts "Extracting with top ports unique (digital)"
+drc off
+#cif istyle sky130()
 
 foreach cell $::env(FLATGLOB_CELLS) {
 	gds flatglob $cell
@@ -25,7 +27,7 @@ extract unique
 extract
 
 ext2spice lvs
-ext2spice short resistor
+#ext2spice short resistor
 ext2spice -o $::env(TOP).gds.spice $::env(TOP).ext
 feedback save $::env(TOP)-ext2gds.spice.feedback.txt
 

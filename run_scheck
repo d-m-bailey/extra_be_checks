@@ -48,6 +48,15 @@ else
 	export EXT_TYPE=digital
 fi
 
+if [[ ! -f $WORK_ROOT/flatglob ]]; then
+	echo "Warning: using $LVS_ROOT/flatglob for $WORK_ROOT/flatglob"
+	cp $LVS_ROOT/flatglob $WORK_ROOT/flatglob
+fi
+if [[ ! -f $WORK_ROOT/abstract ]]; then
+	echo "Warning: using $LVS_ROOT/abstract for $WORK_ROOT/abstract"
+	cp $LVS_ROOT/abstract $WORK_ROOT/abstract
+fi
+
 # Add any cells that should be flattened before extraction to 'flatten'. globbing allowed.
 export FLATGLOB_CELLS="`cat $WORK_ROOT/flatglob 2>/dev/null | grep -v '^#'`"
 # Add any empty cells that should be extracted as black-boxes to 'abstract'.
@@ -115,7 +124,7 @@ else
 	#  3. Extract gds_file without well connectivity
 	( date "+BEGIN: %c" > $LOG_ROOT/$TOP.nowell.ext.log; \
 	start_time=$SECONDS; \
-	magic -dnull -noc -rcfile $LVS_ROOT/tech/magicrc.sky130B.nowell $LVS_ROOT/scripts/gds.$EXT_TYPE.spice.tcl < /dev/null > $LOG_ROOT/$TOP.nowell.ext.log 2>&1; \
+	magic -dnull -noc -rcfile $LVS_ROOT/tech/magicrc.sky130B.nowell $LVS_ROOT/scripts/gds.$EXT_TYPE.spice.tcl < /dev/null >> $LOG_ROOT/$TOP.nowell.ext.log 2>&1; \
 	#  4. Remove disconnected nets.; \
 	awk -f $LVS_ROOT/scripts/remove_disconnect.awk $RUN_DIR/$TOP.gds.spice > $RUN_DIR/$TOP.gds.nowell.spice; \
 	date "+END: %c" >> $LOG_ROOT/$TOP.nowell.ext.log; \
@@ -128,7 +137,7 @@ else
 	wait
 
 	# Compress large ext files
-	find . -name '*.ext' -size +1M -exec gzip {} \;
+	find $WORK_ROOT/$TOP.*ext -name '*.ext' -size +1M -exec gzip {} \;
 fi
 
 #  5. Compare

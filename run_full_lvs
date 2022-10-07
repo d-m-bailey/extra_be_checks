@@ -56,9 +56,17 @@ if [[ ! -f $WORK_ROOT/flatglob ]]; then
 	echo "Warning: using $LVS_ROOT/flatglob for $WORK_ROOT/flatglob"
 	cp $LVS_ROOT/flatglob $WORK_ROOT/flatglob
 fi
+# create work abstract file based on actual cells used
 if [[ ! -f $WORK_ROOT/abstract ]]; then
-	echo "Warning: using $LVS_ROOT/abstract for $WORK_ROOT/abstract"
-	cp $LVS_ROOT/abstract $WORK_ROOT/abstract
+	if [[ -f $LVS_ROOT/abstract ]]; then
+		if [[ -f $WORK_ROOT/gds_text/$TOP.gds.txt.gz ]]; then
+			zgrep STRNAME $WORK_ROOT/gds_text/$TOP.gds.txt.gz | \
+				grep -f $LVS_ROOT/abstract - | \
+				awk '{print $2}' > $WORK_ROOT/abstract
+		else
+			cp $LVS_ROOT/abstract $WORK_ROOT/abstract
+		fi
+	fi
 fi
 
 
@@ -129,7 +137,7 @@ else
 	printf "Runtime: %d:%02d:%02d (hh:mm:ss)\n" $hours $minutes $seconds >> $LOG_ROOT/$TOP_LAYOUT.ext.log
 
 	# Compress large ext files
-	find . -name '*.ext' -size +1M -exec gzip {} \;
+	find $EXT_DIR -name '*.ext' -size +1M -exec gzip {} \;
 fi
 
 #  5. Compare

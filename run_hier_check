@@ -20,7 +20,7 @@
 #  2. Extract gds/oas hierachy, if necessary.
 #  3. Compare
 #  
-#  Add verilog files to 'verilog_files'
+#  Add verilog files to '$WORK_ROOT/verilog_files'
 
 # Use case
 # run_hier_check top_netlist_block netlist gds_file [primitive_prefix [gds_prefix]]
@@ -47,14 +47,16 @@ fi
 : "${WORK_ROOT:=$(pwd)}"
 export LOG_ROOT LVS_ROOT SIGNOFF_ROOT WORK_ROOT
 
-date "+BEGIN: %c" 
+log_file=$LOG_ROOT/$TOP_NET.hier.log
+
+date "+BEGIN: %c" > $log_file
 start_time=$SECONDS
 
 sed '/^[ 	]*module[ 	].*[^ 	](/s/(/ (/' $NETLIST `cat $WORK_ROOT/verilog_files | grep -v ^#` | \
 	awk -v top=$TOP_NET '
 		$1 == "module" {
 			if ( $2 in modules ) {
-				print "Duplicate module definition", $2 > "/dev/tty";
+				print "Duplicate module definition", $2 > "'$log_file'";
 			}
 			module = $2;
 			next;
@@ -81,7 +83,7 @@ sed '/^[ 	]*module[ 	].*[^ 	](/s/(/ (/' $NETLIST `cat $WORK_ROOT/verilog_files |
 				}
 			}
 		}
-		function AddPrintSubckts(subckt_list,  subckts, subckt_it) {
+		function AddPrintSubckts(subckt_list, subckts, subckt_it) {
 			subcell_count = split(subckt_list, subckts);
 			for ( subckt_it in subckts ) {
 				print_subckt[subckts[subckt_it]] = 1;
@@ -105,7 +107,8 @@ if [ "$EXT" == "txt" ]; then
 elif [ "$EXT" == "gds" -o "$EXT" == "oas" ]; then
 	TEXT_FILE=$WORK_ROOT/gds_text/$TOP_NET.gds.txt
 	mkdir -p $WORK_ROOT/gds_text
-	echo "Creating $WORK_ROOT/gds_text/$TEXT_FILE.gz from $LAYOUT..."
+	echo "Creating $TEXT_FILE.gz from $LAYOUT..." | \
+		tee -a $log_file
 cat > $WORK_ROOT/gds2txt.py <<-EOF
 	import pya
 	
@@ -126,8 +129,9 @@ cat > $WORK_ROOT/gds2txt.py <<-EOF
 	
 	app.exit(0)
 EOF
-	klayout -b -rm $WORK_ROOT/gds2txt.py
-	gzip $TEXT_FILE
+	klayout -b -rm $WORK_ROOT/gds2txt.py | \
+		tee -a $log_file
+	gzip -f $TEXT_FILE
 	CAT=zcat
 fi
 
@@ -150,15 +154,55 @@ awk '
 		}
 	}' - | \
 	sed -E $GDS_PREFIX_FILTER $PRIMITIVE_PREFIX_FILTER | \
-	sort -u > $WORK_DIR/$TOP_NET.layout.hier
+	sort -u > $WORK_ROOT/$TOP_NET.layout.hier
 
-comm -23 $WORK_DIR/$TOP_NET.verilog.hier $WORK_DIR/$TOP_NET.layout.hier | \
+comm -23 $WORK_ROOT/$TOP_NET.verilog.hier $WORK_ROOT/$TOP_NET.layout.hier | \
 	awk '{print $1}' | \
-	fgrep -f - $WORK_DIR/$TOP_NET.verilog.hier $WORK_DIR/$TOP_NET.layout.hier
+	fgrep -f - $WORK_ROOT/$TOP_NET.verilog.hier $WORK_ROOT/$TOP_NET.layout.hier | \
+	sed 's/:/ /' | \
+	awk '	BEGIN {
+			print "verilog,,layout";
+		}
+		/verilog.hier/ {
+			verilog_count += 1;
+			verilog[verilog_count] = $2;
+			instances[$2] = $3;
+		}
+		/layout.hier/ {
+			if ( match_count == verilog_count || verilog[match_count+1] > $2 ) {
+				print ",," $2 "," $3;
+			} else {
+				while ( match_count < verilog_count && verilog[match_count+1] <= $2 ) {
+					match_count += 1;
+					if ( verilog[match_count] < $2 ) {
+						print verilog[match_count] "," instances[verilog[match_count]];
+					} else {  # equal
+						print verilog[match_count] "," instances[verilog[match_count]] "," $2 "," $3;
+					}
+				}
+				if ( match_count == verilog_count && verilog[match_count] != $2 ) {
+					print verilog[match_count] "," instances[verilog[match_count]];
+				}
+			}
+		}
+		END {
+			while ( match_count < verilog_count ) {
+				match_count += 1;
+				print verilog[match_count] "," instances[verilog[match_count]];
+			}
+		}' - > $SIGNOFF_ROOT/$TOP_NET.hier.csv
 
-date "+END: %c" 
+if [[ $(cat $SIGNOFF_ROOT/$TOP_NET.hier.csv | wc -l) -eq 1 ]]; then
+	echo "Hierarchy check for $TOP_NET passed." | \
+		tee -a $log_file
+else
+	echo "Hierarchy check for $TOP_NET failed. See $SIGNOFF_ROOT/$TOP_NET.hier.csv" | \
+		tee -a $log_file
+fi
+
+date "+END: %c" >> $log_file
 runtime=$(( SECONDS - start_time ))
 hours=$((runtime / 3600))
 minutes=$(( (runtime % 3600) / 60 ))
 seconds=$(( (runtime % 3600) % 60 ))
-printf "Runtime: %d:%02d:%02d (hh:mm:ss)\n" $hours $minutes $seconds
+printf "Runtime: %d:%02d:%02d (hh:mm:ss)\n" $hours $minutes $seconds >> $log_file

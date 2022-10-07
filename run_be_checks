@@ -16,9 +16,10 @@
 #   limitations under the License.
 
 # Overview:
-#  1. Run soft connection check
-#  2. Run full lvs
-#  3. Run cvc for digital designs
+#  1. Run hierarchy check
+#  2. Run soft connection check
+#  3. Run full lvs
+#  4. Run cvc for digital designs
 #  
 #  Add cells to be flattened before extract to 'flatglob' file
 #  Add cells to be extracted as black-boxes to 'abstract' file
@@ -64,8 +65,21 @@ echo "LAYOUT: $LAYOUT"
 : "${WORK_ROOT:=$(pwd)}"
 export LOG_ROOT LVS_ROOT SIGNOFF_ROOT WORK_ROOT
 
-if [[ ( ! -f $WORK_DIR/verilog_files ) && ( -d verilog/gl ) && ( $(ls verilog/gl | wc -l) -gt 0 ) ]]; then
-	ls verilog/gl/* > $WORK_DIR/verilog_files
+if [[ ! -f $WORK_ROOT/verilog_files ]]; then
+	if [[ -d verilog/gl && $(ls verilog/gl | wc -l) -gt 0 ]]; then
+		ls verilog/gl/* > $WORK_ROOT/verilog_files
+	elif [[ $PWD == $WORK_ROOT && -d ../verilog/gl && $(ls ../verilog/gl | wc -l) -gt 0 ]]; then
+		ls ../verilog/gl/* > $WORK_ROOT/verilog_files
+	fi
+fi
+
+$LVS_ROOT/run_hier_check $TOP $NETLIST $LAYOUT
+
+# create work abstract file based on actual cells used
+if [[ ! -f $WORK_ROOT/abstract ]]; then
+	zgrep STRNAME $WORK_ROOT/gds_text/$TOP.gds.txt.gz | \
+		grep -f $LVS_ROOT/abstract - | \
+		awk '{print $2}' > $WORK_ROOT/abstract
 fi
 
 $LVS_ROOT/run_scheck $TOP $LAYOUT
@@ -87,6 +101,6 @@ tail -n 20 $LOG_ROOT/$TOP.lvs.log | awk '/Final result/,/Logging/' | grep -v ^Lo
 if [[ $TOP = "user_project_wrapper" ]]; then
 	echo "
 CVC result:"
-	grep 'CVC: Total:' $LOG_ROOT/$TOP.cvc.log 
+	grep 'CVC: Total:' $LOG_ROOT/$TOP.cvc.log
 fi
 	
