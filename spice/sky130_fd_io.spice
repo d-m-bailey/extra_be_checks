@@ -6064,9 +6064,9 @@ XI6 net25 IN0 VGND VGND sky130_fd_pr__nfet_g5v0d10v5 m=1 w=0.7 l=0.6 mult=1
 
 .SUBCKT sky130_fd_io__hvsbt_nor IN0 IN1 OUT VGND VPWR
 *.PININFO IN0:I IN1:I OUT:O VGND:I VPWR:I
-XI3 net16 IN0 VPWR VPWR sky130_fd_pr__pfet_g5v0d10v5 m=1 w=1.0 l=0.6 mult=2
+XI3 net16 IN0 VPWR VPWR sky130_fd_pr__pfet_g5v0d10v5 m=2 w=1.0 l=0.6 mult=2
 + sa=0.265 sb=0.265 sd=0.28 topography=normal area=0.063 perim=1.14
-XI12 OUT IN1 net16 VPWR sky130_fd_pr__pfet_g5v0d10v5 m=1 w=1.0 l=0.6 mult=2
+XI12 OUT IN1 net16 VPWR sky130_fd_pr__pfet_g5v0d10v5 m=2 w=1.0 l=0.6 mult=2
 + sa=0.265 sb=0.265 sd=0.28 topography=normal area=0.063 perim=1.14
 XI1 OUT IN0 VGND VGND sky130_fd_pr__nfet_g5v0d10v5 m=1 w=0.7 l=0.6 mult=1
 + sa=0.265 sb=0.265 sd=0.28 topography=normal area=0.063 perim=1.14
