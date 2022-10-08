@@ -70,7 +70,7 @@ foreach dev $devices {
 	property "-circuit2 $dev" parallel {value par}
 	property "-circuit2 $dev" tolerance {l 0.01} {w 0.01}
 	# Ignore these properties
-	property "-circuit2 $dev" delete mult
+	property "-circuit2 $dev" delete mult isHv
     }
 }
 
@@ -91,28 +91,28 @@ foreach dev $devices {
     if {[lsearch $cells1 $dev] >= 0} {
 	permute "-circuit1 $dev" end_a end_b
 	property "-circuit1 $dev" series enable
-	property "-circuit1 $dev" series {w critical}
-	property "-circuit1 $dev" series {l add}
+	#property "-circuit1 $dev" series {w critical}
+	#property "-circuit1 $dev" series {l add}
 	property "-circuit1 $dev" parallel enable
-	property "-circuit1 $dev" parallel {l critical}
-	property "-circuit1 $dev" parallel {w add}
+	#property "-circuit1 $dev" parallel {l critical}
+	#property "-circuit1 $dev" parallel {w add}
 	property "-circuit1 $dev" parallel {value par}
 	property "-circuit1 $dev" tolerance {l 0.01} {w 0.01}
 	# Ignore these properties
-	property "-circuit1 $dev" delete mult
+	property "-circuit1 $dev" delete mult l w
     }
     if {[lsearch $cells2 $dev] >= 0} {
 	permute "-circuit2 $dev" end_a end_b
 	property "-circuit2 $dev" series enable
-	property "-circuit2 $dev" series {w critical}
-	property "-circuit2 $dev" series {l add}
+	#property "-circuit2 $dev" series {w critical}
+	#property "-circuit2 $dev" series {l add}
 	property "-circuit2 $dev" parallel enable
-	property "-circuit2 $dev" parallel {l critical}
-	property "-circuit2 $dev" parallel {w add}
+	#property "-circuit2 $dev" parallel {l critical}
+	#property "-circuit2 $dev" parallel {w add}
 	property "-circuit2 $dev" parallel {value par}
 	property "-circuit2 $dev" tolerance {l 0.01} {w 0.01}
 	# Ignore these properties
-	property "-circuit2 $dev" delete mult
+	property "-circuit2 $dev" delete mult l w
     }
 }
 
@@ -324,34 +324,34 @@ foreach dev $devices {
 #---------------------------------------------------------------
 
 #if { [info exist ::env(MAGIC_EXT_USE_GDS)] && $::env(MAGIC_EXT_USE_GDS) } {
-    #foreach cell $cells1 {
+    foreach cell $cells1 {
 #        if {[regexp {sky130_fd_sc_[^_]+__decap_[[:digit:]]+} $cell match]} {
 #            ignore class "-circuit1 $cell"
 #        }
-        #if {[regexp {sky130_fd_sc_[^_]+__fill_[[:digit:]]+} $cell match]} {
-            #ignore class "-circuit1 $cell"
-        #}
-        #if {[regexp {sky130_fd_sc_[^_]+__tapvpwrvgnd_[[:digit:]]+} $cell match]} {
-            #ignore class "-circuit1 $cell"
-        #}
-        #if {[regexp {sky130_ef_sc_[^_]+__fakediode_[[:digit:]]+} $cell match]} {
-            #ignore class "-circuit1 $cell"
-        #}
-    #}
-    #foreach cell $cells2 {
+        if {[regexp {.*sky130_fd_sc_[^_]+__fill_[[:digit:]]+} $cell match]} {
+            ignore class "-circuit1 $cell"
+        }
+        if {[regexp {.*sky130_fd_sc_[^_]+__tapvpwrvgnd_[[:digit:]]+} $cell match]} {
+            ignore class "-circuit1 $cell"
+        }
+        if {[regexp {.*sky130_ef_sc_[^_]+__fakediode_[[:digit:]]+} $cell match]} {
+            ignore class "-circuit1 $cell"
+        }
+    }
+    foreach cell $cells2 {
 #        if {[regexp {sky130_fd_sc_[^_]+__decap_[[:digit:]]+} $cell match]} {
 #            ignore class "-circuit2 $cell"
 #        }
-        #if {[regexp {sky130_fd_sc_[^_]+__fill_[[:digit:]]+} $cell match]} {
-            #ignore class "-circuit2 $cell"
-        #}
-        #if {[regexp {sky130_fd_sc_[^_]+__tapvpwrvgnd_[[:digit:]]+} $cell match]} {
-            #ignore class "-circuit2 $cell"
-        #}
-        #if {[regexp {sky130_ef_sc_[^_]+__fakediode_[[:digit:]]+} $cell match]} {
-            #ignore class "-circuit2 $cell"
-        #}
-    #}
+        if {[regexp {.*sky130_fd_sc_[^_]+__fill_[[:digit:]]+} $cell match]} {
+            ignore class "-circuit2 $cell"
+        }
+        if {[regexp {.*sky130_fd_sc_[^_]+__tapvpwrvgnd_[[:digit:]]+} $cell match]} {
+            ignore class "-circuit2 $cell"
+        }
+        if {[regexp {.*sky130_ef_sc_[^_]+__fakediode_[[:digit:]]+} $cell match]} {
+            ignore class "-circuit2 $cell"
+        }
+    }
 #}
 
 #---------------------------------------------------------------
@@ -474,11 +474,14 @@ foreach cell $cells1 {
 foreach cell $cells1 {
     if {[regexp {([A-Z][A-Z0-9]_)*(.*)} $cell match prefix cellname]} {
 	if {([lsearch $cells2 $cell] < 0) && \
-		([lsearch $cells2 $cellname] >= 0) && \
-		([lsearch $cells1 $cellname] < 0)} {
+		([lsearch $cells2 $cellname] >= 0)} {
 	    # netlist with the N names should always be the second netlist
 	    equate classes "-circuit2 $cellname" "-circuit1 $cell"
 	    puts stdout "Equating $cell in circuit 1 and $cellname in circuit 2"
+	    if  { [lsearch $cells1 $cellname] > 0 } {
+		equate classes "-circuit2 $cellname" "-circuit1 $cellname"
+		puts stdout "Equating $cellname in circuit 1 and $cellname in circuit 2"
+	    }
 	    #equate pins "-circuit1 $cell" "-circuit2 $cellname"
 	}
     }
