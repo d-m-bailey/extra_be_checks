@@ -7,5 +7,4 @@
 default.cvcrc
 setup_file_*.lvs
 *.unflattened
-verilog_files
 *.sky130B_setup.tcl
