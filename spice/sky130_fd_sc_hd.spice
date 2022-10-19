@@ -10020,17 +10020,17 @@ X21 VGND A a_505_297# VGND sky130_fd_pr__nfet_01v8 w=420000u l=150000u
 
 
 .subckt sky130_fd_sc_hd__macro_sparecell VGND VNB VPB VPWR LO
-Xsky130_fd_sc_hd__nand2_2_1 sky130_fd_sc_hd__nor2_2_1/B LO LO VPB VNB VGND VPWR sky130_fd_sc_hd__nand2_2
-Xsky130_fd_sc_hd__nand2_2_0 sky130_fd_sc_hd__nor2_2_0/A LO LO VPB VNB VGND VPWR sky130_fd_sc_hd__nand2_2
-Xsky130_fd_sc_hd__inv_2_0 sky130_fd_sc_hd__inv_2_0/A sky130_fd_sc_hd__inv_2_0/Y VPB
-+ VNB VPWR VGND sky130_fd_sc_hd__inv_2
-Xsky130_fd_sc_hd__inv_2_1 sky130_fd_sc_hd__inv_2_1/A sky130_fd_sc_hd__inv_2_1/Y VPB
-+ VNB VPWR VGND sky130_fd_sc_hd__inv_2
-Xsky130_fd_sc_hd__nor2_2_0 sky130_fd_sc_hd__nor2_2_0/A sky130_fd_sc_hd__inv_2_0/A
-+ sky130_fd_sc_hd__nor2_2_0/A VPB VNB VGND VPWR sky130_fd_sc_hd__nor2_2
-Xsky130_fd_sc_hd__nor2_2_1 sky130_fd_sc_hd__nor2_2_1/B sky130_fd_sc_hd__inv_2_1/A
-+ sky130_fd_sc_hd__nor2_2_1/B VPB VNB VGND VPWR sky130_fd_sc_hd__nor2_2
-Xsky130_fd_sc_hd__conb_1_0 LO sky130_fd_sc_hd__conb_1_0/HI VPB VNB VGND VPWR sky130_fd_sc_hd__conb_1
+Xsky130_fd_sc_hd__nand2_2_1 LO LO VGND VNB VPB VPWR sky130_fd_sc_hd__nor2_2_1/B sky130_fd_sc_hd__nand2_2
+Xsky130_fd_sc_hd__nand2_2_0 LO LO VGND VNB VPB VPWR sky130_fd_sc_hd__nor2_2_0/A sky130_fd_sc_hd__nand2_2
+Xsky130_fd_sc_hd__inv_2_0 sky130_fd_sc_hd__inv_2_0/A VGND VNB VPB
++ VPWR sky130_fd_sc_hd__inv_2_0/Y sky130_fd_sc_hd__inv_2
+Xsky130_fd_sc_hd__inv_2_1 sky130_fd_sc_hd__inv_2_1/A VGND VNB VPB
++ VPWR sky130_fd_sc_hd__inv_2_1/Y sky130_fd_sc_hd__inv_2
+Xsky130_fd_sc_hd__nor2_2_0 sky130_fd_sc_hd__nor2_2_0/A 
++ sky130_fd_sc_hd__nor2_2_0/A VGND VNB VPB VPWR sky130_fd_sc_hd__inv_2_0/A sky130_fd_sc_hd__nor2_2
+Xsky130_fd_sc_hd__nor2_2_1 sky130_fd_sc_hd__nor2_2_1/B 
++ sky130_fd_sc_hd__nor2_2_1/B VGND VNB VPB VPWR sky130_fd_sc_hd__inv_2_1/A sky130_fd_sc_hd__nor2_2
+Xsky130_fd_sc_hd__conb_1_0 VGND VNB VPB VPWR sky130_fd_sc_hd__conb_1_0/HI LO sky130_fd_sc_hd__conb_1
 .ends
 
 
