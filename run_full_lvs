@@ -56,6 +56,10 @@ if [[ ! -f $WORK_ROOT/flatglob ]]; then
 	echo "Warning: using $LVS_ROOT/flatglob for $WORK_ROOT/flatglob"
 	cp $LVS_ROOT/flatglob $WORK_ROOT/flatglob
 fi
+if [[ ! -f $WORK_ROOT/flatten ]]; then
+	echo "Warning: using $LVS_ROOT/flatten for $WORK_ROOT/flatten"
+	cp $LVS_ROOT/flatten $WORK_ROOT/flatten
+fi
 # create work abstract file based on actual cells used
 if [[ ! -f $WORK_ROOT/abstract ]]; then
 	if [[ -f $LVS_ROOT/abstract ]]; then
