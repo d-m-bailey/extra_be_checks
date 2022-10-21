@@ -14,6 +14,7 @@ $::env(CARAVEL_ROOT)/verilog/gl/gpio_defaults_block_0403.v
 $::env(CARAVEL_ROOT)/verilog/gl/gpio_defaults_block_0801.v
 $::env(CARAVEL_ROOT)/verilog/gl/gpio_defaults_block_1803.v
 $::env(CARAVEL_ROOT)/verilog/gl/gpio_signal_buffering.v
+$::env(CARAVEL_ROOT)/verilog/gl/gpio_signal_buffering_alt.v
 $::env(CARAVEL_ROOT)/verilog/gl/housekeeping.v
 $::env(CARAVEL_ROOT)/verilog/gl/mgmt_protect_hv.v
 $::env(CARAVEL_ROOT)/verilog/gl/mprj2_logic_high.v
