@@ -6,6 +6,7 @@ $::env(CARAVEL_ROOT)/verilog/gl/buff_flash_clkrst.v
 $::env(CARAVEL_ROOT)/verilog/gl/caravel_clocking.v
 $::env(CARAVEL_ROOT)/verilog/gl/constant_block.v
 $::env(CARAVEL_ROOT)/verilog/gl/chip_io.v
+$::env(CARAVEL_ROOT)/verilog/gl/chip_io_alt.v
 $::env(CARAVEL_ROOT)/verilog/gl/digital_pll.v
 $::env(CARAVEL_ROOT)/verilog/gl/gpio_logic_high.v
 $::env(CARAVEL_ROOT)/verilog/gl/gpio_control_block.v
