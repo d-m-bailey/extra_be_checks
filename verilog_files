@@ -1,6 +1,7 @@
 $::env(MCW_ROOT)/verilog/gl/RAM128.v
 $::env(MCW_ROOT)/verilog/gl/RAM256.v
 $::env(MCW_ROOT)/verilog/gl/mgmt_core_wrapper.v
+$::env(LVS_ROOT)/verilog/user_analog_project_wrapper.v
 $::env(LVS_ROOT)/verilog/user_project_wrapper.v
 $::env(CARAVEL_ROOT)/verilog/gl/buff_flash_clkrst.v
 $::env(CARAVEL_ROOT)/verilog/gl/caravel_clocking.v
