@@ -54,6 +54,11 @@ start_time=$SECONDS
 
 sed '/^[ 	]*module[ 	].*[^ 	](/s/(/ (/' $NETLIST `cat $WORK_ROOT/verilog_files | grep -v ^#` | \
 	awk -v top=$TOP_NET '
+		$1 ~ /^\/\*/ {
+			while ( ! /\*\// ) {
+				getline;
+			}
+		}
 		$1 == "module" {
 			if ( $2 in modules ) {
 				print "Duplicate module definition", $2 > "'$log_file'";
