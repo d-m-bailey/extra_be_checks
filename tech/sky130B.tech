@@ -14,7 +14,7 @@ tech
 end
 
 version
- version 1.0.291-82-gfa87f8f
+ version 1.0.356-0-g3af1337
  description "SkyWater SKY130: Open Source rules and DRC"
  requires magic-8.3.306
 end
@@ -765,11 +765,11 @@ style gdsii
 
  layer WELLTXT
  	labels allnwell noport
-	calma 64 5
+	calma 64 16
 
  layer WELLPIN
  	labels allnwell port
-	calma 64 16
+	calma 64 5
 
 #----------------------------------------------------------------
 # SUB (text/port only)
@@ -777,11 +777,11 @@ style gdsii
 
  layer SUBTXT
  	labels pwell noport
-	calma 64 59
+	calma 122 16
 
  layer SUBPIN
  	labels pwell port
-	calma 122 16
+	calma 64 59
 
 #----------------------------------------------------------------
 # DIFF
@@ -792,23 +792,23 @@ style gdsii
 
  layer DIFFTXT
  	labels allnactivenontap,allpactivenontap noport
-	calma	65 6
+	calma	65 16
 
  layer DIFFPIN
  	labels allnactivenontap,allpactivenontap port
-	calma	65 16
+	calma	65 6
 
 #----------------------------------------------------------------
 # TAP
 #----------------------------------------------------------------
 
  layer TAP 	allnactivetap,allpactivetap
- 	labels 	allnactivetap,allpactivetap port
- 	calma 	65 44
-
- layer TAPTXT
  	labels 	allnactivetap,allpactivetap noport
-	calma	65 5
+	calma	65 44
+
+ layer TAPPIN
+ 	labels 	allnactivetap,allpactivetap port
+ 	calma 	65 5
 
 #----------------------------------------------------------------
 # FOM
@@ -1028,11 +1028,11 @@ style gdsii
 
  layer POLYTXT
 	labels  allpoly noport
-	calma	66 5
+	calma	66 16
 
  layer POLYPIN
 	labels  allpoly port
-	calma	66 16
+	calma	66 5
 
  layer POLYFILL	polyfill
 	labels 	polyfill
@@ -1154,11 +1154,11 @@ style gdsii
 
  layer LITXT
  	labels *locali,coreli noport
-	calma 67 5
+	calma 67 16
 
  layer LIPIN
  	labels *locali,coreli port
-	calma 67 16
+	calma 67 5
 
  layer LIRES rli
 	labels rli
@@ -1183,11 +1183,11 @@ style gdsii
 
  layer MET1TXT
 	labels	allm1 noport
-	calma 	68 5
+	calma 	68 16
 
  layer MET1PIN
 	labels	allm1 port
-	calma 	68 16
+	calma 	68 5
 
  layer MET1RES rm1
 	labels rm1
@@ -1219,11 +1219,11 @@ style gdsii
 
  layer MET2TXT
 	labels	allm2 noport
-	calma	69 5
+	calma	69 16
 
  layer MET2PIN
 	labels	allm2 port
-	calma	69 16
+	calma	69 5
 
  layer MET2RES rm2
 	labels rm2
@@ -1248,11 +1248,11 @@ style gdsii
 
  layer MET3TXT
  	labels 	allm3 noport
-	calma	70 5
+	calma	70 16 
 
  layer MET3PIN
 	labels	allm3 port
-	calma	70 16 
+	calma	70 5
 
  layer MET3RES rm3
 	labels rm3
@@ -1278,11 +1278,11 @@ style gdsii
 
  layer MET4TXT
 	labels	allm4 noport
-	calma	71 5
+	calma	71 16
 
  layer MET4PIN
 	labels	allm4 port
-	calma	71 16
+	calma	71 5
 
  layer MET4RES rm4
 	labels rm4
@@ -1308,11 +1308,11 @@ style gdsii
 
  layer MET5TXT
 	labels	allm5 noport
-	calma	72 5
+	calma	72 16
 
  layer MET5PIN
 	labels	allm5 port
-	calma	72 16
+	calma	72 5
 
  layer MET5RES rm5
 	labels rm5
@@ -1331,11 +1331,11 @@ style gdsii
 
   layer RDLTXT
 	labels	*metrdl noport
-	calma	74 5
+	calma	74 16
 
   layer RDLPIN
 	labels  *metrdl port
-	calma	74 16
+	calma	74 5
 
   layer PI1	*metrdl
 	and	padl,glass
@@ -2260,7 +2260,7 @@ cifinput
 # or else magic will scale below the allowed layout grid size
 #-----------------------------------------------------------------------
 
-style  sky130 variants (vendor),()
+style  sky130 variants (),(vendor),(legacy)
  scalefactor 10 nanometers
  gridlimit 5
 
@@ -2287,22 +2287,22 @@ style  sky130 variants (vendor),()
  layer pnp NWELL,WELLTXT,WELLPIN
  and PNPID
  labels NWELL
- variants (vendor)
- labels WELLTXT port
- variants ()
- labels WELLTXT text
- variants *
  labels WELLPIN port
+ variants (),(vendor)
+ labels WELLTXT text
+ variants (legacy)
+ labels WELLTXT port
+ variants *
 
  layer nwell NWELL,WELLTXT,WELLPIN
  and-not PNPID
  labels NWELL
- variants (vendor)
- labels WELLTXT port
- variants ()
- labels WELLTXT text
- variants *
  labels WELLPIN port
+ variants (),(vendor)
+ labels WELLTXT text
+ variants (legacy)
+ labels WELLTXT port
+ variants *
 
  templayer nwellarea NWELL
  copyup nwelcheck
@@ -2326,24 +2326,17 @@ style  sky130 variants (vendor),()
  or SUBTXT,SUBPIN
  grow 420
  shrink 420
- variants (vendor)
- labels SUBTXT port
- variants ()
- labels SUBTXT text
- variants *
  labels SUBPIN port
+ variants (),(vendor)
+ labels SUBTXT text
+ variants (legacy)
+ labels SUBTXT port
+ variants *
 
- templayer alldnwell DNWELL,lowerdnwell
- copyup lowerdnwell
-
- layer dnwell DNWELL,lowerdnwell
+ layer dnwell DNWELL
  labels DNWELL
 
- templayer alliso SUBCUT,loweriso
- copyup loweriso
-
- layer isosub SUBCUT,loweriso
- and-not DNWELL,lowerdnwell
+ layer isosub SUBCUT
  labels SUBCUT
 
  layer npn DNWELL
@@ -2368,12 +2361,12 @@ style  sky130 variants (vendor),()
  and-not CORELI
  copyup ndifcheck
  labels DIFF
- variants (vendor)
- labels DIFFTXT port
- variants ()
- labels DIFFTXT text
- variants *
  labels DIFFPIN port
+ variants (),(vendor)
+ labels DIFFTXT text
+ variants (legacy)
+ labels DIFFTXT port
+ variants *
 
  layer ndiff ndiffarea
 
@@ -2391,13 +2384,12 @@ style  sky130 variants (vendor),()
  and NSDM
  copyup ndifcheck
  labels DIFF
- labels DIFFTXT text
- variants (vendor)
- labels DIFFTXT port
- variants ()
- labels DIFFTXT text
- variants *
  labels DIFFPIN port
+ variants (),(vendor)
+ labels DIFFTXT text
+ variants (legacy)
+ labels DIFFTXT port
+ variants *
 
  layer mvndiff mvndiffarea
 
@@ -2445,12 +2437,12 @@ style  sky130 variants (vendor),()
  and PSDM
  copyup pdifcheck
  labels DIFF 
- variants (vendor)
- labels DIFFTXT port
- variants ()
- labels DIFFTXT text
- variants *
  labels DIFFPIN port
+ variants (),(vendor)
+ labels DIFFTXT text
+ variants (legacy)
+ labels DIFFTXT port
+ variants *
 
  layer pdiff pdiffarea
 
@@ -2493,12 +2485,12 @@ style  sky130 variants (vendor),()
  and PSDM
  copyup mvpdifcheck
  labels DIFF
- variants (vendor)
- labels DIFFTXT port
- variants ()
- labels DIFFTXT text
- variants *
  labels DIFFPIN port
+ variants (),(vendor)
+ labels DIFFTXT text
+ variants (legacy)
+ labels DIFFTXT port
+ variants *
 
  layer mvpdiff mvpdiffarea
 
@@ -2639,12 +2631,12 @@ style  sky130 variants (vendor),()
  and-not DIODE
  and-not DIFFRES
  labels DIFF
- variants (vendor)
- labels DIFFTXT port
- variants ()
- labels DIFFTXT text
- variants *
  labels DIFFPIN port
+ variants (),(vendor)
+ labels DIFFTXT text
+ variants (legacy)
+ labels DIFFTXT port
+ variants *
 
  layer pdiffres DIFFRES
  and PSDM
@@ -2740,12 +2732,12 @@ style  sky130 variants (vendor),()
  layer nsd nsdarea
  labels TAP
 
- layer nsd TAP,TAPTXT
+ layer nsd TAP,TAPPIN
  and NSDM
  and-not POLY
  and-not HVI,hvcheck
  labels TAP
- labels TAPTXT text
+ labels TAPPIN port
 
  layer corenvar TAP
  and NSDM
@@ -2777,7 +2769,7 @@ style  sky130 variants (vendor),()
  and-not POLY
  and-not HVI,hvcheck
  labels TAP
- labels TAPTXT text
+ labels TAPPIN port
 
  layer corepvar TAP
  and PSDM
@@ -2794,12 +2786,12 @@ style  sky130 variants (vendor),()
  and HVI,hvcheck
  and mvpfetexpand
  labels DIFF
- variants (vendor)
- labels DIFFTXT port
- variants ()
- labels DIFFTXT text
- variants *
  labels DIFFPIN port
+ variants (),(vendor)
+ labels DIFFTXT text
+ variants (legacy)
+ labels DIFFTXT port
+ variants *
 
  layer mvpdiffres DIFFRES
  and PSDM
@@ -2865,11 +2857,11 @@ style  sky130 variants (vendor),()
  layer mvnsd mvnsdarea
  labels TAP
 
- layer mvnsd TAP,TAPTXT
+ layer mvnsd TAP,TAPPIN
  and NSDM
  and HVI,hvcheck
  labels TAP
- labels TAPTXT text
+ labels TAPPIN port
 
  templayer mvnsdexpand mvnsdarea
  grow 500
@@ -2890,11 +2882,11 @@ style  sky130 variants (vendor),()
  layer mvpsd mvpsdarea
  labels DIFF
 
- layer mvpsd TAP,TAPTXT
+ layer mvpsd TAP,TAPPIN
  and PSDM
  and HVI,hvcheck
  labels TAP
- labels TAPTXT text
+ labels TAPPIN port
 
  templayer mvpsdexpand mvpsdarea
  grow 500
@@ -2936,43 +2928,43 @@ style  sky130 variants (vendor),()
  and HVI,hvcheck
  and mvnsdexpand
 
- templayer hresarea POLY
- and RPM
- grow 3000
-
- templayer uresarea POLY
- and URPM
- grow 3000
+# The following recipes deal with DIFFRES layers expanded over large areas
+# outside the resistor.  Find areas which may have been accidentally
+# captured as a resistor which were supposed to be transistors.
 
  templayer diffresarea DIFFRES
  and-not HVI,hvcheck
  grow 3000
 
- templayer mvdiffresarea DIFFRES
- and HVI,hvcheck
- grow 3000
-
- templayer resarea diffresarea,mvdiffresarea,hresarea,uresarea
-
  layer pfet POLY
- and DIFF
  and diffresarea
+ and DIFF
  and-not NSDM
  and-not STDCELL
+ and-not HVI
+
+ layer mvpfet POLY
+ and diffresarea
+ and DIFF
+ and-not NSDM
+ and-not STDCELL
+ and HVI
 
  layer scpfet POLY
- and DIFF
  and diffresarea
- and-not HVTP
+ and DIFF
  and-not NSDM
+ and-not HVTP
  and STDCELL
 
  layer scpfethvt POLY
- and DIFF
  and diffresarea
- and HVTP
+ and DIFF
  and-not NSDM
+ and HVTP
  and STDCELL
+
+# End of resistor area hack
 
  templayer xpolyterm RPM,URPM
  and POLY
@@ -2994,12 +2986,12 @@ style  sky130 variants (vendor),()
 
  layer poly polyarea
  labels POLY
- variants (vendor)
- labels POLYTXT port
- variants ()
- labels POLYTXT text
- variants *
  labels POLYPIN port
+ variants (),(vendor)
+ labels POLYTXT text
+ variants (legacy)
+ labels POLYTXT port
+ variants *
 
  # Copy (non-resistor) poly areas up for contact checks
  templayer xpolycheck polycheck
@@ -3141,6 +3133,7 @@ style  sky130 variants (vendor),()
  and DIFF
  and NSDM
  and DIODE
+ and-not NWELL,nwelcheck
  and-not POLY
  and-not PSDM
  and-not HVI,hvcheck
@@ -3161,6 +3154,7 @@ style  sky130 variants (vendor),()
  and DIFF
  and NSDM
  and DIODE
+ and-not NWELL,nwelcheck
  and-not POLY
  and-not PSDM
  and-not HVI,hvcheck
@@ -3393,23 +3387,23 @@ style  sky130 variants (vendor),()
  and-not LIRES,LISHORT
  and COREID
  labels LI
- variants (vendor)
- labels LITXT port
- variants ()
- labels LITXT text
- variants *
  labels LIPIN port
+ variants (),(vendor)
+ labels LITXT text
+ variants (legacy)
+ labels LITXT port
+ variants *
 
  layer locali LI,LITXT,LIPIN
  and-not LIRES,LISHORT
  and-not COREID
  labels LI
- variants (vendor)
- labels LITXT port
- variants ()
- labels LITXT text
- variants *
  labels LIPIN port
+ variants (),(vendor)
+ labels LITXT text
+ variants (legacy)
+ labels LITXT port
+ variants *
 
  layer rli LI
  and LIRES,LISHORT
@@ -3429,12 +3423,12 @@ style  sky130 variants (vendor),()
  layer m1 MET1,MET1TXT,MET1PIN
  and-not MET1RES,MET1SHORT
  labels MET1
- variants (vendor)
- labels MET1TXT port
- variants ()
- labels MET1TXT text
- variants *
  labels MET1PIN port
+ variants (),(vendor)
+ labels MET1TXT text
+ variants (legacy)
+ labels MET1TXT port
+ variants *
 
  layer rm1 MET1
  and MET1RES,MET1SHORT
@@ -3487,12 +3481,12 @@ style  sky130 variants (vendor),()
  layer m2 MET2,MET2TXT,MET2PIN
  and-not MET2RES,MET2SHORT
  labels MET2
- variants (vendor)
- labels MET2TXT port
- variants ()
- labels MET2TXT text
- variants *
  labels MET2PIN port
+ variants (),(vendor)
+ labels MET2TXT text
+ variants (legacy)
+ labels MET2TXT port
+ variants *
 
  layer rm2 MET2
  and MET2RES,MET2SHORT
@@ -3514,12 +3508,12 @@ style  sky130 variants (vendor),()
  layer m3 MET3,MET3TXT,MET3PIN
  and-not MET3RES,MET3SHORT
  labels MET3
- variants (vendor)
- labels MET3TXT port
- variants ()
- labels MET3TXT text
- variants *
  labels MET3PIN port
+ variants (),(vendor)
+ labels MET3TXT text
+ variants (legacy)
+ labels MET3TXT port
+ variants *
 
  layer rm3 MET3
  and MET3RES,MET3SHORT
@@ -3543,12 +3537,12 @@ style  sky130 variants (vendor),()
  layer m4 MET4,MET4TXT,MET4PIN
  and-not MET4RES,MET4SHORT
  labels MET4
- variants (vendor)
- labels MET4TXT port
- variants ()
- labels MET4TXT text
- variants *
  labels MET4PIN port
+ variants (),(vendor)
+ labels MET4TXT text
+ variants (legacy)
+ labels MET4TXT port
+ variants *
 
  layer rm4 MET4
  and MET4RES,MET4SHORT
@@ -3560,12 +3554,12 @@ style  sky130 variants (vendor),()
  layer m5 MET5,MET5TXT,MET5PIN
  and-not MET5RES,MET5SHORT
  labels MET5
- variants (vendor)
- labels MET5TXT port
- variants ()
- labels MET5TXT text
- variants *
  labels MET5PIN port
+ variants (),(vendor)
+ labels MET5TXT text
+ variants (legacy)
+ labels MET5TXT port
+ variants *
 
  layer rm5 MET5
  and MET5RES,MET5SHORT
@@ -3587,12 +3581,12 @@ style  sky130 variants (vendor),()
 
  layer metrdl RDL,RDLTXT,RDLPIN
  labels RDL
- variants (vendor)
- labels RDLTXT port
- variants ()
- labels RDLTXT text
- variants *
  labels RDLPIN port
+ variants (),(vendor)
+ labels RDLTXT text
+ variants (legacy)
+ labels RDLTXT port
+ variants *
 
  # Find diffusion not covered in
  # NSDM or PSDM and pull it into
@@ -3616,7 +3610,9 @@ style  sky130 variants (vendor),()
  templayer ndiccopy CONT
  and LI
  and DIODE
+ and-not NWELL,nwelcheck
  and NSDM
+ and-not LVTN
  and-not HVI,hvcheck
 
  layer ndic ndiccopy
@@ -3630,7 +3626,9 @@ style  sky130 variants (vendor),()
  templayer mvndiccopy CONT
  and LI
  and DIODE
+ and-not NWELL,nwelcheck
  and NSDM
+ and-not LVTN
  and HVI,hvcheck
 
  layer mvndic mvndiccopy
@@ -3795,12 +3793,12 @@ style  sky130 variants (vendor),()
 
  layer glass GLASS,PADTXT,PADPIN
  labels GLASS
- variants (vendor)
- labels PADTXT port
- variants ()
- labels PADTXT text
- variants *
  labels PADPIN port
+ variants (),(vendor)
+ labels PADTXT text
+ variants (legacy)
+ labels PADTXT port
+ variants *
 
  templayer boundary BOUND,STDCELL,PADCELL
  boundary
@@ -3845,10 +3843,10 @@ style  sky130 variants (vendor),()
 
  calma NWELL 64 20
  calma DIFF 65 20
+ calma TAP  65 44
  calma DNWELL 64 18
  calma SUBCUT 81 53
  calma PWRES 64 13
- calma TAP  65 44
  # LVTN
  calma LVTN 125 44
  # HVTR
@@ -3929,19 +3927,19 @@ style  sky130 variants (vendor),()
  calma RDL 74 20
  calma GLASS 76 20
 
- calma SUBTXT  64 59
- calma PADTXT  76 5
- calma DIFFTXT 65 6
- calma TAPTXT  65 5
- calma WELLTXT  64 5
- calma LITXT 67 5
- calma POLYTXT 66 5
- calma MET1TXT 68 5
- calma MET2TXT 69 5
- calma MET3TXT 70 5
- calma MET4TXT 71 5
- calma MET5TXT 72 5
- calma RDLTXT 74 5
+ calma SUBPIN  64 59
+ calma PADPIN  76 5
+ calma DIFFPIN 65 6
+ calma TAPPIN  65 5
+ calma WELLPIN  64 5
+ calma LIPIN 67 5
+ calma POLYPIN 66 5
+ calma MET1PIN 68 5
+ calma MET2PIN 69 5
+ calma MET3PIN 70 5
+ calma MET4PIN 71 5
+ calma MET5PIN 72 5
+ calma RDLPIN 74 5
 
  calma LIRES 67 13
  calma MET1RES 68 13
@@ -3965,18 +3963,18 @@ style  sky130 variants (vendor),()
  calma MET4SHORT 71 15
  calma MET5SHORT 72 15
 
- calma SUBPIN 122 16
- calma PADPIN 76 16
- calma DIFFPIN 65 16
- calma POLYPIN 66 16
- calma WELLPIN 64 16
- calma LIPIN 67 16
- calma MET1PIN 68 16
- calma MET2PIN 69 16
- calma MET3PIN 70 16
- calma MET4PIN 71 16
- calma MET5PIN 72 16
- calma RDLPIN 74 16
+ calma SUBTXT 122 16
+ calma PADTXT 76 16
+ calma DIFFTXT 65 16
+ calma POLYTXT 66 16
+ calma WELLTXT 64 16
+ calma LITXT 67 16
+ calma MET1TXT 68 16
+ calma MET2TXT 69 16
+ calma MET3TXT 70 16
+ calma MET4TXT 71 16
+ calma MET5TXT 72 16
+ calma RDLTXT 74 16
 
  calma BOUND 235 4
 
@@ -4936,10 +4934,10 @@ extract
  antenna allcont surface 3 none
  antenna li sidewall 75 0 450
  antenna mcon surface 3 0 18
- antenna m1,m2,m3 sidewall 400 2600 400
+ antenna m1,m2,m3 sidewall 400 2200 400
  antenna v1 surface 3 0 18
  antenna v2 surface 6 0 36
- antenna m4,m5 sidewall 400 2600 400
+ antenna m4,m5 sidewall 400 2200 400
  antenna v3,v4 surface 6 0 36
 
  tiedown alldiffnonfet
@@ -5916,15 +5914,16 @@ variants (),(si),(hrhc),(lrhc),(hrlc),(lrlc)
  device resistor sky130_fd_pr__res_generic_po rmp *poly
  device resistor sky130_fd_pr__res_generic_po mrp1 *poly
 
- device pdiode sky130_fd_pr__diode_pd2nw_05v5 *pdiode nwell a=area p=pj
- device pdiode sky130_fd_pr__diode_pd2nw_05v5_lvt *pdiodelvt nwell a=area p=pj
- device pdiode sky130_fd_pr__diode_pd2nw_05v5_hvt *pdiodehvt nwell a=area p=pj
- device pdiode sky130_fd_pr__diode_pd2nw_11v0 *mvpdiode nwell a=area p=pj
+ # NOTE: SkyWater diode models have bizarre units requiring bizarre scaling
+ device pdiode sky130_fd_pr__diode_pd2nw_05v5 *pdiode nwell a=area*1E12 p=pj*1E6
+ device pdiode sky130_fd_pr__diode_pd2nw_05v5_lvt *pdiodelvt nwell a=area*1E12 p=pj*1E6
+ device pdiode sky130_fd_pr__diode_pd2nw_05v5_hvt *pdiodehvt nwell a=area*1E12 p=pj*1E6
+ device pdiode sky130_fd_pr__diode_pd2nw_11v0 *mvpdiode nwell a=area*1E12 p=pj*1E6
 
- device ndiode sky130_fd_pr__diode_pw2nd_05v5 *ndiode pwell,space/w a=area p=pj
- device ndiode sky130_fd_pr__diode_pw2nd_05v5_lvt *ndiodelvt pwell,space/w a=area p=pj
- device ndiode sky130_fd_pr__diode_pw2nd_05v5_nvt *nndiode pwell,space/w a=area p=pj
- device ndiode sky130_fd_pr__diode_pw2nd_11v0 *mvndiode pwell,space/w a=area p=pj
+ device ndiode sky130_fd_pr__diode_pw2nd_05v5 *ndiode pwell,space/w a=area*1E12 p=pj*1E6
+ device ndiode sky130_fd_pr__diode_pw2nd_05v5_lvt *ndiodelvt pwell,space/w a=area*1E12 p=pj*1E6
+ device ndiode sky130_fd_pr__diode_pw2nd_05v5_nvt *nndiode pwell,space/w a=area*1E12 p=pj*1E6
+ device ndiode sky130_fd_pr__diode_pw2nd_11v0 *mvndiode pwell,space/w a=area*1E12 p=pj*1E6
 
  device csubcircuit sky130_fd_pr__reram_reram_cell reram m1 a=area_ox
 
@@ -5996,15 +5995,16 @@ variants (),(si),(hrhc),(lrhc),(hrlc),(lrlc)
  device resistor mrdp_hv   mvpdiffres *mvpdiff 
  device resistor sky130_fd_pr__res_iso_pw   rpw    pwell
 
- device ndiode sky130_fd_pr__diode_pw2nd_05v5 *ndiode pwell,space/w a=area
- device ndiode sky130_fd_pr__diode_pw2nd_05v5_lvt *ndiodelvt pwell,space/w a=area
- device ndiode sky130_fd_pr__diode_pw2nd_05v5_nvt *nndiode pwell,space/w a=area
- device ndiode sky130_fd_pr__diode_pw2nd_11v0 *mvndiode pwell,space/w a=area
+ # NOTE: SkyWater diode models have bizarre units requiring bizarre scaling
+ device ndiode sky130_fd_pr__diode_pw2nd_05v5 *ndiode pwell,space/w a=area*1E12 p=pj*1E6
+ device ndiode sky130_fd_pr__diode_pw2nd_05v5_lvt *ndiodelvt pwell,space/w a=area*1E12 p=pj*1E6
+ device ndiode sky130_fd_pr__diode_pw2nd_05v5_nvt *nndiode pwell,space/w a=area*1E12 p=pj*1E6
+ device ndiode sky130_fd_pr__diode_pw2nd_11v0 *mvndiode pwell,space/w a=area*1E12 p=pj*1E6
 
- device pdiode sky130_fd_pr__diode_pd2nw_05v5 *pdiode nwell a=area
- device pdiode sky130_fd_pr__diode_pd2nw_05v5_lvt *pdiodelvt nwell a=area
- device pdiode sky130_fd_pr__diode_pd2nw_05v5_hvt *pdiodehvt nwell a=area
- device pdiode sky130_fd_pr__diode_pd2nw_11v0 *mvpdiode nwell a=area
+ device pdiode sky130_fd_pr__diode_pd2nw_05v5 *pdiode nwell a=area*1E12 p=pj*1E6
+ device pdiode sky130_fd_pr__diode_pd2nw_05v5_lvt *pdiodelvt nwell a=area*1E12 p=pj*1E6
+ device pdiode sky130_fd_pr__diode_pd2nw_05v5_hvt *pdiodehvt nwell a=area*1E12 p=pj*1E6
+ device pdiode sky130_fd_pr__diode_pd2nw_11v0 *mvpdiode nwell a=area*1E12 p=pj*1E6
 
  device bjt sky130_fd_pr__npn_05v5_W1p00L1p00 npn *ndiff dnwell space/w error +npn1p00
  device bjt sky130_fd_pr__npn_05v5_W1p00L2p00 npn *ndiff dnwell space/w error +npn2p00

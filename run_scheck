@@ -48,19 +48,22 @@ else
 	export EXT_TYPE=digital
 fi
 
-if [[ ! -f $WORK_ROOT/flatglob ]]; then
-	echo "Warning: using $LVS_ROOT/flatglob for $WORK_ROOT/flatglob"
-	cp $LVS_ROOT/flatglob $WORK_ROOT/flatglob
+if [[ ! -f $WORK_ROOT/$TOP.flatglob ]]; then
+	echo "Warning: using $LVS_ROOT/flatglob for $WORK_ROOT/$TOP.flatglob"
+	cp $LVS_ROOT/flatglob $WORK_ROOT/$TOP.flatglob
 fi
-if [[ ! -f $WORK_ROOT/abstract ]]; then
-	echo "Warning: using $LVS_ROOT/abstract for $WORK_ROOT/abstract"
-	cp $LVS_ROOT/abstract $WORK_ROOT/abstract
+if [[ ! -f $WORK_ROOT/$TOP.abstract && -f $LVS_ROOT/abstract ]]; then
+	cp $LVS_ROOT/abstract $WORK_ROOT/$TOP.abstract
+fi
+if [[ -f $WORK_ROOT/$TOP.abstract && -f $WORK_ROOT/gds_text/$TOP.cells ]]; then
+	sed -e 's/\*/.*/g' -e 's/^/^/' -e 's/$/$/' $WORK_ROOT/$TOP.abstract | \
+		grep -f - $WORK_ROOT/gds_text/$TOP.cells > $WORK_ROOT/$TOP.abstract.glob
 fi
 
 # Add any cells that should be flattened before extraction to 'flatten'. globbing allowed.
-export FLATGLOB_CELLS="`cat $WORK_ROOT/flatglob 2>/dev/null | grep -v '^#'`"
+export FLATGLOB_CELLS="`cat $WORK_ROOT/$TOP.flatglob 2>/dev/null | grep -v '^#'`"
 # Add any empty cells that should be extracted as black-boxes to 'abstract'.
-export ABSTRACT_CELLS="`cat $WORK_ROOT/abstract 2>/dev/null | grep -v '^#'`"
+export ABSTRACT_CELLS="`cat $WORK_ROOT/$TOP.abstract.glob 2>/dev/null | grep -v '^#'`"
 
 # Verify that magic and netgen are executable.
 which magic >& /dev/null

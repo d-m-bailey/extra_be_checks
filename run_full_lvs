@@ -52,32 +52,77 @@ fi
 : "${WORK_ROOT:=$(pwd)}"
 export LOG_ROOT LVS_ROOT SIGNOFF_ROOT WORK_ROOT
 
-if [[ ! -f $WORK_ROOT/flatglob ]]; then
-	echo "Warning: using $LVS_ROOT/flatglob for $WORK_ROOT/flatglob"
-	cp $LVS_ROOT/flatglob $WORK_ROOT/flatglob
+if [[ ! -f $WORK_ROOT/$TOP_LAYOUT.flatglob && $LVS_ROOT/flatglob ]]; then
+	echo "Warning: using $LVS_ROOT/flatglob for $WORK_ROOT/$TOP_LAYOUT.flatglob"
+	cp $LVS_ROOT/flatglob $WORK_ROOT/$TOP_LAYOUT.flatglob
 fi
-if [[ ! -f $WORK_ROOT/flatten ]]; then
-	echo "Warning: using $LVS_ROOT/flatten for $WORK_ROOT/flatten"
-	cp $LVS_ROOT/flatten $WORK_ROOT/flatten
+
+# create work abstract file based on actual cells used (pseudo globbing)
+if [[ ! -f $WORK_ROOT/$TOP_LAYOUT.abstract && -f $LVS_ROOT/abstract ]]; then
+	cp $LVS_ROOT/abstract $WORK_ROOT/$TOP_LAYOUT.abstract
 fi
-# create work abstract file based on actual cells used
-if [[ ! -f $WORK_ROOT/abstract ]]; then
-	if [[ -f $LVS_ROOT/abstract ]]; then
-		if [[ -f $WORK_ROOT/gds_text/$TOP.gds.txt.gz ]]; then
-			zgrep STRNAME $WORK_ROOT/gds_text/$TOP.gds.txt.gz | \
-				grep -f $LVS_ROOT/abstract - | \
-				awk '{print $2}' > $WORK_ROOT/abstract
-		else
-			cp $LVS_ROOT/abstract $WORK_ROOT/abstract
-		fi
+if [[ -f $WORK_ROOT/$TOP_LAYOUT.abstract && -f $WORK_ROOT/gds_text/$TOP_LAYOUT.cells ]]; then
+	sed -e 's/\*/.*/g' -e 's/^/^/' -e 's/$/$/' $WORK_ROOT/$TOP_LAYOUT.abstract | \
+		grep -f - $WORK_ROOT/gds_text/$TOP_LAYOUT.cells > $WORK_ROOT/$TOP_LAYOUT.abstract.glob
+fi
+
+# create work noflatten file based on actual cells used (pseudo globbing)
+if [[ ! -f $WORK_ROOT/$TOP_NET.flatten && $LVS_ROOT/flatten ]]; then
+	echo "Warning: using $LVS_ROOT/flatten for $WORK_ROOT/$TOP_NET.flatten"
+	cp $LVS_ROOT/flatten $WORK_ROOT/$TOP_NET.flatten
+fi
+if [[ -f $WORK_ROOT/$TOP_NET.flatten ]]; then
+	if [[ -f $WORK_ROOT/gds_text/$TOP_LAYOUT.cells ]]; then
+		sed -e 's/\*/.*/g' -e 's/^/^/' -e 's/$/$/' $WORK_ROOT/$TOP_NET.flatten | \
+			grep -f - $WORK_ROOT/gds_text/$TOP_LAYOUT.cells > $WORK_ROOT/$TOP_NET.flatten.layout
+		sed -e 's/^\([A-Z][A-Z0-9]_\)*//g' $WORK_ROOT/$TOP_NET.flatten.layout | \
+			sort -u - $WORK_ROOT/$TOP_NET.flatten.layout > $WORK_ROOT/$TOP_NET.flatten.glob
+	else
+		cp $WORK_ROOT/$TOP_NET.flatten $WORK_ROOT/$TOP_NET.flatten.glob
 	fi
 fi
 
+# create work noflatten file based on actual cells used (pseudo globbing)
+if [[ ! -f $WORK_ROOT/$TOP_NET.noflatten && $LVS_ROOT/noflatten ]]; then
+	echo "Warning: using $LVS_ROOT/noflatten for $WORK_ROOT/$TOP_NET.noflatten"
+	cp $LVS_ROOT/noflatten $WORK_ROOT/$TOP_NET.noflatten
+fi
+if [[ -f $WORK_ROOT/$TOP_NET.noflatten ]]; then
+	if [[ -f $WORK_ROOT/gds_text/$TOP_LAYOUT.cells ]]; then
+		sed -e 's/\*/.*/g' -e 's/^/^/' -e 's/$/$/' $WORK_ROOT/$TOP_NET.noflatten | \
+			grep -f - $WORK_ROOT/gds_text/$TOP_LAYOUT.cells > $WORK_ROOT/$TOP_NET.noflatten.layout
+		sed -e 's/^\([A-Z][A-Z0-9]_\)*//g' $WORK_ROOT/$TOP_NET.noflatten.layout | \
+			sort -u - $WORK_ROOT/$TOP_NET.noflatten.layout > $WORK_ROOT/$TOP_NET.noflatten.glob
+	else
+		cp $WORK_ROOT/$TOP_NET.noflatten $WORK_ROOT/$TOP_NET.noflatten.glob
+	fi
+fi
+
+# create work ignore file based on actual cells used (pseudo globbing)
+if [[ ! -f $WORK_ROOT/$TOP_NET.ignore && -f $LVS_ROOT/ignore ]]; then
+	echo "Warning: using $LVS_ROOT/ignore for $WORK_ROOT/$TOP_NET.ignore"
+	cp $LVS_ROOT/ignore $WORK_ROOT/$TOP_NET.ignore
+fi
+if [[ -f $WORK_ROOT/$TOP_NET.ignore ]]; then
+	if [[ -f $WORK_ROOT/gds_text/$TOP_LAYOUT.cells ]]; then
+		sed -e 's/\*/.*/g' -e 's/^/^/' -e 's/$/$/' $WORK_ROOT/$TOP_NET.ignore | \
+			grep -f - $WORK_ROOT/gds_text/$TOP_LAYOUT.cells > $WORK_ROOT/$TOP_NET.ignore.layout
+		sed -e 's/^\([A-Z][A-Z0-9]_\)*//g' $WORK_ROOT/$TOP_NET.ignore.layout | \
+			sort -u - $WORK_ROOT/$TOP_NET.ignore.layout > $WORK_ROOT/$TOP_NET.ignore.glob
+	else
+		cp $WORK_ROOT/$TOP_NET.ignore $WORK_ROOT/$TOP_NET.ignore.glob
+	fi
+fi
 
 # Add any cells that should be flattened before extraction to 'flatten'. globbing allowed.
-export FLATGLOB_CELLS="`cat $WORK_ROOT/flatglob 2>/dev/null | grep -v '^#'`"
+export FLATGLOB_CELLS="`cat $WORK_ROOT/$TOP_LAYOUT.flatglob 2>/dev/null | grep -v '^#'`"
 # Add any empty cells that should be extracted as black-boxes to 'abstract'. globbing not allowed.
-export ABSTRACT_CELLS="`cat $WORK_ROOT/abstract 2>/dev/null | grep -v '^#'`"
+export ABSTRACT_CELLS="`cat $WORK_ROOT/$TOP_LAYOUT.abstract.glob 2>/dev/null | grep -v '^#'`"
+
+if [[ ! -f $WORK_ROOT/$TOP_NET.spice_files ]]; then
+	echo "Warning: using $LVS_ROOT/spice_files for $WORK_ROOT/$TOP_NET.spice_files"
+	cp $LVS_ROOT/spice_files $WORK_ROOT/$TOP_NET.spice_files
+fi
 
 # Verify that magic and netgen are executable.
 if [[ $# == 4 ]]; then  # only if gds is specified
@@ -149,34 +194,47 @@ cp $LVS_ROOT/tech/sky130B_setup.tcl $WORK_ROOT/$TOP_NET.sky130B_setup.tcl
 shopt -s nullglob
 
 awk '
-! /^#/ {
-	print "puts stdout \"Flattening", $1 "\"";
-	print "flatten class {-circuit1", $1, "}";
-	print "flatten class {-circuit2", $1, "}";
-}' $WORK_ROOT/flatte[n] /dev/null >> $WORK_ROOT/$TOP_NET.sky130B_setup.tcl
+/^#/ { next; }
+FILENAME ~ /flatten.glob/ {
+	print "if { [lsearch $cells1", $1, "] > 0 } {";
+	print "	puts stdout \"Flattening", $1, "in layout\"";
+	print "	flatten class {-circuit1", $1, "}";
+	print "}";
+	print "if { [lsearch $cells2", $1, "] > 0 } {";
+	print "	puts stdout \"Flattening", $1, "in netlist\"";
+	print "	flatten class {-circuit2", $1, "}";
+	print "}";
+}
+FILENAME ~ /ignore.glob/ {
+	print "if { [lsearch $cells1", $1, "] > 0 } {";
+	print "	puts stdout \"Ignoring", $1, "in layout\"";
+	print "	ignore class {-circuit1", $1, "}";
+	print "}";
+	print "if { [lsearch $cells2", $1, "] > 0 } {";
+	print "	puts stdout \"Flattening", $1, "in netlist\"";
+	print "	ignore class {-circuit2", $1, "}";
+	print "}";
+}' $WORK_ROOT/$TOP_NET.flatte[n].glob $WORK_ROOT/$TOP_NET.ignor[e].glob /dev/null >> $WORK_ROOT/$TOP_NET.sky130B_setup.tcl
 
-if [[ ! -f $WORK_ROOT/spice_files ]]; then
-	echo "Warning: using $LVS_ROOT/spice_files for $WORK_ROOT/spice_files"
-	cp $LVS_ROOT/spice_files $WORK_ROOT/spice_files
-fi
 awk '
-FILENAME ~ /spice_files/ && ! /^#/ {
+/^#/ { next; }
+FILENAME ~ /spice_files/ {
 	print "puts \"Reading spice netlist file", $1 "\"";
 	print "readnet spice", $1, 1;
 }
-FILENAME ~ /verilog_files/ && ! /^#/ {
+FILENAME ~ /verilog_files/ {
 	print "puts \"Reading verilog netlist file", $1 "\"";
 	print "readnet verilog", $1, 1;
 }
 END {
-	print "lvs {'$EXT_DIR/$TOP_LAYOUT.gds.spice' '$TOP_LAYOUT'} {'$NETLIST' '$TOP_NET'} '$WORK_ROOT/$TOP_NET'.sky130B_setup.tcl '$SIGNOFF_ROOT/$TOP_NET'.lvs.report -blackbox -json -noflatten='$WORK_ROOT'/noflatten"
-}' $WORK_ROOT/spice_file[s] $WORK_ROOT/verilog_file[s] /dev/null > $WORK_ROOT/setup_file_$TOP_NET.lvs
+	print "lvs {'$EXT_DIR/$TOP_LAYOUT.gds.spice' '$TOP_LAYOUT'} {'$NETLIST' '$TOP_NET'} '$WORK_ROOT/$TOP_NET'.sky130B_setup.tcl '$SIGNOFF_ROOT/$TOP_NET'.lvs.report -blackbox -json -noflatten='$WORK_ROOT/$TOP_NET.noflatten.glob'"
+}' $WORK_ROOT/$TOP_NET.spice_file[s] $WORK_ROOT/$TOP_NET.verilog_file[s] /dev/null > $WORK_ROOT/$TOP_NET.setup_file.lvs
 
 date "+BEGIN: %c" > $LOG_ROOT/$TOP_NET.lvs.log
 start_time=$SECONDS
 
-netgen -batch source $WORK_ROOT/setup_file_$TOP_NET.lvs | \
-	tee -a $LOG_ROOT/$TOP_NET.lvs.log 2>&1
+netgen -batch source $WORK_ROOT/$TOP_NET.setup_file.lvs 2>&1 | \
+	tee -a $LOG_ROOT/$TOP_NET.lvs.log 
 
 awk '
 /Circuit 1 .* will not flatten/ {print $4, "is a black box in the layout"}

@@ -20,8 +20,8 @@
 .ENDS
 
 .SUBCKT sky130_fd_io__gnd2gnd_120x2_lv_isosub BDY2_B2B SRC_BDY_LVC1 VSSD
-D0 SRC_BDY_LVC1 BDY2_B2B sky130_fd_pr__diode_pd2nw_05v5 area=90 pj=33
-D1 BDY2_B2B SRC_BDY_LVC1 sky130_fd_pr__diode_pd2nw_05v5 area=90 pj=33
+D0 SRC_BDY_LVC1 BDY2_B2B sky130_fd_pr__diode_pd2nw_05v5 area=90e12 pj=33e+6
+D1 BDY2_B2B SRC_BDY_LVC1 sky130_fd_pr__diode_pd2nw_05v5 area=90e12 pj=33e+6
 .ENDS
 
 .SUBCKT sky130_fd_io__amuxsplitv2_delay ENABLE_VDDA_H HLD_VDDA_H_N HOLD RESET

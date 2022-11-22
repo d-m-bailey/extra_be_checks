@@ -35,7 +35,7 @@
 # run_be_checks 				: use previous extraction results to compare
 if [[ $# -eq 0 ]]; then
 	export LAYOUT=$(ls gds/user_*wrapper.gds* | head -1)
-	file=${LAYOUT##.*/}
+	file=${LAYOUT##*/}
 	export TOP=${file%%.gds*}
 	if [[ "$TOP" == user_project_wrapper ]]; then
 		export NETLIST=verilog/gl/$TOP.v
@@ -65,24 +65,27 @@ echo "LAYOUT: $LAYOUT"
 : "${WORK_ROOT:=$(pwd)}"
 export LOG_ROOT LVS_ROOT SIGNOFF_ROOT WORK_ROOT
 
-if [[ ! -f $WORK_ROOT/verilog_files ]]; then
+if [[ ! -d $WORK_ROOT ]]; then
+	mkdir $WORK_ROOT
+fi
+
+if [[ ! -f $WORK_ROOT/$TOP.verilog_files ]]; then
 	if [[ -f $LVS_ROOT/verilog_files ]]; then
-		cp $LVS_ROOT/verilog_files $WORK_ROOT/verilog_files
+		cp $LVS_ROOT/verilog_files $WORK_ROOT/$TOP.verilog_files
 	elif [[ -d verilog/gl && $(ls verilog/gl | wc -l) -gt 0 ]]; then
-		ls verilog/gl/* > $WORK_ROOT/verilog_files
+		ls verilog/gl/* > $WORK_ROOT/$TOP.verilog_files
 	elif [[ $PWD == $WORK_ROOT && -d ../verilog/gl && $(ls ../verilog/gl | wc -l) -gt 0 ]]; then
-		ls ../verilog/gl/* > $WORK_ROOT/verilog_files
+		ls ../verilog/gl/* > $WORK_ROOT/$TOP.verilog_files
 	fi
+fi
+if [[ ! -f $WORK_ROOT/$TOP.spice_files ]]; then
+	echo "Warning: using $LVS_ROOT/spice_files for $WORK_ROOT/$TOP.spice_files"
+	cp $LVS_ROOT/spice_files $WORK_ROOT/$TOP.spice_files
 fi
 
 $LVS_ROOT/run_hier_check $TOP $NETLIST $LAYOUT
-
-# create work abstract file based on actual cells used
-if [[ ! -f $WORK_ROOT/abstract ]]; then
-	zgrep STRNAME $WORK_ROOT/gds_text/$TOP.gds.txt.gz | \
-		grep -f $LVS_ROOT/abstract - | \
-		awk '{print $2}' > $WORK_ROOT/abstract
-fi
+zgrep STRNAME $WORK_ROOT/gds_text/$TOP.gds.txt.gz | \
+	awk '{print $2}' > $WORK_ROOT/gds_text/$TOP.cells
 
 $LVS_ROOT/run_scheck $TOP $LAYOUT
 

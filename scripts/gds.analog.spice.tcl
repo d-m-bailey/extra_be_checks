@@ -4,7 +4,7 @@
 
 puts "Extracting with top ports connected by name (analog)"
 drc off
-#cif istyle sky130()
+cif istyle sky130(legacy)
 
 foreach cell $::env(FLATGLOB_CELLS) {
 	gds flatglob $cell

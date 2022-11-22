@@ -52,7 +52,11 @@ log_file=$LOG_ROOT/$TOP_NET.hier.log
 date "+BEGIN: %c" > $log_file
 start_time=$SECONDS
 
-sed '/^[ 	]*module[ 	].*[^ 	](/s/(/ (/' $NETLIST `cat $WORK_ROOT/verilog_files | grep -v ^#` | \
+grep -v ^# $WORK_ROOT/$TOP_NET.verilog_files | \
+	sed -e 's,$::env(\([^)]*\)),$\1,' | \
+	envsubst > $WORK_ROOT/$TOP_NET.verilog_files.bash
+
+sed '/^[ 	]*module[ 	].*[^ 	](/s/(/ (/' $NETLIST `cat $WORK_ROOT/$TOP_NET.verilog_files.bash | grep -v ^#` | \
 	awk -v top=$TOP_NET '
 		$1 ~ /^\/\*/ {
 			while ( ! /\*\// ) {
