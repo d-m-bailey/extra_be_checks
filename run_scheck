@@ -111,7 +111,7 @@ else
 	#  1. Extract gds_file with well connectivity
 	( date "+BEGIN: %c" > $LOG_ROOT/$TOP.ext.log; \
 	start_time=$SECONDS; \
-	magic -dnull -noc -rcfile $LVS_ROOT/tech/magicrc.sky130B $LVS_ROOT/scripts/gds.$EXT_TYPE.spice.tcl < /dev/null >> $LOG_ROOT/$TOP.ext.log 2>&1; \
+	magic -dnull -noc -rcfile $LVS_ROOT/tech/magicrc.$PDK $LVS_ROOT/scripts/gds.$PDK.$EXT_TYPE.spice.tcl < /dev/null >> $LOG_ROOT/$TOP.ext.log 2>&1; \
 	#  2. Remove well connections and disconnected nets.; \
 	sed -f $LVS_ROOT/scripts/remove_well.sed $RUN_DIR/$TOP.gds.spice | \
 		awk -f $LVS_ROOT/scripts/remove_disconnect.awk - > $RUN_DIR/$TOP.gds.nowell.spice; \
@@ -127,7 +127,7 @@ else
 	#  3. Extract gds_file without well connectivity
 	( date "+BEGIN: %c" > $LOG_ROOT/$TOP.nowell.ext.log; \
 	start_time=$SECONDS; \
-	magic -dnull -noc -rcfile $LVS_ROOT/tech/magicrc.sky130B.nowell $LVS_ROOT/scripts/gds.$EXT_TYPE.spice.tcl < /dev/null >> $LOG_ROOT/$TOP.nowell.ext.log 2>&1; \
+	magic -dnull -noc -rcfile $LVS_ROOT/tech/magicrc.$PDK.nowell $LVS_ROOT/scripts/gds.$PDK.$EXT_TYPE.spice.tcl < /dev/null >> $LOG_ROOT/$TOP.nowell.ext.log 2>&1; \
 	#  4. Remove disconnected nets.; \
 	awk -f $LVS_ROOT/scripts/remove_disconnect.awk $RUN_DIR/$TOP.gds.spice > $RUN_DIR/$TOP.gds.nowell.spice; \
 	date "+END: %c" >> $LOG_ROOT/$TOP.nowell.ext.log; \

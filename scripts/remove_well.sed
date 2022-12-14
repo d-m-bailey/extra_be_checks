@@ -7,6 +7,10 @@ s/[^ ]* \(sky130_fd_pr__res_generic_nd\)/\1/
 s/[^ ]* \(sky130_fd_pr__res_generic_pd\)/\1/
 s/[^ ]* \(sky130_fd_pr__cap_var_lvt\)/\1/
 s/[^ ]* \(sky130_fd_bs_flash__special_sonosfet_star\)/\1/
+s/[^ ]* \(ppolyf_u_1k_6p0\)/\1/
+s/[^ ]* \(.mos_6p0\)/\1/
 /^D.* sky130_fd_pr__diode_pd2nw_/d
 /^D.* sky130_fd_pr__diode_pw2nd_/d
+/^D.* np_6p0/d
+/^D.* pn_6p0/d
 /^X.* sky130_fd_pr__pnp_05v5/d

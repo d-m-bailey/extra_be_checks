@@ -175,7 +175,7 @@ else
 		EXT_TYPE=digital
 	fi
 
-	env TOP=$TOP_LAYOUT RUN_DIR=$EXT_DIR magic -dnull -noc -rcfile $LVS_ROOT/tech/magicrc.sky130B $LVS_ROOT/scripts/gds.$EXT_TYPE.spice.tcl < /dev/null | \
+	env TOP=$TOP_LAYOUT RUN_DIR=$EXT_DIR magic -dnull -noc -rcfile $LVS_ROOT/tech/magicrc.$PDK $LVS_ROOT/scripts/gds.$PDK.$EXT_TYPE.spice.tcl < /dev/null | \
 		tee -a $LOG_ROOT/$TOP_LAYOUT.ext.log 2>&1
 
 	date "+END: %c" >> $LOG_ROOT/$TOP_LAYOUT.ext.log
@@ -190,7 +190,7 @@ else
 fi
 
 #  5. Compare
-cp $LVS_ROOT/tech/sky130B_setup.tcl $WORK_ROOT/$TOP_NET.sky130B_setup.tcl
+cp $LVS_ROOT/tech/${PDK}_setup.tcl $WORK_ROOT/$TOP_NET.${PDK}_setup.tcl
 shopt -s nullglob
 
 awk '
@@ -214,7 +214,7 @@ FILENAME ~ /ignore.glob/ {
 	print "	puts stdout \"Flattening", $1, "in netlist\"";
 	print "	ignore class {-circuit2", $1, "}";
 	print "}";
-}' $WORK_ROOT/$TOP_NET.flatte[n].glob $WORK_ROOT/$TOP_NET.ignor[e].glob /dev/null >> $WORK_ROOT/$TOP_NET.sky130B_setup.tcl
+}' $WORK_ROOT/$TOP_NET.flatte[n].glob $WORK_ROOT/$TOP_NET.ignor[e].glob /dev/null >> $WORK_ROOT/$TOP_NET.${PDK}_setup.tcl
 
 awk '
 /^#/ { next; }
@@ -227,7 +227,7 @@ FILENAME ~ /verilog_files/ {
 	print "readnet verilog", $1, 1;
 }
 END {
-	print "lvs {'$EXT_DIR/$TOP_LAYOUT.gds.spice' '$TOP_LAYOUT'} {'$NETLIST' '$TOP_NET'} '$WORK_ROOT/$TOP_NET'.sky130B_setup.tcl '$SIGNOFF_ROOT/$TOP_NET'.lvs.report -blackbox -json -noflatten='$WORK_ROOT/$TOP_NET.noflatten.glob'"
+	print "lvs {'$EXT_DIR/$TOP_LAYOUT.gds.spice' '$TOP_LAYOUT'} {'$NETLIST' '$TOP_NET'} '$WORK_ROOT/$TOP_NET.$PDK'_setup.tcl '$SIGNOFF_ROOT/$TOP_NET'.lvs.report -blackbox -json -noflatten='$WORK_ROOT/$TOP_NET.noflatten.glob'"
 }' $WORK_ROOT/$TOP_NET.spice_file[s] $WORK_ROOT/$TOP_NET.verilog_file[s] /dev/null > $WORK_ROOT/$TOP_NET.setup_file.lvs
 
 date "+BEGIN: %c" > $LOG_ROOT/$TOP_NET.lvs.log
@@ -249,6 +249,12 @@ awk '
 ' $LOG_ROOT/$TOP_NET.lvs.log >> $SIGNOFF_ROOT/$TOP_NET.unflattened
 if [[ -s $SIGNOFF_ROOT/$TOP_NET.unflattened ]]; then
 	echo "Warning: device level LVS may be incomplete due to $(cat $SIGNOFF_ROOT/$TOP_NET.unflattened | wc -l) unflattened cell(s): see $SIGNOFF_ROOT/$TOP_NET.unflattened" | \
+		tee -a $SIGNOFF_ROOT/$TOP_NET.lvs.report | \
+		tee -a $LOG_ROOT/$TOP_NET.lvs.log
+fi
+
+if [[ -s $WORK_ROOT/$TOP_NET.ignore.layout ]]; then
+	echo "Warning: device level LVS may be incomplete because $(cat $WORK_ROOT/$TOP_NET.ignore.layout | wc -l) cell(s) was/were ignored: see $WORK_ROAOT/$TOP_NET.ignore.layout" | \
 		tee -a $SIGNOFF_ROOT/$TOP_NET.lvs.report | \
 		tee -a $LOG_ROOT/$TOP_NET.lvs.log
 fi

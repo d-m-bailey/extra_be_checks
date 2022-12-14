@@ -25,7 +25,7 @@ if [[ ( ! -f $WORK_ROOT/$DESIGN_NAME.power ) && -f $LVS_ROOT/cvc/$DESIGN_NAME.po
 fi
 
 start_time=$SECONDS
-cvc_rv $LVS_ROOT/cvc/cvcrc.sky130B
+cvc_rv $LVS_ROOT/cvc/cvcrc.$PDK
 
 runtime=$(( SECONDS - start_time ))
 hours=$((runtime / 3600))
