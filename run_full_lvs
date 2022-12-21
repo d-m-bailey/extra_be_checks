@@ -59,8 +59,8 @@ fi
 # create work abstract file based on actual cells used
 if [[ ! -f $WORK_ROOT/abstract ]]; then
 	if [[ -f $LVS_ROOT/abstract ]]; then
-		if [[ -f $WORK_ROOT/gds_text/$TOP.gds.txt.gz ]]; then
-			zgrep STRNAME $WORK_ROOT/gds_text/$TOP.gds.txt.gz | \
+		if [[ -f $WORK_ROOT/gds_text/$TOP_LAYOUT.gds.txt.gz ]]; then
+			zgrep STRNAME $WORK_ROOT/gds_text/$TOP_LAYOUT.gds.txt.gz | \
 				grep -f $LVS_ROOT/abstract - | \
 				awk '{print $2}' > $WORK_ROOT/abstract
 		else
@@ -125,8 +125,11 @@ else
 		echo "Extracting as digital. Top ports unique."
 		EXT_TYPE=digital
 	fi
+	if [[ ! -f $WORK_ROOT/$TOP.gds.$EXT_TYPE.spice.tcl ]]; then
+		cp $LVS_ROOT/scripts/gds.$EXT_TYPE.spice.tcl $WORK_ROOT/$TOP.gds.$EXT_TYPE.spice.tcl
+	fi
 
-	env TOP=$TOP_LAYOUT RUN_DIR=$EXT_DIR magic -dnull -noc -rcfile $LVS_ROOT/tech/magicrc.sky130B $LVS_ROOT/scripts/gds.$EXT_TYPE.spice.tcl < /dev/null | \
+	env TOP=$TOP_LAYOUT RUN_DIR=$EXT_DIR magic -dnull -noc -rcfile $LVS_ROOT/tech/magicrc.sky130B $WORK_ROOT/$TOP_LAYOUT.gds.$EXT_TYPE.spice.tcl < /dev/null | \
 		tee -a $LOG_ROOT/$TOP_LAYOUT.ext.log 2>&1
 
 	date "+END: %c" >> $LOG_ROOT/$TOP_LAYOUT.ext.log
