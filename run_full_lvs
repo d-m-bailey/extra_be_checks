@@ -254,7 +254,7 @@ if [[ -s $SIGNOFF_ROOT/$TOP_NET.unflattened ]]; then
 fi
 
 if [[ -s $WORK_ROOT/$TOP_NET.ignore.layout ]]; then
-	echo "Warning: device level LVS may be incomplete because $(cat $WORK_ROOT/$TOP_NET.ignore.layout | wc -l) cell(s) was/were ignored: see $WORK_ROAOT/$TOP_NET.ignore.layout" | \
+	echo "Warning: device level LVS may be incomplete because $(cat $WORK_ROOT/$TOP_NET.ignore.layout | wc -l) cell(s) was/were ignored: see $WORK_ROOT/$TOP_NET.ignore.layout" | \
 		tee -a $SIGNOFF_ROOT/$TOP_NET.lvs.report | \
 		tee -a $LOG_ROOT/$TOP_NET.lvs.log
 fi

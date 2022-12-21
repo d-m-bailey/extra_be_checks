@@ -6,6 +6,8 @@ R short model=switch_on
 
 D np_6p0
 D pn_6p0 
+D diode_nd2ps_06v0
+D diode_pd2nw_06v0
 
 D sky130_fd_pr__diode_pw2nd_05v5 
 D sky130_fd_pr__diode_pw2nd_11v0 
@@ -40,6 +42,8 @@ R sky130_fd_pr__res_xhigh_po R=l/w*2000
 R sky130_fd_pr__res_high_po R=l/w*2000
 R sky130_fd_pr__reram_reram_cell R=10
 
+MN nfet_06v0 Vth=0.4
+MP pfet_06v0 Vth=-0.4
 MN nmos_6p0 Vth=0.4
 MP pmos_6p0 Vth=-0.4
 MN nmos_3p3 Vth=0.3
@@ -66,6 +70,7 @@ C sky130_fd_pr__cap_mim_m3_1
 C sky130_fd_pr__cap_mim_m3_2
 C sky130_fd_pr__cap_var
 C sky130_fd_pr__cap_var_lvt
+C cap_mim_2f0_m4m5_noshield
 
 Q sky130_fd_pr__pnp_05v5
 
