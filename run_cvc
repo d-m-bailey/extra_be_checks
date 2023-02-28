@@ -9,7 +9,7 @@ export LVS_ROOT LOG_ROOT SIGNOFF_ROOT WORK_ROOT
 export DESIGN_NAME=$1
 export RESULTS_DIR=$WORK_ROOT/$DESIGN_NAME.ext
 
-if [[ ! -f $RESULTS_DIR/$DESIGN_NAME.cdl ]] ; then
+if [[ ! -f $RESULTS_DIR/$DESIGN_NAME.cdl.gz ]] ; then
 	if [[ ! -f $RESULTS_DIR/$DESIGN_NAME.gds.spice ]]; then
 		echo "Could not create cdl file from $RESULTS_DIR/$DESIGN_NAME.gds.spice"
 		exit 1
@@ -20,8 +20,8 @@ if [[ ! -f $RESULTS_DIR/$DESIGN_NAME.cdl ]] ; then
 	fi
 fi
 
-if [[ ( ! -f $WORK_ROOT/$DESIGN_NAME.power ) && -f $LVS_ROOT/cvc/$DESIGN_NAME.power ]]; then
-	cp $LVS_ROOT/cvc/$DESIGN_NAME.power $WORK_ROOT/$DESIGN_NAME.power
+if [[ ( ! -f $WORK_ROOT/$DESIGN_NAME.power ) && -f $LVS_ROOT/cvc/$DESIGN_NAME.$PDK.power ]]; then
+	cp $LVS_ROOT/cvc/$DESIGN_NAME.$PDK.power $WORK_ROOT/$DESIGN_NAME.power
 fi
 
 start_time=$SECONDS

@@ -90,9 +90,11 @@ fi
 if [[ -f $WORK_ROOT/$TOP_NET.noflatten ]]; then
 	if [[ -f $WORK_ROOT/gds_text/$TOP_LAYOUT.cells ]]; then
 		sed -e 's/\*/.*/g' -e 's/^/^/' -e 's/$/$/' $WORK_ROOT/$TOP_NET.noflatten | \
-			grep -f - $WORK_ROOT/gds_text/$TOP_LAYOUT.cells > $WORK_ROOT/$TOP_NET.noflatten.layout
-		sed -e 's/^\([A-Z][A-Z0-9]_\)*//g' $WORK_ROOT/$TOP_NET.noflatten.layout | \
-			sort -u - $WORK_ROOT/$TOP_NET.noflatten.layout > $WORK_ROOT/$TOP_NET.noflatten.glob
+			grep -f - $WORK_ROOT/gds_text/$TOP_LAYOUT.cells $WORK_ROOT/$TOP_NET.verilog.cells | \
+			sed 's/.*cells://' | \
+			sort -u > $WORK_ROOT/$TOP_NET.noflatten.raw
+		sed -e 's/^\([A-Z][A-Z0-9]_\)*//g' $WORK_ROOT/$TOP_NET.noflatten.raw | \
+			sort -u - $WORK_ROOT/$TOP_NET.noflatten.raw > $WORK_ROOT/$TOP_NET.noflatten.glob
 	else
 		cp $WORK_ROOT/$TOP_NET.noflatten $WORK_ROOT/$TOP_NET.noflatten.glob
 	fi
@@ -106,9 +108,11 @@ fi
 if [[ -f $WORK_ROOT/$TOP_NET.ignore ]]; then
 	if [[ -f $WORK_ROOT/gds_text/$TOP_LAYOUT.cells ]]; then
 		sed -e 's/\*/.*/g' -e 's/^/^/' -e 's/$/$/' $WORK_ROOT/$TOP_NET.ignore | \
-			grep -f - $WORK_ROOT/gds_text/$TOP_LAYOUT.cells > $WORK_ROOT/$TOP_NET.ignore.layout
-		sed -e 's/^\([A-Z][A-Z0-9]_\)*//g' $WORK_ROOT/$TOP_NET.ignore.layout | \
-			sort -u - $WORK_ROOT/$TOP_NET.ignore.layout > $WORK_ROOT/$TOP_NET.ignore.glob
+			grep -f - $WORK_ROOT/gds_text/$TOP_LAYOUT.cells $WORK_ROOT/$TOP_NET.verilog.cells | \
+			sed 's/.*cells://' | \
+			sort -u > $WORK_ROOT/$TOP_NET.ignore.raw
+		sed -e 's/^\([A-Z][A-Z0-9]_\)*//g' $WORK_ROOT/$TOP_NET.ignore.raw | \
+			sort -u - $WORK_ROOT/$TOP_NET.ignore.raw > $WORK_ROOT/$TOP_NET.ignore.glob
 	else
 		cp $WORK_ROOT/$TOP_NET.ignore $WORK_ROOT/$TOP_NET.ignore.glob
 	fi
@@ -253,8 +257,8 @@ if [[ -s $SIGNOFF_ROOT/$TOP_NET.unflattened ]]; then
 		tee -a $LOG_ROOT/$TOP_NET.lvs.log
 fi
 
-if [[ -s $WORK_ROOT/$TOP_NET.ignore.layout ]]; then
-	echo "Warning: device level LVS may be incomplete because $(cat $WORK_ROOT/$TOP_NET.ignore.layout | wc -l) cell(s) was/were ignored: see $WORK_ROOT/$TOP_NET.ignore.layout" | \
+if [[ -s $WORK_ROOT/$TOP_NET.ignore.raw ]]; then
+	echo "Warning: device level LVS may be incomplete because $(cat $WORK_ROOT/$TOP_NET.ignore.raw | wc -l) cell(s) was/were ignored: see $WORK_ROOT/$TOP_NET.ignore.raw" | \
 		tee -a $SIGNOFF_ROOT/$TOP_NET.lvs.report | \
 		tee -a $LOG_ROOT/$TOP_NET.lvs.log
 fi

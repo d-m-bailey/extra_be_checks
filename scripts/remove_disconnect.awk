@@ -123,6 +123,7 @@ function SaveInstance(subckt, parent) {
 	used_count = 0;
 	# save the current line
 	current = $0;
+	verified_count = length(device_lines);
 	for (instance_line_it = 1; instance_line_it <= length(instance_lines); instance_line_it++ ) {
 		# automatic parsing with $0 = ...
 		$0 = instance_lines[instance_line_it];
@@ -141,13 +142,19 @@ function SaveInstance(subckt, parent) {
 				}
 			}
 		}
-		# ignore one line instances that have all ports removed
-		if ( length(instance_lines) == 1 && used_count == 0 ) {
-			continue;
-		}
+		## ignore one line instances that have all ports removed
+		#if ( length(instance_lines) == 1 && used_count == 0 ) {
+			#continue;
+		#}
 		# only keep lines that have nets remaining
 		if ( ! /^\+ *$/ ) {
 			device_lines[length(device_lines)+1] = $0;
+		}
+	}
+	if ( used_count == 0 ) {
+		# Remove instances that have all ports removed
+		while ( length(device_lines) > verified_count ) {
+			delete device_lines[length(device_lines)];
 		}
 	}
 	delete instance_lines;

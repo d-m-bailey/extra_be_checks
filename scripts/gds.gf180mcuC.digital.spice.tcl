@@ -27,6 +27,7 @@ extract unique
 extract
 
 ext2spice lvs
+ext2spice merge conservative
 #ext2spice short resistor
 ext2spice -o $::env(TOP).gds.spice $::env(TOP).ext
 feedback save $::env(TOP)-ext2gds.spice.feedback.txt

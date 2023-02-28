@@ -48,13 +48,26 @@ fi
 export LOG_ROOT LVS_ROOT SIGNOFF_ROOT WORK_ROOT
 
 log_file=$LOG_ROOT/$TOP_NET.hier.log
+verilog_cell_file=$WORK_ROOT/$TOP_NET.verilog.cells
 
 date "+BEGIN: %c" > $log_file
 start_time=$SECONDS
 
-grep -v ^# $WORK_ROOT/$TOP_NET.verilog_files | \
-	sed -e 's,$::env(\([^)]*\)),$\1,' | \
-	envsubst > $WORK_ROOT/$TOP_NET.verilog_files.bash
+
+echo "Creating $verilog_cell_file from the following files..." | \
+	tee -a $log_file
+echo "	" $NETLIST | \
+	tee -a $log_file
+if [[ -f $WORK_ROOT/$TOP_NET.verilog_files ]]; then
+	grep -v ^# $WORK_ROOT/$TOP_NET.verilog_files | \
+		sed -e 's,$::env(\([^)]*\)),$\1,' | \
+		envsubst > $WORK_ROOT/$TOP_NET.verilog_files.bash
+	awk '{print "	" $1}' $WORK_ROOT/$TOP_NET.verilog_files.bash | \
+		tee -a $log_file
+else
+	rm -f $WORK_ROOT/$TOP_NET.verilog_files.bash
+	touch $WORK_ROOT/$TOP_NET.verilog_files.bash
+fi
 
 sed '/^[ 	]*module[ 	].*[^ 	](/s/(/ (/' $NETLIST `cat $WORK_ROOT/$TOP_NET.verilog_files.bash | grep -v ^#` | \
 	awk -v top=$TOP_NET '
@@ -67,6 +80,9 @@ sed '/^[ 	]*module[ 	].*[^ 	](/s/(/ (/' $NETLIST `cat $WORK_ROOT/$TOP_NET.verilo
 			if ( $2 in modules ) {
 				print "Duplicate module definition", $2 > "'$log_file'";
 			}
+			if ( ! ( $2 in cells ) ) {
+				cells[$2] = 1;
+			}
 			module = $2;
 			next;
 		}
@@ -75,6 +91,9 @@ sed '/^[ 	]*module[ 	].*[^ 	](/s/(/ (/' $NETLIST `cat $WORK_ROOT/$TOP_NET.verilo
 		}
 		/ \(/ && ! /^[ 		]*\/\*/ {
 			key = module "/" $1;
+			if ( ! ( $1 in cells ) ) {
+				cells[$1] = 1;
+			}
 			if ( key in hier ) {
 				hier[key] += 1;
 			} else {
@@ -90,6 +109,9 @@ sed '/^[ 	]*module[ 	].*[^ 	](/s/(/ (/' $NETLIST `cat $WORK_ROOT/$TOP_NET.verilo
 				if ( path[1] in print_subckt ) {
 					print key, hier[key];
 				}
+			}
+			for ( cell in cells ) {
+				print cell > "'$verilog_cell_file'";
 			}
 		}
 		function AddPrintSubckts(subckt_list, subckts, subckt_it) {
