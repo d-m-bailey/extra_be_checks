@@ -52,6 +52,21 @@ fi
 : "${WORK_ROOT:=$(pwd)}"
 export LOG_ROOT LVS_ROOT SIGNOFF_ROOT WORK_ROOT
 
+# Check for PDK_ROOT and PDK
+if [[ -z "$PDK_ROOT" || -z "$PDK" ]]; then
+	echo "PDK_ROOT and/or PDK not set."
+	exit 1
+fi
+
+if cmp -s $PDK_ROOT/$PDK/libs.tech/magic/$PDK.tech $LVS_ROOT/tech/$PDK.tech; then
+	awk 'NF > 1 && /version/' $LVS_ROOT/tech/$PDK.tech
+else
+	echo "Tech files do not match:"
+	grep version $PDK_ROOT/$PDK/libs.tech/magic/$PDK.tech $LVS_ROOT/tech/$PDK.tech | \
+		awk 'NF > 2'
+	exit 1
+fi
+
 if [[ ! -f $WORK_ROOT/$TOP_LAYOUT.flatglob && $LVS_ROOT/flatglob ]]; then
 	echo "Warning: using $LVS_ROOT/flatglob for $WORK_ROOT/$TOP_LAYOUT.flatglob"
 	cp $LVS_ROOT/flatglob $WORK_ROOT/$TOP_LAYOUT.flatglob
@@ -179,7 +194,7 @@ else
 		EXT_TYPE=digital
 	fi
 
-	env TOP=$TOP_LAYOUT RUN_DIR=$EXT_DIR magic -dnull -noc -rcfile $LVS_ROOT/tech/magicrc.$PDK $LVS_ROOT/scripts/gds.$PDK.$EXT_TYPE.spice.tcl < /dev/null | \
+	env TOP=$TOP_LAYOUT RUN_DIR=$EXT_DIR magic -dnull -noc -rcfile $LVS_ROOT/tech/magicrc.well $LVS_ROOT/scripts/gds.$EXT_TYPE.spice.tcl < /dev/null | \
 		tee -a $LOG_ROOT/$TOP_LAYOUT.ext.log 2>&1
 
 	date "+END: %c" >> $LOG_ROOT/$TOP_LAYOUT.ext.log

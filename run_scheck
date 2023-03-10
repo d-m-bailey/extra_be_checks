@@ -35,6 +35,21 @@ if [ $# -lt 1 -o $# -gt 2 ]; then
 	exit
 fi
 
+# Check for PDK_ROOT and PDK
+if [[ -z "$PDK_ROOT" || -z "$PDK" ]]; then
+	echo "PDK_ROOT and/or PDK not set."
+	exit 1
+fi
+
+if cmp -s $PDK_ROOT/$PDK/libs.tech/magic/$PDK.tech $LVS_ROOT/tech/$PDK.tech; then
+	awk 'NF > 1 && /version/' $LVS_ROOT/tech/$PDK.tech
+else
+	echo "Tech files do not match:"
+	grep version $PDK_ROOT/$PDK/libs.tech/magic/$PDK.tech $LVS_ROOT/tech/$PDK.tech | \
+		awk 'NF > 2'
+	exit 1
+fi
+
 : "${LOG_ROOT:=$(pwd)}"
 : "${LVS_ROOT:=$(pwd)}"
 : "${SIGNOFF_ROOT:=$(pwd)}"
@@ -111,7 +126,7 @@ else
 	#  1. Extract gds_file with well connectivity
 	( date "+BEGIN: %c" > $LOG_ROOT/$TOP.ext.log; \
 	start_time=$SECONDS; \
-	magic -dnull -noc -rcfile $LVS_ROOT/tech/magicrc.$PDK $LVS_ROOT/scripts/gds.$PDK.$EXT_TYPE.spice.tcl < /dev/null >> $LOG_ROOT/$TOP.ext.log 2>&1; \
+	magic -dnull -noc -rcfile $LVS_ROOT/tech/magicrc.well $LVS_ROOT/scripts/gds.$EXT_TYPE.spice.tcl < /dev/null >> $LOG_ROOT/$TOP.ext.log 2>&1; \
 	#  2. Remove well connections and disconnected nets.; \
 	sed -f $LVS_ROOT/scripts/remove_well.sed $RUN_DIR/$TOP.gds.spice | \
 		awk -f $LVS_ROOT/scripts/remove_disconnect.awk - > $RUN_DIR/$TOP.gds.nowell.spice; \
@@ -127,7 +142,7 @@ else
 	#  3. Extract gds_file without well connectivity
 	( date "+BEGIN: %c" > $LOG_ROOT/$TOP.nowell.ext.log; \
 	start_time=$SECONDS; \
-	magic -dnull -noc -rcfile $LVS_ROOT/tech/magicrc.$PDK.nowell $LVS_ROOT/scripts/gds.$PDK.$EXT_TYPE.spice.tcl < /dev/null >> $LOG_ROOT/$TOP.nowell.ext.log 2>&1; \
+	magic -dnull -noc -rcfile $LVS_ROOT/tech/magicrc.nowell $LVS_ROOT/scripts/gds.$EXT_TYPE.spice.tcl < /dev/null >> $LOG_ROOT/$TOP.nowell.ext.log 2>&1; \
 	#  4. Remove disconnected nets.; \
 	awk -f $LVS_ROOT/scripts/remove_disconnect.awk $RUN_DIR/$TOP.gds.spice > $RUN_DIR/$TOP.gds.nowell.spice; \
 	date "+END: %c" >> $LOG_ROOT/$TOP.nowell.ext.log; \
