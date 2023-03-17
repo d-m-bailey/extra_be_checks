@@ -70,8 +70,8 @@ if [[ ! -d $WORK_ROOT ]]; then
 fi
 
 if [[ ! -f $WORK_ROOT/$TOP.verilog_files ]]; then
-	if [[ -f $LVS_ROOT/verilog_files ]]; then
-		cp $LVS_ROOT/verilog_files $WORK_ROOT/$TOP.verilog_files
+	if [[ -f $LVS_ROOT/$PDK/verilog_files ]]; then
+		cp $LVS_ROOT/$PDK/verilog_files $WORK_ROOT/$PDK/$TOP.verilog_files
 	elif [[ -d verilog/gl && $(ls verilog/gl | wc -l) -gt 0 ]]; then
 		ls verilog/gl/* > $WORK_ROOT/$TOP.verilog_files
 	elif [[ $PWD == $WORK_ROOT && -d ../verilog/gl && $(ls ../verilog/gl | wc -l) -gt 0 ]]; then
@@ -79,8 +79,8 @@ if [[ ! -f $WORK_ROOT/$TOP.verilog_files ]]; then
 	fi
 fi
 if [[ ! -f $WORK_ROOT/$TOP.spice_files ]]; then
-	echo "Warning: using $LVS_ROOT/spice_files for $WORK_ROOT/$TOP.spice_files"
-	cp $LVS_ROOT/spice_files $WORK_ROOT/$TOP.spice_files
+	echo "Warning: using $LVS_ROOT/$PDK/spice_files for $WORK_ROOT/$TOP.spice_files"
+	cp $LVS_ROOT/$PDK/spice_files $WORK_ROOT/$TOP.spice_files
 fi
 
 $LVS_ROOT/run_hier_check $TOP $NETLIST $LAYOUT

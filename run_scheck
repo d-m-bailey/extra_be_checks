@@ -63,12 +63,13 @@ else
 	export EXT_TYPE=digital
 fi
 
-if [[ ! -f $WORK_ROOT/$TOP.flatglob ]]; then
-	echo "Warning: using $LVS_ROOT/flatglob for $WORK_ROOT/$TOP.flatglob"
-	cp $LVS_ROOT/flatglob $WORK_ROOT/$TOP.flatglob
+if [[ ! -f $WORK_ROOT/$TOP.flatglob && $LVS_ROOT/$PDK/flatglob ]]; then
+	echo "Warning: using $LVS_ROOT/$PDK/flatglob for $WORK_ROOT/$TOP.flatglob"
+	cp $LVS_ROOT/$PDK/flatglob $WORK_ROOT/$TOP.flatglob
 fi
-if [[ ! -f $WORK_ROOT/$TOP.abstract && -f $LVS_ROOT/abstract ]]; then
-	cp $LVS_ROOT/abstract $WORK_ROOT/$TOP.abstract
+if [[ ! -f $WORK_ROOT/$TOP.abstract && -f $LVS_ROOT/$PDK/abstract ]]; then
+	echo "Warning: using $LVS_ROOT/$PDK/abstract for $WORK_ROOT/$TOP.abstract"
+	cp $LVS_ROOT/$PDK/abstract $WORK_ROOT/$TOP.abstract
 fi
 if [[ -f $WORK_ROOT/$TOP.abstract && -f $WORK_ROOT/gds_text/$TOP.cells ]]; then
 	sed -e 's/\*/.*/g' -e 's/^/^/' -e 's/$/$/' $WORK_ROOT/$TOP.abstract | \

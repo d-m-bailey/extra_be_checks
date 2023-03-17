@@ -67,14 +67,15 @@ else
 	exit 1
 fi
 
-if [[ ! -f $WORK_ROOT/$TOP_LAYOUT.flatglob && $LVS_ROOT/flatglob ]]; then
-	echo "Warning: using $LVS_ROOT/flatglob for $WORK_ROOT/$TOP_LAYOUT.flatglob"
-	cp $LVS_ROOT/flatglob $WORK_ROOT/$TOP_LAYOUT.flatglob
+if [[ ! -f $WORK_ROOT/$TOP_LAYOUT.flatglob && $LVS_ROOT/$PDK/flatglob ]]; then
+	echo "Warning: using $LVS_ROOT/$PDK/flatglob for $WORK_ROOT/$TOP_LAYOUT.flatglob"
+	cp $LVS_ROOT/$PDK/flatglob $WORK_ROOT/$TOP_LAYOUT.flatglob
 fi
 
 # create work abstract file based on actual cells used (pseudo globbing)
-if [[ ! -f $WORK_ROOT/$TOP_LAYOUT.abstract && -f $LVS_ROOT/abstract ]]; then
-	cp $LVS_ROOT/abstract $WORK_ROOT/$TOP_LAYOUT.abstract
+if [[ ! -f $WORK_ROOT/$TOP_LAYOUT.abstract && -f $LVS_ROOT/$PDK/abstract ]]; then
+	echo "Warning: using $LVS_ROOT/$PDK/abstract for $WORK_ROOT/$TOP_NET.abstract"
+	cp $LVS_ROOT/$PDK/abstract $WORK_ROOT/$TOP_LAYOUT.abstract
 fi
 if [[ -f $WORK_ROOT/$TOP_LAYOUT.abstract && -f $WORK_ROOT/gds_text/$TOP_LAYOUT.cells ]]; then
 	sed -e 's/\*/.*/g' -e 's/^/^/' -e 's/$/$/' $WORK_ROOT/$TOP_LAYOUT.abstract | \
@@ -82,9 +83,9 @@ if [[ -f $WORK_ROOT/$TOP_LAYOUT.abstract && -f $WORK_ROOT/gds_text/$TOP_LAYOUT.c
 fi
 
 # create work noflatten file based on actual cells used (pseudo globbing)
-if [[ ! -f $WORK_ROOT/$TOP_NET.flatten && $LVS_ROOT/flatten ]]; then
-	echo "Warning: using $LVS_ROOT/flatten for $WORK_ROOT/$TOP_NET.flatten"
-	cp $LVS_ROOT/flatten $WORK_ROOT/$TOP_NET.flatten
+if [[ ! -f $WORK_ROOT/$TOP_NET.flatten && $LVS_ROOT/$PDK/flatten ]]; then
+	echo "Warning: using $LVS_ROOT/$PDK/flatten for $WORK_ROOT/$TOP_NET.flatten"
+	cp $LVS_ROOT/$PDK/flatten $WORK_ROOT/$TOP_NET.flatten
 fi
 if [[ -f $WORK_ROOT/$TOP_NET.flatten ]]; then
 	if [[ -f $WORK_ROOT/gds_text/$TOP_LAYOUT.cells ]]; then
@@ -98,9 +99,9 @@ if [[ -f $WORK_ROOT/$TOP_NET.flatten ]]; then
 fi
 
 # create work noflatten file based on actual cells used (pseudo globbing)
-if [[ ! -f $WORK_ROOT/$TOP_NET.noflatten && $LVS_ROOT/noflatten ]]; then
-	echo "Warning: using $LVS_ROOT/noflatten for $WORK_ROOT/$TOP_NET.noflatten"
-	cp $LVS_ROOT/noflatten $WORK_ROOT/$TOP_NET.noflatten
+if [[ ! -f $WORK_ROOT/$TOP_NET.noflatten && $LVS_ROOT/$PDK/noflatten ]]; then
+	echo "Warning: using $LVS_ROOT/$PDK/noflatten for $WORK_ROOT/$TOP_NET.noflatten"
+	cp $LVS_ROOT/$PDK/noflatten $WORK_ROOT/$TOP_NET.noflatten
 fi
 if [[ -f $WORK_ROOT/$TOP_NET.noflatten ]]; then
 	if [[ -f $WORK_ROOT/gds_text/$TOP_LAYOUT.cells ]]; then
@@ -116,9 +117,9 @@ if [[ -f $WORK_ROOT/$TOP_NET.noflatten ]]; then
 fi
 
 # create work ignore file based on actual cells used (pseudo globbing)
-if [[ ! -f $WORK_ROOT/$TOP_NET.ignore && -f $LVS_ROOT/ignore ]]; then
-	echo "Warning: using $LVS_ROOT/ignore for $WORK_ROOT/$TOP_NET.ignore"
-	cp $LVS_ROOT/ignore $WORK_ROOT/$TOP_NET.ignore
+if [[ ! -f $WORK_ROOT/$TOP_NET.ignore && -f $LVS_ROOT/$PDK/ignore ]]; then
+	echo "Warning: using $LVS_ROOT/$PDK/ignore for $WORK_ROOT/$TOP_NET.ignore"
+	cp $LVS_ROOT/$PDK/ignore $WORK_ROOT/$TOP_NET.ignore
 fi
 if [[ -f $WORK_ROOT/$TOP_NET.ignore ]]; then
 	if [[ -f $WORK_ROOT/gds_text/$TOP_LAYOUT.cells ]]; then
@@ -135,12 +136,12 @@ fi
 
 # Add any cells that should be flattened before extraction to 'flatten'. globbing allowed.
 export FLATGLOB_CELLS="`cat $WORK_ROOT/$TOP_LAYOUT.flatglob 2>/dev/null | grep -v '^#'`"
-# Add any empty cells that should be extracted as black-boxes to 'abstract'. globbing not allowed.
+# Add any empty cells that should be extracted as black-boxes to 'abstract'. (globbed version is 'abstract.glob')
 export ABSTRACT_CELLS="`cat $WORK_ROOT/$TOP_LAYOUT.abstract.glob 2>/dev/null | grep -v '^#'`"
 
 if [[ ! -f $WORK_ROOT/$TOP_NET.spice_files ]]; then
-	echo "Warning: using $LVS_ROOT/spice_files for $WORK_ROOT/$TOP_NET.spice_files"
-	cp $LVS_ROOT/spice_files $WORK_ROOT/$TOP_NET.spice_files
+	echo "Warning: using $LVS_ROOT/$PDK/spice_files for $WORK_ROOT/$TOP_NET.spice_files"
+	cp $LVS_ROOT/$PDK/spice_files $WORK_ROOT/$TOP_NET.spice_files
 fi
 
 # Verify that magic and netgen are executable.
