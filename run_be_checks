@@ -21,91 +21,76 @@
 #  3. Run full lvs
 #  4. Run cvc for digital designs
 #  
-#  Add cells to be flattened before extract to 'flatglob' file
-#  Add cells to be extracted as black-boxes to 'abstract' file
-#  Add cells to be flattened during compare to 'flatten' file
-#  Add cells not to be flattened during compare to 'noflatten' file
+#  All variable specified in LVS configuration file
 
-#  verilog_files defaults to the contents of ../verilog/gl
-#  spice_files contains common spice libraries, but may need to be changed.
+# Usage
+# run_be_checks LVS_config_file [top_netlist [top_layout]] 		: extract, then check
+# run_be_checks --noextract LVS_config_file [top_netlist [top_layout]]	: use previous extraction results to compare
 
-# Use cases
-# run_be_checks top_block netlist_file gds_file	: extract, then check
-# run_be_checks top_block netlist_file		: use previous extraction results to compare
-# run_be_checks 				: use previous extraction results to compare
-if [[ $# -eq 0 ]]; then
-	export LAYOUT=$(ls gds/user_*wrapper.gds* | head -1)
-	file=${LAYOUT##*/}
-	export TOP=${file%%.gds*}
-	if [[ "$TOP" == user_project_wrapper ]]; then
-		export NETLIST=verilog/gl/$TOP.v
-	else
-		export NETLIST=xschem/$TOP.spice
-	fi
-elif [[ $# -lt 2 || $# -gt 3 ]]; then
-	echo "usage: run_be_checks [top_block netlist_file [gds_file]]"
-	exit
+if [[ $1 = "--noextract" ]]; then
+	export EXTRACT_LAYOUT=no
+	shift
 else
-	export TOP=$1
-	export NETLIST=$2
-	if [[ $# -eq 3 ]]; then
-		export LAYOUT=$3
-	else
-		export LAYOUT=
-	fi
+	export EXTRACT_LAYOUT=yes
+fi
+	
+if [[ $# -lt 1 || $# -gt 3 ]]; then
+	echo "usage: run_be_checks [--noextract] lvs_config_file [netlist_top [layout_top]]"
+	exit 1
 fi
 
-echo "TOP: $TOP"
-echo "NETLIST: $NETLIST"
-echo "LAYOUT: $LAYOUT"
+CONFIG_FILE=$1
+TOP_SOURCE=$2
+TOP_LAYOUT=${3:-$TOP_SOURCE}
 
-: "${LOG_ROOT:=$(pwd)}"
+if [[ ! -f $CONFIG_FILE ]]; then
+	echo "Could not find LVS configuration file $CONFIG_FILE"
+	exit 1
+fi
+
+#get_lvs_config $CONFIG_FILE | 
+	source $CONFIG_FILE
+if [[ $EXTRACT_LAYOUT = no ]]; then
+	export LAYOUT_FILE=
+fi
+
+echo "TOP SOURCE: $TOP_SOURCE"
+echo "SOURCE FILE(S): $LVS_SPICE_FILES $LVS_VERILOG_FILES"
+echo "TOP LAYOUT: $TOP_LAYOUT"
+echo "LAYOUT FILE: $LAYOUT_FILE"
+
+: "${LOG_ROOT:=$(pwd)/$TOP_SOURCE}"
 : "${LVS_ROOT:=$(pwd)}"
-: "${SIGNOFF_ROOT:=$(pwd)}"
-: "${WORK_ROOT:=$(pwd)}"
+: "${SIGNOFF_ROOT:=$(pwd)/$TOP_SOURCE}"
+: "${WORK_ROOT:=$(pwd)/$TOP_SOURCE}"
 export LOG_ROOT LVS_ROOT SIGNOFF_ROOT WORK_ROOT
 
 if [[ ! -d $WORK_ROOT ]]; then
-	mkdir $WORK_ROOT
+	mkdir -p $WORK_ROOT/$TOP_SOURCE 
+	mkdir -p $WORK_ROOT/$TOP_LAYOUT
 fi
 
-if [[ ! -f $WORK_ROOT/$TOP.verilog_files ]]; then
-	if [[ -f $LVS_ROOT/$PDK/verilog_files ]]; then
-		cp $LVS_ROOT/$PDK/verilog_files $WORK_ROOT/$PDK/$TOP.verilog_files
-	elif [[ -d verilog/gl && $(ls verilog/gl | wc -l) -gt 0 ]]; then
-		ls verilog/gl/* > $WORK_ROOT/$TOP.verilog_files
-	elif [[ $PWD == $WORK_ROOT && -d ../verilog/gl && $(ls ../verilog/gl | wc -l) -gt 0 ]]; then
-		ls ../verilog/gl/* > $WORK_ROOT/$TOP.verilog_files
-	fi
-fi
-if [[ ! -f $WORK_ROOT/$TOP.spice_files ]]; then
-	echo "Warning: using $LVS_ROOT/$PDK/spice_files for $WORK_ROOT/$TOP.spice_files"
-	cp $LVS_ROOT/$PDK/spice_files $WORK_ROOT/$TOP.spice_files
-fi
+$LVS_ROOT/run_hier_check $TOP_SOURCE "$LVS_VERILOG_FILES" $TOP_LAYOUT $LAYOUT_FILE
 
-$LVS_ROOT/run_hier_check $TOP $NETLIST $LAYOUT
-zgrep STRNAME $WORK_ROOT/gds_text/$TOP.gds.txt.gz | \
-	awk '{print $2}' > $WORK_ROOT/gds_text/$TOP.cells
+$LVS_ROOT/run_scheck $CONFIG_FILE $TOP_LAYOUT $LAYOUT_FILE
 
-$LVS_ROOT/run_scheck $TOP $LAYOUT
+$LVS_ROOT/run_full_lvs --noextract $CONFIG_FILE $TOP_SOURCE $TOP_LAYOUT
 
-$LVS_ROOT/run_full_lvs $TOP $NETLIST $TOP
-
-if [[ $TOP = "user_project_wrapper" ]]; then
-	$LVS_ROOT/run_cvc $TOP
+if [[ $TOP_SOURCE = "user_project_wrapper" ]]; then
+	$LVS_ROOT/run_cvc $TOP_LAYOUT
 fi
 
 echo "
 Soft check result:"
-tail -n 20 $LOG_ROOT/$TOP.soft.log | awk '/Final result/,/Logging/' | grep -v ^Logging
+tail -n 20 $LOG_ROOT/$TOP_LAYOUT/soft.log | awk '/Final result/,/Logging/' | grep -v ^Logging
 
 echo "
 LVS result:"
-tail -n 20 $LOG_ROOT/$TOP.lvs.log | awk '/Final result/,/Logging/' | grep -v ^Logging
+tail -n 20 $LOG_ROOT/$TOP_SOURCE/lvs.log | awk '/Final result/,/^END/' | grep -v ^Logging | grep -v "^END"
 
-if [[ $TOP = "user_project_wrapper" ]]; then
+if [[ $TOP_SOURCE = "user_project_wrapper" ]]; then
 	echo "
 CVC result:"
-	grep 'CVC: Total:' $LOG_ROOT/$TOP.cvc.log
+	grep 'CVC: Total:' $LOG_ROOT/$TOP_LAYOUT/cvc.log
 fi
 	

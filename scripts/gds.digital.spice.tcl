@@ -12,7 +12,7 @@ foreach cell $::env(FLATGLOB_CELLS) {
 # list cells to be flattened
 puts "Flattening [gds flatglob]"
 gds flatten yes
-gds read $::env(CURRENT_GDS)
+gds read $::env(LAYOUT_FILE)
 
 foreach cell $::env(ABSTRACT_CELLS) {
 	load $cell -dereference
@@ -27,7 +27,7 @@ extract unique
 extract
 
 ext2spice lvs
-ext2spice merge conservative
+#ext2spice merge conservative
 #ext2spice short resistor
 ext2spice -o $::env(TOP).gds.spice $::env(TOP).ext
 feedback save $::env(TOP)-ext2gds.spice.feedback.txt
