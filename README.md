@@ -3,42 +3,92 @@ Scripts to run additional back-end checks on gds files.
 
 INSTALLATION:
 Requires:
-- magic 3.8.319  https://github.com/RTimothyEdwards/magic.git
-- netgen 1.5.227  https://github.com/RTimothyEdwards/netgen.git
-- cvc 1.1.3  https://github.com/d-m-bailey/cvc.git
+- magic 3.8.392  https://github.com/RTimothyEdwards/magic.git
+- netgen 1.5.251  https://github.com/RTimothyEdwards/netgen.git
+- cvc 1.1.4  https://github.com/d-m-bailey/cvc.git
 
-In your `caravel_user_project` or `caravel_user_project_analog`
+git clone -b precheck https://github.com/d-m-bailey/extra_be_checks.git
+export LVS_ROOT=$PWD/extra_be_checks
+
+In your `caravel_user_project` or `caravel_user_project_analog` directory,
+create an LVS configuration file based on `extra_be_checks/$PDK/lvs_config.sh`.
+`mpw_precheck` expects this file to be in `lvs/<cellname>/lvs_config.sh`.
+
+Environment variables.
+These checks will use the following environment variables'
+`LVS_ROOT`: path to the extra_be_checks directory. No default. Must be set.
+`WORK_ROOT`: path to temporary work directory. Defaults to $PWD/work/$top_source
+`LOG_ROOT`: path to runtime logs. Defaults to $PWD/logs/$top_source
+`SIGNOFF_ROOT`: path to results. Defaults to $PWD/signoff/$top_source
+
+
 ```
-git clone -b mpw-7 https://github.com/d-m-bailey/extra_be_checks.git
-cd extra_be_checks
-./run_be_checks
+$LVS_ROOT/run_be_checks lvs/<cellname>/lvs_config.sh
+```
+This command will run the following checks.
+```
+run_hier_check: Checks layout hierarchy against verilog hierarchy
+run_scheck: Soft connection check
+run_full_lvs: Device level LVS
+run_cvc: ERC checks
 ```
 
-`run_be_checks` should run with the default user_project_wrapper or user_analog_project_wrapper.
+1. Check design hierarchies. A fast check for digital designs to ensure that design hierarchies match.
 
-1. Soft connection check: find high resistance connections (i.e. soft connections) through n/pwell.
-
-   Usage:
-   `run_softcheck top_cell [gds_file]`
+   Usage: `run_hier_check top_source verilog_files top_layout layout_file [primitive_prefix [layout_prefix]]`
 
    Requires:
-   - magic 3.8.319
-   - netgen 1.5.227
+   - klayout:
 
    Arguments:
-   - `top_cell`: Top cell name.
-   - `gds_file`: gds file (gzip compression allowed). Required initially. If not specified,uses previous extraction results.
+   - `top_source`: Top cell name from verilog
+   - `verilog_files`: Verilog files (only cells in the listed verilog files will be checked)
+   - `top_layout`: Top cell name in the layout
+   - `layout_file`: gds/oasis/text file (gzip compression allowed).
+   - `primitive_prefix`: If given, prefix is removed from both source and layout before comparison.
+   - `layout_prefix`: If given, prefix is removed from layout cell names before comparison.
 
    Input:
-   - `flatglob`: List of cell names to be flattened before extraction. Globbing permitted.
-   - `abstract`: List of cell names to be extracted as black boxes.
+   - `verilog_files`: List of referenced verilog files. Should have child modules listed before parents.
 
    Output:
-   - `<top_cell>.ext/*`: Extraction results with well connectivity.
-   - `<top_cell>.ext.log`: Well connectivity extraction log. 
-   - `<top_cell>.nowell/*`: Extraction results without well connectivity.
-   - `<top_cell>.nowell.log`: No well connectivity extraction log. 
-   - `<top_cell>.lvs.nowell.report`: Comparison results.
+   - `$WORK_ROOT/verilog.hier`: The netlist hierarchy.
+   - `$WORK_ROOT/layout.txt.gz`: If input is gds/oas, the layout hierarchy converted to text.
+   - `$WORK_ROOT/layout.hier`: The layout hierarchy.
+   - `$SIGNOFF_ROOT/hier.csv`: Comparison results.
+
+   Algorithm:
+   - Convert gds/oasis to gds text file.
+   - Extract netlist hierarchy.
+   - Extract layout hierarchy.
+   - Compare. 
+
+2. Soft connection check: find high resistance connections (i.e. soft connections) through n/pwell.
+
+   Usage:
+   `run_softcheck [--noextract] <config_file> [<top_layout> [<gds_file>]]`
+
+   Requires:
+   - magic 3.8.389
+   - netgen 1.5.250
+
+   Arguments:
+   - `--noextract`: Use previous extraction results.
+   - `config_file`: Configuration file. For details, see sample in repo.
+   - `top_layout`: Top layout name. Overrides config_file setting.
+   - `gds_file`: gds file (gzip compression allowed). Overrides config_file setting.
+
+   References: (created from config_file)
+   - `$WORK_ROOT/flatglob`: cells to be flattened before extraction.
+   - `$WORK_ROOT/abstract`: cells to be abstracted during extraction.
+
+   Output:
+   - `$WORK_ROOT/ext/*`: Extraction results with well connectivity.
+   - `$LOG_ROOT/ext.log`: Well connectivity extraction log. 
+   - `$WORK_ROOT/nowell.ext/*`: Extraction results without well connectivity.
+   - `$LOG_ROOT/nowell.ext.log`: No well connectivity extraction log. 
+   - `$LOG_ROOT/lvs.soft.log`: Soft connection check LVS log.
+   - `$SIGNOFF_ROOT/lvs.soft.report`: Comparison results.
 
    Algorithm:
    - Create 2 versions of the extracted netlist.
@@ -50,123 +100,72 @@ cd extra_be_checks
 
    Analysis:
    - Any discrepancies should be the result of well/substrate taps not connected to the correct power net.
-   - Use the `<top_cell>.lvs.nowell.report` file to find problem nets.
-   - Use the problem nets to find a connected device in the `<top_cell>.nowell/<top_cell>.gds.nowell.spice` file.
-   - Use the corresponding `<top_cell>.nowell/*.ext` file to find the coordinates of error devices. (divide by 200 to get coordinates in um).
+   - Use the `$SIGNOFF_ROOT/lvs.soft.report` file to find problem nets.
+   - Use the problem nets to find a connected device in the `$WORK_ROOT/nowell.ext/<top_layout>.gds.nowell.spice` file.
+   - Use the corresponding `$WORK_ROOT/nowell.ext/*.ext` file to find the coordinates of error devices. (divide by 200 to get coordinates in um).
 
-2. Full device level LVS
+3. Full device level LVS
 
-   Usage: `run_full_lvs top_netlist_cell top_netlist top_layout_cell [gds_file]`
+   Usage: `run_full_lvs [--noextract] <config_file> [<top_source> [<top_layout>]]
 
    Requires:
-   - magic 3.8.319
-   - netgen 1.5.227
+   - magic 3.8.392
+   - netgen 1.5.251
 
    Arguments:
-   - `top_netlist_cell`: Top cell name from verilog or spice netlist.
-   - `top_netlist`: Verilog or spice file that contains the top cell.
-   - `top_layout_cell`: Top cell name of the gds file.
-   - `gds_file`: gds file (gzip compression allowed). Required initially. If not specified, uses previous extraction results. Will use softcheck results if available.
+   - `--noextract`: Use previous extraction results.
+   - `config_file`: Configuration file. For details, see sample in repo.
+   - `top_source`: Top source name. Overrides config_file setting.
+   - `top_layout`: Top layout name. Overrides config_file setting.
   
-   Input:
-   - `flatglob`: List of cell names to be flattened before extraction. Globbing permitted.
-   - `abstract`: List of cell names to be extracted as black boxes.
-   - `flatten`: List of cell names to be flattened during LVS.
-   - `noflatten`: List of cell names that should not be flattened during LVS.
-   - `verilog_files`: List of referenced verilog files. Should have child modules listed before parents. Initially created with the contents of verilog/gl.
-   - `spice_files`: List of referenced spice files.
-   
+   References: (created from config_file)
+   - `$WORK_ROOT/flatglob`: cells to be flattened before extraction.
+   - `$WORK_ROOT/abstract`: cells to be abstracted during extraction.
+   - `$WORK_ROOT/flatten`: cells to be flattened during LVS.
+   - `$WORK_ROOT/noflatten`: cells not to be flattened during LVS.
+   - `$WORK_ROOT/ignore`: cells to be ignored during extraction.
+   - `$WORK_ROOT/spice_files`: list of spice files in hierachical order (lowest level first).
+   - `$WORK_ROOT/verilog_files`: list of verilog files in hierachical order (lowest level first).
+
    Output:
-   - `<top_cell>.ext/*`: Extraction results.
-   - `<top_cell>.ext.log`: Extraction log. 
-   - `<top_cell>.lvs.log`: Netgen output.
-   - `<top_cell>.lvs.report`: LVS results.
+   - `$WORK_ROOT/ext/*`: Extraction results with well connectivity.
+   - `$LOG_ROOT/ext.log`: Well connectivity extraction log. 
+   - `$LOG_ROOT/lvs.log`: LVS comparison log.
+   - `$SIGNOFF_ROOT/lvs.report`: Comparison results.
 
    Hints:
-   - Rerunning without specifing the `gds_file` is faster because previous extraction result will be used.
-   - Add cells to the `flatglob` file to flatten before extraction.
-   - Cells in the `abstract` file will be fully extracted, but netlisted as black-boxes. 
-   - The `flatten` file contains a list of cell names to be flattened during LVS. 
-Flattening cells with unmatched ports may resolve proxy port errors.
+   - Rerunning with --noextract is faster because previous extraction result will be used.
+   - Add cells to the `EXTRACT_FLATGLOB` to flatten before extraction.
+   - Cells in `EXTRACT_ABSTRACT` will be extracted (top level?), but netlisted as black-boxes. 
+   - `LVS_FLATTEN` is a list of cell names to be flattened during LVS. 
+     Flattening cells with unmatched ports may resolve proxy port errors.
    - netgen normally flattens unmatched cells which can lead to confusing results at higher levels.
-To avoid this, create a file `noflatten`, that contains the names of cells not to be flattened.
+     To avoid this, add cells to `LVS_NOFLATTEN`.
+   - Add cells to `LVS_IGNORE` to skip LVS checks.
 
-3. CVC-RV. Circuit Validity Check - Reliability Verification.
+4. CVC-RV. Circuit Validity Check - Reliability Verification - voltage aware ERC.
    Voltage aware ERC tool to detect current leaks and electrical overstress errors.
 
-   Usage: `run_cvc top_cell`
+   Usage: `run_cvc <top_layout>`
 
    Requires:
-   - cvc 1.1.4
+   - cvc_rv 1.1.4
 
    Arguments:
-   - `top_cell`: Top layout cell name.
+   - `top_layout`: Top layout cell name.
 
    Input:
-   - `<top_cell>.ext/<top_cell>.gds.spice`: Extracted spice file.
-   - `<top_cell>.power`: Power settings.
-   - `cvc.sky130A.models`: Model settings.
+   - `$WORK_ROOT/ext/<top_layout>.gds.spice`: Extracted spice file.
+   - `$WORK_ROOT/<top_layout>.power`: Power settings.
+   - `cvc.$PDK.models`: Model settings.
 
    Output:
-   - `<top_cell>.ext/<top_cell>.cdl`: CDL file converted from extracted spice file.
-   - `<top_cell>.cvc.log`: Log file with error summary.
-   - `<top_cell>.cvc.error.gz`: Detailed errors results.
+   - `$WORK_ROOT/ext/<top_layout>.cdl`: CDL file converted from extracted spice file.
+   - `$WORK_ROOT/cvc.error.gz`: Detailed errors results.
+   - `$LOG_ROOT/cvc.log`: Log file with error summary.
 
    Analysis;
    - Works well with digital designs. Analog results can be obscure.
    - If the log file shows errors, look for details in the error file.
-   - Error device locations can be found in the respective `<top_cell>.ext/*.ext` files. (coordinates should be divided by 200).
+   - Error device locations can be found in the respective `$WORK_ROOT/ext/*.ext` files. (coordinates should be divided by 200).
 
-4. Check design hierarchies. A fast check for digital designs to ensure that design hierarchies match.
-
-   Usage: `run_hier_check top_cell top_netlist layout_file [primitive_prefix [layout_prefix]]`
-
-   Requires:
-   - klayout:
-
-   Arguments:
-   - `top_cell`: Top cell name from verilog
-   - `top_netlist`: Verilog file that contains the top cell.
-   - `gds_file`: gds/oasis/text file (gzip compression allowed).
-   - `primitive_prefix`: If given, prefix is removed before comparison.
-   - `layout_prefix`: If given, prefix is removed from layout cell names before comparison.
-
-   Input:
-   - `verilog_files`: List of referenced verilog files. Should have child modules listed before parents.
-
-   Output:
-   - `<top_cell>.verilog.hier`: The netlist hierarchy.
-   - `gds_text/<top_cell>.gds.txt.gz`: If input is gds/oas, the layout data converted to text.
-   - `<top_cell>.layout.hier`: The layout hierarchy.
-   - List of discrepancies on stdout. 
-
-   Algorithm:
-   - Convert gds/oasis to gds text file.
-   - Extract netlist hierarchy.
-   - Extract layout hierarchy.
-   - Compare. 
-
-5. (PENDING) Hierarchy XOR. Compare 2 layouts showing cell count mismatches, cell movement, and layer mismatches.
-
-   Usage: `run_hier_xor top_cell first_layout second_layout`
-
-   Requires:
-   - klayout:
-
-   Arguments:
-   - `top_cell`: Top cell name for layout.
-   - `first_layout`: first gds/oasis/text file (gzip compression allowed).
-   - `second_layout`: second gds/oasis/text file (gzip compression allowed).
-
-   Output:
-   - `gds_text/<top_cell>.first.gds.txt.gz`: First layout file converted to text.
-   - `gds_text/<top_cell>.second.gds.txt.gz`: Second layout file converted to text.
-   - List of discrepancies on stdout. 
-
-   Algorithm:
-   - Convert gds/oasis to gds text file (if necessary).
-   - Perform the following comparisons hierarchically.
-     - Compare instance counts
-     - If instance counts match, compare instance positions
-     - Compare shape/text counts
-     - If shape/text counts match, compare shape/text positions
