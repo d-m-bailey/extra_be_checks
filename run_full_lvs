@@ -52,7 +52,7 @@ echo "Running LVS..."
 
 # Check for PDK_ROOT and PDK
 echo "TOP SOURCE: $TOP_SOURCE"
-echo "SOURCE FILE(S): $LVS_SPICE_FILES $LVS_VERILOG_FILES"
+echo "SOURCE FILE(S): $(echo $LVS_SPICE_FILES $LVS_VERILOG_FILES | sed -e 's/#[^ ]*//g')"
 echo "TOP LAYOUT: $TOP_LAYOUT"
 echo "LAYOUT FILE: $LAYOUT_FILE"
 
@@ -61,6 +61,7 @@ echo "LAYOUT FILE: $LAYOUT_FILE"
 : "${WORK_ROOT:=$(pwd)/$TOP_SOURCE}"
 export LOG_ROOT SIGNOFF_ROOT WORK_ROOT
 
+
 mkdir -p $LOG_ROOT
 mkdir -p $SIGNOFF_ROOT
 mkdir -p $WORK_ROOT
@@ -68,6 +69,11 @@ mkdir -p $WORK_ROOT
 if [[ -z "$PDK_ROOT" || -z "$PDK" ]]; then
 	echo "PDK_ROOT and/or PDK not set."
 	exit 1
+fi
+
+rm -f $LOG_ROOT/lvs.log $SIGNOFF_ROOT/lvs.report
+if [[ $EXTRACT_LAYOUT = yes ]]; then
+	rm -f $LOG_ROOT/ext.log
 fi
 
 if cmp -s $PDK_ROOT/$PDK/libs.tech/magic/$PDK.tech $LVS_ROOT/tech/$PDK.tech; then
@@ -81,7 +87,7 @@ else
 fi
 
 if [[ ! -f $WORK_ROOT/layout.cells || ! -f $WORK_ROOT/verilog.cells ]]; then
-	$LVS_ROOT/run_hier_check $TOP_SOURCE "$LVS_VERILOG_FILES" $TOP_LAYOUT $LAYOUT_FILE
+	$LVS_ROOT/run_hier_check $TOP_SOURCE "$(echo $LVS_VERILOG_FILES | sed 's/#[^ ]*//g')" $TOP_LAYOUT $LAYOUT_FILE
 fi
 
 echo $EXTRACT_FLATGLOB |
@@ -230,11 +236,11 @@ cp $LVS_ROOT/tech/${PDK}_setup.tcl $WORK_ROOT/${PDK}_setup.tcl
 
 while read cell; do
 	cat >>$WORK_ROOT/${PDK}_setup.tcl <<-flatten
-		if { [lsearch \$cells1 $cell] > 0 } {
+		if { [lsearch \$cells1 $cell] >= 0 } {
 			puts stdout "Flattening $cell in layout"
 			flatten class {-circuit1 $cell}
 		}
-		if { [lsearch \$cells2 $cell] > 0 } {
+		if { [lsearch \$cells2 $cell] >= 0 } {
 			puts stdout "Flattening $cell in source"
 			flatten class {-circuit2 $cell}
 		}
@@ -243,11 +249,11 @@ done <$WORK_ROOT/flatten.glob
 
 while read cell; do
 	cat >>$WORK_ROOT/${PDK}_setup.tcl <<-ignore
-		if { [lsearch \$cells1 $cell] > 0 } {
+		if { [lsearch \$cells1 $cell] >= 0 } {
 			puts stdout "Ignoring $cell in layout"
 			ignore class {-circuit1 $cell}
 		}
-		if { [lsearch \$cells2 $cell] > 0 } {
+		if { [lsearch \$cells2 $cell] >= 0 } {
 			puts stdout "Ignoring $cell in source"
 			ignore class {-circuit2 $cell}
 		}

@@ -16,6 +16,7 @@ export LOG_ROOT SIGNOFF_ROOT WORK_ROOT
 mkdir -p $LOG_ROOT $SIGNOFF_ROOT $WORK_ROOT
 
 export RESULTS_DIR=$WORK_ROOT/ext
+rm -f $LOG_ROOT/cvc.log $LOG_ROOT/cvc.error.gz $SIGNOFF_ROOT/cvc.log $SIGNOFF_ROOT/cvc.error.gz
 
 echo " "
 echo "Running CVC..."
