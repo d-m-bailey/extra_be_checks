@@ -46,8 +46,18 @@ ERROR: Could not find $WORK_ROOT/$DESIGN_NAME.power"
 	fi
 fi
 
+# Copy default configuration file
+if [[ ! -f $WORK_ROOT/cvcrc.$PDK ]]; then
+	if [[ -f $LVS_ROOT/cvc/cvcrc.$PDK ]]; then
+		cp $LVS_ROOT/cvc/cvcrc.$PDK $WORK_ROOT/.
+	else
+		echo "
+ERROR: Could not file $WORK_ROOT/cvcrc.$PDK"
+	fi
+fi
+
 start_time=$SECONDS
-cvc_rv $LVS_ROOT/cvc/cvcrc.$PDK
+cvc_rv $WORK_ROOT/cvcrc.$PDK
 cvc_status=$?
 
 runtime=$((SECONDS - start_time))

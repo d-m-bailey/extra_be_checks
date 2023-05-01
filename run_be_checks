@@ -64,13 +64,13 @@ if [[ $EXTRACT_LAYOUT = no ]]; then
 fi
 
 echo "TOP SOURCE: $TOP_SOURCE"
-echo "SOURCE FILE(S): $(echo $LVS_SPICE_FILES $LVS_VERILOG_FILES | sed -e 's/#[^ ]*//g')"
+echo "SOURCE FILE(S): $(echo $LVS_SPICE_FILES $LVS_VERILOG_FILES | sed -e 's/#[^ ]*//g' -e 's/ /\n/g')"
 echo "TOP LAYOUT: $TOP_LAYOUT"
 echo "LAYOUT FILE: $LAYOUT_FILE"
 
-: "${LOG_ROOT:=$(pwd)/$TOP_SOURCE}"
-: "${SIGNOFF_ROOT:=$(pwd)/$TOP_SOURCE}"
 : "${WORK_ROOT:=$(pwd)/$TOP_SOURCE}"
+: "${LOG_ROOT:=$WORK_ROOT}"
+: "${SIGNOFF_ROOT:=$WORK_ROOT}"
 export LOG_ROOT SIGNOFF_ROOT WORK_ROOT
 
 mkdir -p $LOG_ROOT $SIGNOFF_ROOT $WORK_ROOT
@@ -94,6 +94,9 @@ $LVS_ROOT/run_full_lvs --noextract $CONFIG_FILE $TOP_SOURCE $TOP_LAYOUT
 lvs_status=$?
 
 if [[ $TOP_SOURCE = "user_project_wrapper" ]]; then
+	if [[ -f ${CONFIG_FILE%/*}/$TOP_SOURCE.power ]]; then
+		cp ${CONFIG_FILE%/*}/$TOP_SOURCE.power $WORK_DIR/.
+	fi
 	$LVS_ROOT/run_cvc $TOP_LAYOUT
 	cvc_status=$?
 fi
