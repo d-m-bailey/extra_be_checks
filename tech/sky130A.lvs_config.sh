@@ -8,6 +8,9 @@ export TOP_SOURCE TOP_LAYOUT
 
 # list of cells to be flattened before extraction
 export EXTRACT_FLATGLOB="
+	*sky130_fd_pr__*[A-Z]*
+	*_nmos_m*
+	*_pmos_m*
 	"
 
 # list of cells to be abstracted before extraction
