@@ -34,8 +34,8 @@ else
 	export EXTRACT_LAYOUT=yes
 fi
 
-if [[ $# -lt 1 || $# -gt 4 ]]; then
-	echo "usage: run_be_checks [--noextract] lvs_config_file [netlist_top [layout_top [layout_file]]]"
+if [[ $# -gt 4 ]]; then
+	echo "usage: run_be_checks [--noextract] [lvs_config_file [netlist_top [layout_top [layout_file]]]]"
 	exit 1
 fi
 
@@ -46,24 +46,37 @@ if [[ -z "$LVS_ROOT" ]]; then
 fi
 
 CONFIG_FILE=$1
-TOP_SOURCE=$2
-TOP_LAYOUT=${3:-$TOP_SOURCE}
-if [[ $# -ge 4 ]]; then
-	LAYOUT_FILE=$4
-fi
+DESIGN_NAME=${2:+"-d $2"}
 
-if [[ ! -f $CONFIG_FILE ]]; then
-	echo "Could not find LVS configuration file $CONFIG_FILE"
+if [[ $# -ne 0 ]]; then  # if config file not specified, skip and use current environment
+	source <( $LVS_ROOT/set_lvs_env.py -c $CONFIG_FILE $DESIGN_NAME )
+fi
+if [[ ! -v EXTRACT_FLATGLOB ]]; then
+	echo "ERROR: LVS environment problem."
 	exit 1
 fi
 
-#get_lvs_config $CONFIG_FILE |
-source $CONFIG_FILE
+# Command line values override config file values 
+export TOP_SOURCE=${2:-$TOP_SOURCE}
+export TOP_LAYOUT=${3:-$TOP_LAYOUT}
+export LAYOUT_FILE=${4:-$LAYOUT_FILE}
 
-echo "TOP SOURCE: $TOP_SOURCE"
-echo "SOURCE FILE(S): $(echo $LVS_SPICE_FILES $LVS_VERILOG_FILES | sed -e 's/#[^ ]*//g' -e 's/ /\n/g')"
+echo "
+TOP SOURCE: $TOP_SOURCE"
+echo "SOURCE FILE(S): $(echo $LVS_SPICE_FILES $LVS_VERILOG_FILES | sed -e 's/#[^ ]*//g' -e 's/ /\n /g')"
 echo "TOP LAYOUT: $TOP_LAYOUT"
 echo "LAYOUT FILE: $LAYOUT_FILE"
+echo "EXTRACT_FLATGLOB: $(echo $EXTRACT_FLATGLOB | sed -e 's/#[^ ]*//g' -e 's/ /\n /g')"
+echo "EXTRACT_ABSTRACT: $(echo $EXTRACT_ABSTRACT | sed -e 's/#[^ ]*//g' -e 's/ /\n /g')"
+echo "LVS_FLATTEN: $(echo $LVS_FLATTEN | sed -e 's/#[^ ]*//g' -e 's/ /\n /g')"
+echo "LVS_NOFLATTEN: $(echo $LVS_NOFLATTEN | sed -e 's/#[^ ]*//g' -e 's/ /\n /g')"
+echo "LVS_IGNORE: $(echo $LVS_IGNORE | sed -e 's/#[^ ]*//g' -e 's/ /\n /g')"
+
+if [[ ! -f $LAYOUT_FILE ]]; then
+	echo "
+ERROR: missing layout file $LAYOUT_FILE"
+	exit 2
+fi
 
 : "${WORK_ROOT:=$(pwd)/$TOP_SOURCE}"
 : "${LOG_ROOT:=$WORK_ROOT}"
@@ -80,14 +93,14 @@ if [[ $LAYOUT_FILE ]]; then
 fi
 
 if [[ $EXTRACT_LAYOUT = yes ]]; then
-	$LVS_ROOT/run_scheck $CONFIG_FILE $TOP_LAYOUT $LAYOUT_FILE
+	$LVS_ROOT/run_scheck 
 	scheck_status=$?
 else
-	$LVS_ROOT/run_scheck --noextract $CONFIG_FILE $TOP_LAYOUT $LAYOUT_FILE
+	$LVS_ROOT/run_scheck --noextract 
 	scheck_status=$?
 fi
 
-$LVS_ROOT/run_full_lvs --noextract $CONFIG_FILE $TOP_SOURCE $TOP_LAYOUT
+$LVS_ROOT/run_full_lvs --noextract 
 lvs_status=$?
 
 if [[ -f $LVS_ROOT/cvc/$TOP_SOURCE.$PDK.power || -f ${CONFIG_FILE%/*}/$TOP_SOURCE.power ]]; then

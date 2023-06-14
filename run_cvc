@@ -1,5 +1,10 @@
 #! /bin/bash
 
+# Script to run a simplifed setup for CVC
+
+# Requires a netlist $WORK_ROOT/ext/$DESIGN_NAME.gds.spice
+# Converts this netlist to $WORK_ROOT/ext/$DESIGN_NAME.cdl.gz
+
 export DESIGN_NAME=$1
 
 # Check for LVS_ROOT

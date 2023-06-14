@@ -34,7 +34,7 @@ else
 	export EXTRACT_LAYOUT=yes
 fi
 
-if [[ $# -lt 1 || $# -gt 3 ]]; then
+if [[ $# -gt 3 ]]; then
 	echo "usage: run_scheck [--noextract] lvs_config_file [top_block [gds_file]]"
 	exit 1
 fi
@@ -65,20 +65,18 @@ else
 fi
 
 CONFIG_FILE=$1
-if [[ $# -ge 2 ]]; then
-	TOP_LAYOUT=$2
-fi
-if [[ $# -ge 3 ]]; then
-	LAYOUT_FILE=$3
-fi
+DESIGN_NAME=${2:+"-d $2"}
 
-if [[ ! -f $CONFIG_FILE ]]; then
-	echo "Could not find LVS configuration file $CONFIG_FILE"
+if [[ $# -ne 0 ]]; then  # if config file not specified, skip and use current environment
+	source <( $LVS_ROOT/set_lvs_env.py -c $CONFIG_FILE $DESIGN_NAME )
+fi
+if [[ ! -v EXTRACT_FLATGLOB ]]; then
+	echo "ERROR: LVS environment problem."
 	exit 1
 fi
 
-source $CONFIG_FILE
-export TOP=$TOP_LAYOUT
+export TOP=${2:-$TOP_LAYOUT}
+export LAYOUT_FILE=${3:-$LAYOUT_FILE}
 if [[ $EXTRACT_LAYOUT = no ]]; then
 	export LAYOUT_FILE=
 fi
@@ -90,6 +88,8 @@ export LOG_ROOT SIGNOFF_ROOT WORK_ROOT
 
 echo "TOP: $TOP"
 echo "LAYOUT: $LAYOUT_FILE"
+echo "EXTRACT_FLATGLOB: $(echo $EXTRACT_FLATGLOB | sed -e 's/#[^ ]*//g' -e 's/ /\n /g')"
+echo "EXTRACT_ABSTRACT: $(echo $EXTRACT_ABSTRACT | sed -e 's/#[^ ]*//g' -e 's/ /\n /g')"
 
 mkdir -p $LOG_ROOT
 mkdir -p $WORK_ROOT
