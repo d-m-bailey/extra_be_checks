@@ -1,1 +1,0 @@
-lvs "well/$::env(TOP).gds.nowell.spice $::env(TOP)" "nowell/$::env(TOP).gds.nowell.spice $::env(TOP)" sky130A_setup.nowell.tcl nowell/$::env(TOP).lvs.nowell.log -json -noflatten=noflatten

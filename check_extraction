@@ -1,0 +1,13 @@
+#! /usr/bin/env bash
+
+for ext_path in $1/*.ext $1/*.ext.gz; do
+	ext_file=${ext_path##*/}
+	ext_cell=${ext_file%%.ext*}
+	if [[ ${ext_file##*.} == "gz" ]]; then
+		CAT=zcat
+	else
+		CAT=cat
+	fi
+	$CAT $ext_path |
+		awk -v CELL=$ext_cell -f $LVS_ROOT/merge_short.awk
+done

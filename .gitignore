@@ -1,10 +1,10 @@
-well
-nowell
-noflatten
 *.ext
-*.lvs.log*
-*.lvs.json
+*.log
+*.cvc.error.gz
+*.cvc.debug.gz
+*.report
+*.json
 default.cvcrc
-lvs.*.out
 setup_file_*.lvs
 *.unflattened
+*.sky130B_setup.tcl
