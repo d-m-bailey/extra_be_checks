@@ -63,7 +63,7 @@ export LAYOUT_FILE=${4:-$LAYOUT_FILE}
 
 echo "
 TOP SOURCE: $TOP_SOURCE"
-echo "SOURCE FILE(S): $(echo $LVS_SPICE_FILES $LVS_VERILOG_FILES | sed -e 's/#[^ ]*//g' -e 's/ /\n /g')"
+echo "SOURCE FILE(S): $(echo $LVS_SPICE_FILES_TO_FIX $LVS_SPICE_FILES $LVS_VERILOG_FILES | sed -e 's/#[^ ]*//g' -e 's/ /\n /g')"
 echo "TOP LAYOUT: $TOP_LAYOUT"
 echo "LAYOUT FILE: $LAYOUT_FILE"
 echo "EXTRACT_FLATGLOB: $(echo $EXTRACT_FLATGLOB | sed -e 's/#[^ ]*//g' -e 's/ /\n /g')"
@@ -103,9 +103,9 @@ fi
 $LVS_ROOT/run_full_lvs --noextract 
 lvs_status=$?
 
-if [[ -f $LVS_ROOT/cvc/$TOP_SOURCE.$PDK.power || -f ${CONFIG_FILE%/*}/$TOP_SOURCE.power ]]; then
-	if [[ -f ${CONFIG_FILE%/*}/$TOP_SOURCE.power ]]; then
-		cp ${CONFIG_FILE%/*}/$TOP_SOURCE.power $WORK_ROOT/$TOP_LAYOUT.power
+if [[ -f $LVS_ROOT/$PDK/cvc.power.$TOP_SOURCE || -f ${CONFIG_FILE%/*}/cvc.power.$TOP_SOURCE ]]; then
+	if [[ -f ${CONFIG_FILE%/*}/cvc.power.$TOP_SOURCE ]]; then
+		cp ${CONFIG_FILE%/*}/cvc.power.$TOP_SOURCE $WORK_ROOT/cvc.power.$TOP_LAYOUT
 	fi
 	$LVS_ROOT/run_cvc $TOP_LAYOUT
 	cvc_status=$?
@@ -119,7 +119,7 @@ if [[ $scheck_status -ne 0 ]]; then
 $LOG_ROOT/ext.log
 $LOG_ROOT/nowell.ext.log
 $LOG_ROOT/soft.log
-$SIGNOFF_ROOT/lvs.soft.report"
+$SIGNOFF_ROOT/soft.report"
 fi
 
 echo "

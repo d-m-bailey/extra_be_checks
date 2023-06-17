@@ -4,7 +4,15 @@
 
 puts "Extracting with top ports unique (digital)"
 drc off
-#cif istyle sky130(legacy)
+if {[string first sky130 $::env(PDK)] >= 0} {
+    cif istyle sky130($::env(CIFIN_STYLE))
+
+} elseif {[string first gf180mcu $::env(PDK)] >= 0} {
+    cif istyle import($::env(CIFIN_STYLE))
+
+} else {
+	puts "ERROR: Unknown PDK - $::env(PDK)"
+}
 
 foreach cell $::env(FLATGLOB_CELLS) {
 	gds flatglob $cell
@@ -16,12 +24,13 @@ puts "Extracting $::env(LAYOUT_FILE)"
 gds read $::env(LAYOUT_FILE)
 
 foreach cell $::env(ABSTRACT_CELLS) {
-	load $cell 
+	load $cell
 	property LEFview true
 }
 
 load $::env(TOP)
 cd $::env(RUN_DIR)
+extract style ngspice($::env(EXTRACT_STYLE))
 extract no all
 extract do aliases
 extract do local
