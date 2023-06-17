@@ -27,8 +27,9 @@ else
 	export EXTRACT_LAYOUT=yes
 fi
 
+usage="usage: run_full_lvs [--noextract] [lvs_config_file [top_source [top_layout [layout_file]]]]"
 if [[ $# -gt 4 ]]; then
-	echo "usage: run_full_lvs [--noextract] [lvs_config_file [top_source [top_layout [layout_file]]]]"
+	echo $usage
 	exit 1
 fi
 
@@ -54,7 +55,7 @@ echo " "
 echo "Running LVS..."
 
 echo "TOP SOURCE: $TOP_SOURCE"
-echo "SOURCE FILE(S): $(echo $LVS_SPICE_FILES $LVS_VERILOG_FILES | sed -e 's/#[^ ]*//g' -e 's/ /\n /g')"
+echo "SOURCE FILE(S): $(echo $LVS_SPICE_FILES_TO_FIX $LVS_SPICE_FILES $LVS_VERILOG_FILES | sed -e 's/#[^ ]*//g' -e 's/ /\n /g')"
 echo "TOP LAYOUT: $TOP_LAYOUT"
 echo "LAYOUT FILE: $LAYOUT_FILE"
 echo "EXTRACT_FLATGLOB: $(echo $EXTRACT_FLATGLOB | sed -e 's/#[^ ]*//g' -e 's/ /\n /g')"
@@ -83,12 +84,12 @@ if [[ $EXTRACT_LAYOUT = yes ]]; then
 	rm -f $LOG_ROOT/ext.log
 fi
 
-if cmp -s $PDK_ROOT/$PDK/libs.tech/magic/$PDK.tech $LVS_ROOT/tech/$PDK.tech; then
-	awk 'NF > 1 && /version/' $LVS_ROOT/tech/$PDK.tech
+if cmp -s $PDK_ROOT/$PDK/libs.tech/magic/$PDK.tech $LVS_ROOT/tech/$PDK/$PDK.tech; then
+	awk 'NF > 1 && /version/' $LVS_ROOT/tech/$PDK/$PDK.tech
 else
 	echo "Tech files do not match:"
-	grep version $PDK_ROOT/$PDK/libs.tech/magic/$PDK.tech $LVS_ROOT/tech/$PDK.tech |
-		awk 'NF > 2'
+	grep version $PDK_ROOT/$PDK/libs.tech/magic/$PDK.tech $LVS_ROOT/tech/$PDK/$PDK.tech |
+		awk 'NF > 2 && ! /^ *#/'
 	echo "Results may be incorrect. Contact efabless to update the soft connection rules."
 	#exit 1
 fi
@@ -115,9 +116,8 @@ echo $LVS_FLATTEN |
 	sed 's/  */\n/g' >$WORK_ROOT/flatten
 if [[ -f $WORK_ROOT/layout.cells && -f $WORK_ROOT/verilog.cells ]]; then
 	# Do pseudo globbing against layout and verilog. "*" expansion only.
-	sed -e 's/\*/.*/g' -e 's/^/^/' -e 's/$/$/' $WORK_ROOT/flatten |
-		grep -f - $WORK_ROOT/layout.cells $WORK_ROOT/verilog.cells |
-		sed 's/.*cells://' |
+	sed -e 's/\*/.*/g' $WORK_ROOT/flatten |
+		grep -hx -f - $WORK_ROOT/layout.cells $WORK_ROOT/verilog.cells |
 		awk 'NF > 0' |
 		sort -u >$WORK_ROOT/flatten.glob
 else
@@ -129,9 +129,8 @@ echo $LVS_NOFLATTEN |
 	sed 's/  */\n/g' >$WORK_ROOT/noflatten
 if [[ -f $WORK_ROOT/layout.cells && -f $WORK_ROOT/verilog.cells ]]; then
 	# Do pseudo globbing against layout and verilog. "*" expansion only.
-	sed -e 's/\*/.*/g' -e 's/^/^/' -e 's/$/$/' $WORK_ROOT/noflatten |
-		grep -f - $WORK_ROOT/layout.cells $WORK_ROOT/verilog.cells |
-		sed 's/.*cells://' |
+	sed -e 's/\*/.*/g' $WORK_ROOT/noflatten |
+		grep -hx -f - $WORK_ROOT/layout.cells $WORK_ROOT/verilog.cells |
 		awk 'NF > 0' |
 		sort -u >$WORK_ROOT/noflatten.glob
 else
@@ -143,13 +142,12 @@ echo $LVS_IGNORE |
 	sed 's/  */\n/g' >$WORK_ROOT/ignore
 if [[ -f $WORK_ROOT/layout.cells && -f $WORK_ROOT/verilog.cells ]]; then
 	# Do pseudo globbing against layout and verilog. "*" expansion only.
-	sed -e 's/\*/.*/g' -e 's/^/^/' -e 's/$/$/' $WORK_ROOT/ignore |
-		grep -f - $WORK_ROOT/layout.cells $WORK_ROOT/verilog.cells |
-		sed 's/.*cells://' |
+	sed -e 's/\*/.*/g' $WORK_ROOT/ignore |
+		grep -hx -f - $WORK_ROOT/layout.cells $WORK_ROOT/verilog.cells |
 		awk 'NF > 0' |
 		sort -u >$WORK_ROOT/ignore.glob
 else
-	cp $WORK_ROOT/noflatten $WORK_ROOT/noflatten.glob
+	cp $WORK_ROOT/ignore $WORK_ROOT/ignore.glob
 fi
 
 # Add any cells that should be flattened before extraction to 'flatten'. globbing allowed.
@@ -198,7 +196,7 @@ if [[ $LAYOUT_FILE ]]; then
 		EXT_TYPE=digital
 	fi
 
-	env TOP=$TOP_LAYOUT RUN_DIR=$EXT_DIR magic -dnull -noc -rcfile $LVS_ROOT/tech/magicrc.well $LVS_ROOT/scripts/gds.$EXT_TYPE.spice.tcl </dev/null |
+	env TOP=$TOP_LAYOUT RUN_DIR=$EXT_DIR CIFIN_STYLE="" EXTRACT_STYLE="" magic -dnull -noc -rcfile $LVS_ROOT/tech/magicrc $LVS_ROOT/scripts/gds.$EXT_TYPE.spice.tcl </dev/null |
 		tee -a $LOG_ROOT/ext.log 2>&1
 	ext_status=${PIPESTATUS[0]}
 
@@ -216,7 +214,7 @@ else
 	if [[ ! -f $EXT_DIR/$TOP_LAYOUT.gds.spice ]]; then
 		echo "Error: missing $EXT_DIR/$TOP_LAYOUT.gds.spice"
 		echo "Specify gds_file to create"
-		echo "usage: run_full_lvs top_source_block spice_source verilog_source top_layout_block [gds_file]"
+		echo $usage
 		exit 2
 	fi
 	echo "Reusing $EXT_DIR/$TOP_LAYOUT.gds.spice."
@@ -230,16 +228,32 @@ Error: extraction did not complete successfully"
 fi
 
 #  5. Compare
-echo $LVS_SPICE_FILES |
-	sed 's/  */\n/g' |
-	grep -v '^#' |
-	awk 'NF > 0' >$WORK_ROOT/spice_files
-echo $LVS_VERILOG_FILES |
-	sed 's/  */\n/g' |
-	grep -v '^#' |
-	awk 'NF > 0' >$WORK_ROOT/verilog_files
+# Create lists of source files. Allow globbing.
+# Files in LVS_SPICE_FILES_TO_FIX are modified with a pdk specific program to local versions.
 
-cp $LVS_ROOT/tech/${PDK}_setup.tcl $WORK_ROOT/${PDK}_setup.tcl
+rm -rf $WORK_ROOT/spice_fix
+mkdir -p $WORK_ROOT/spice_fix
+cat /dev/null > $WORK_ROOT/spice_files
+SPICE_FIX_LIST=$( echo $LVS_SPICE_FILES_TO_FIX | sed 's/  */\n/g' | awk 'NF > 0 && ! /^#/' )
+if [[ $SPICE_FIX_LIST ]]; then
+	cp $SPICE_FIX_LIST $WORK_ROOT/spice_fix/.
+	$LVS_ROOT/tech/$PDK/fix_spice $WORK_ROOT/spice_fix/*.spice
+	ls --sort=none $WORK_ROOT/spice_fix/* |
+		grep -v '.org$' >$WORK_ROOT/spice_files
+fi
+
+SPICE_LIST=$( echo $LVS_SPICE_FILES | sed 's/  */\n/g' | awk 'NF > 0 && ! /^#/' )
+if [[ $SPICE_LIST ]]; then
+	ls --sort=none $SPICE_LIST >>$WORK_ROOT/spice_files
+fi
+
+cat /dev/null > $WORK_ROOT/verilog_files
+VERILOG_LIST=$( echo $LVS_VERILOG_FILES | sed 's/  */\n/g' | awk 'NF > 0 && ! /^#/' )
+if [[ $VERILOG_LIST ]]; then
+	ls --sort=none $VERILOG_LIST >>$WORK_ROOT/verilog_files
+fi
+
+cp $LVS_ROOT/tech/$PDK/${PDK}_setup.tcl $WORK_ROOT/${PDK}_setup.tcl
 
 while read cell; do
 	cat >>$WORK_ROOT/${PDK}_setup.tcl <<-flatten

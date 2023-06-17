@@ -390,7 +390,6 @@ foreach dev $devices {
 #---------------------------------------------------------------
 # e.g., ignore class "-circuit2 sky130_fc_sc_hd__decap_3"
 #---------------------------------------------------------------
-#Added programatically.
 
 #---------------------------------------------------------------
 # Allow the fill, decap, etc., cells to be parallelized
@@ -535,3 +534,5 @@ foreach cell $cells1 {
 	}
     }
 }
+
+#Added programatically.

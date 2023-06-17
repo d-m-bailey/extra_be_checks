@@ -25,12 +25,13 @@ lvs_vars = [
     'TOP_SOURCE',
     'TOP_LAYOUT',
     'LAYOUT_FILE',
-    'EXTRACT_FLATGLOB', 
-    'EXTRACT_ABSTRACT', 
-    'LVS_FLATTEN', 
-    'LVS_NOFLATTEN', 
-    'LVS_IGNORE', 
-    'LVS_SPICE_FILES', 
+    'EXTRACT_FLATGLOB',
+    'EXTRACT_ABSTRACT',
+    'LVS_FLATTEN',
+    'LVS_NOFLATTEN',
+    'LVS_IGNORE',
+    'LVS_SPICE_FILES_TO_FIX',
+    'LVS_SPICE_FILES',
     'LVS_VERILOG_FILES'
 ]
 
@@ -43,13 +44,13 @@ def substitute_env_variables(input_string, env):
     """
     string = input_string
     if "$" in string:
-        words = re.findall(r'\$\w+', string)  # returns a list of all environment variables used. 
+        words = re.findall(r'\$\w+', string)  # returns a list of all environment variables used.
         for w in words:
             env_var = w[1:]  # remove leading '$'
             if env_var in env:
                 string = string.replace(w, env.get(env_var), 1)  # only replace first occurence. Others will be replaced later.
             else:
-                print(f"ERROR: couldn't find environment variable {w} used in {input_string}", file=sys.stderr)   
+                print(f"ERROR: couldn't find environment variable {w} used in {input_string}", file=sys.stderr)
                 sys.exit(4)
 
     return string

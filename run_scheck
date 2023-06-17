@@ -54,12 +54,12 @@ if [[ -z "$LVS_ROOT" ]]; then
 	exit 1
 fi
 
-if cmp -s $PDK_ROOT/$PDK/libs.tech/magic/$PDK.tech $LVS_ROOT/tech/$PDK.tech; then
-	awk 'NF > 1 && /version/' $LVS_ROOT/tech/$PDK.tech
+if cmp -s $PDK_ROOT/$PDK/libs.tech/magic/$PDK.tech $LVS_ROOT/tech/$PDK/$PDK.tech; then
+	awk 'NF > 1 && /version/' $LVS_ROOT/tech/$PDK/$PDK.tech
 else
 	echo "WARNING: Tech files do not match:"
-	grep version $PDK_ROOT/$PDK/libs.tech/magic/$PDK.tech $LVS_ROOT/tech/$PDK.tech |
-		awk 'NF > 2'
+	grep version $PDK_ROOT/$PDK/libs.tech/magic/$PDK.tech $LVS_ROOT/tech/$PDK/$PDK.tech |
+		awk 'NF > 2 && ! /^ *#/'
 	echo "Results may be incorrect. Contact efabless to update the soft connection rules."
 	#exit 1
 fi
@@ -95,7 +95,7 @@ mkdir -p $LOG_ROOT
 mkdir -p $WORK_ROOT
 mkdir -p $SIGNOFF_ROOT
 
-rm -f $LOG_ROOT/soft.log $SIGNOFF_ROOT/lvs.soft.report
+rm -f $LOG_ROOT/soft.log $SIGNOFF_ROOT/soft.report
 if [[ $EXTRACT_LAYOUT = yes ]]; then
 	rm -f $LOG_ROOT/ext.log
 fi
@@ -154,7 +154,9 @@ if [[ $LAYOUT_FILE ]]; then
 		#  1. Extract gds_file with well connectivity
 		date "+BEGIN: %c" >$LOG_ROOT/ext.log
 		start_time=$SECONDS
-		magic -dnull -noc -rcfile $LVS_ROOT/tech/magicrc.well $LVS_ROOT/scripts/gds.$EXT_TYPE.spice.tcl </dev/null >>$LOG_ROOT/ext.log 2>&1
+		export CIFIN_STYLE=""
+		export EXTRACT_STYLE=""
+		magic -dnull -noc -rcfile $LVS_ROOT/tech/magicrc $LVS_ROOT/scripts/gds.$EXT_TYPE.spice.tcl </dev/null >>$LOG_ROOT/ext.log 2>&1
 		#  2. Remove well connections and disconnected nets.
 		sed -f $LVS_ROOT/scripts/remove_well.sed $RUN_DIR/$TOP.gds.spice |
 			awk -f $LVS_ROOT/scripts/remove_disconnect.awk - >$RUN_DIR/$TOP.gds.nowell.spice
@@ -172,7 +174,9 @@ if [[ $LAYOUT_FILE ]]; then
 		#  3. Extract gds_file without well connectivity
 		date "+BEGIN: %c" >$LOG_ROOT/nowell.ext.log
 		start_time=$SECONDS
-		magic -dnull -noc -rcfile $LVS_ROOT/tech/magicrc.nowell $LVS_ROOT/scripts/gds.$EXT_TYPE.spice.tcl </dev/null >>$LOG_ROOT/nowell.ext.log 2>&1
+		export CIFIN_STYLE=nowell
+		export EXTRACT_STYLE=nowell
+		magic -dnull -noc -rcfile $LVS_ROOT/tech/magicrc $LVS_ROOT/scripts/gds.$EXT_TYPE.spice.tcl </dev/null >>$LOG_ROOT/nowell.ext.log 2>&1
 		#  4. Remove disconnected nets.
 		awk -f $LVS_ROOT/scripts/remove_disconnect.awk $RUN_DIR/$TOP.gds.spice >$RUN_DIR/$TOP.gds.nowell.spice
 		date "+END: %c" >>$LOG_ROOT/nowell.ext.log
@@ -226,10 +230,10 @@ date "+BEGIN: %c" >$LOG_ROOT/soft.log
 start_time=$SECONDS
 : "${NETGEN_COLUMNS:=80}"
 export NETGEN_COLUMNS
-netgen -batch source $LVS_ROOT/tech/setup_file.soft.lvs |
+netgen -batch source $LVS_ROOT/tech/soft.lvs.script |
 	tee -a $LOG_ROOT/soft.log 2>&1
 scheck_status=${PIPESTATUS[0]}
-if [[ $scheck_status -ne 0 || $(tail $SIGNOFF_ROOT/lvs.soft.report | grep 'Circuits match uniquely\.' | wc -l) -ne 1 ]]; then
+if [[ $scheck_status -ne 0 || $(tail $SIGNOFF_ROOT/soft.report | grep 'Circuits match uniquely\.' | wc -l) -ne 1 ]]; then
 	echo "scheck status $scheck_status"
 	scheck_status=3
 fi
