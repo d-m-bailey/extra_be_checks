@@ -43,7 +43,7 @@ shopt -u nocasematch
 BASE_NAME=${DESIGN_NAME//[A-Z0-9][A-Z0-9]_}  # remove leading 2 byte prefices
 if [[ ! -f $WORK_ROOT/cvc.power.$DESIGN_NAME ]]; then
 	if [[ -f $LVS_ROOT/tech/$PDK/cvc.power.$BASE_NAME ]]; then
-		cp $LVS_ROOT/tech/$PDK/cvc.power.$BASE_NAME $WORK_ROOT/$DESIGN_NAME.power
+		cp $LVS_ROOT/tech/$PDK/cvc.power.$BASE_NAME $WORK_ROOT/cvc.power.$DESIGN_NAME
 	else
 		echo "
 ERROR: Could not find $WORK_ROOT/cvc.power.$DESIGN_NAME"
