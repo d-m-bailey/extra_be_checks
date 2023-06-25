@@ -49,24 +49,25 @@ export LOG_ROOT SIGNOFF_ROOT WORK_ROOT
 mkdir -p $LOG_ROOT
 mkdir -p $SIGNOFF_ROOT
 mkdir -p $WORK_ROOT
+rm -f $LOG_ROOT/hier.log
 
-log_file=$LOG_ROOT/hier.log
+log_file=$WORK_ROOT/hier.log
 verilog_cell_file=$WORK_ROOT/verilog.cells
 layout_cell_file=$WORK_ROOT/layout.cells
 
 echo " "
 echo "Running hierarchical comparison between verilog and layout..."
 
-date "+BEGIN: %c" >$log_file
+date "+BEGIN: %c" >$WORK_ROOT/hier.log
 start_time=$SECONDS
 
 if [[ $(echo $SOURCE_FILES | wc -w) -gt 0 ]]; then
 	echo "Creating $verilog_cell_file from the following files..." |
-		tee -a $log_file
+		tee -a $WORK_ROOT/hier.log
 	echo $SOURCE_FILES |
 		sed -e 's/  */\n/g' |
 		sed -e 's/^/	/' |
-		tee -a $log_file
+		tee -a $WORK_ROOT/hier.log
 
 	sed '/^[ 	]*module[ 	].*[^ 	](/s/(/ (/' $(echo $SOURCE_FILES) |
 		awk -v top=$TOP_SOURCE '
@@ -77,7 +78,7 @@ if [[ $(echo $SOURCE_FILES | wc -w) -gt 0 ]]; then
 			}
 			$1 == "module" {
 				if ( $2 in modules ) {
-					print "Duplicate module definition", $2 > "'$log_file'";
+					print "Duplicate module definition", $2 > "'$WORK_ROOT/hier.log'";
 				}
 				if ( ! ( $2 in cells ) ) {
 					cells[$2] = 1;
@@ -172,7 +173,7 @@ if [[ $LAYOUT_FILE ]]; then
 			app.exit(0)
 		EOF
 		klayout -b -rm $WORK_ROOT/gds2txt.py |
-			tee -a $log_file
+			tee -a $WORK_ROOT/hier.log
 		gzip -f $TEXT_FILE
 		CAT=zcat
 	fi
@@ -243,19 +244,25 @@ comm -23 $WORK_ROOT/verilog.hier $WORK_ROOT/layout.hier |
 				match_count += 1;
 				print verilog[match_count] "," instances[verilog[match_count]];
 			}
-		}' - >$SIGNOFF_ROOT/hier.csv
+		}' - >$WORK_ROOT/hier.csv
 
-if [[ $(cat $SIGNOFF_ROOT/hier.csv | wc -l) -eq 1 ]]; then
+if [[ $(cat $WORK_ROOT/hier.csv | wc -l) -eq 1 ]]; then
 	echo "Hierarchy check for $TOP_SOURCE passed." |
-		tee -a $log_file
+		tee -a $WORK_ROOT/hier.log
 else
-	echo "Hierarchy check for $TOP_SOURCE failed. See $SIGNOFF_ROOT/hier.csv" |
-		tee -a $log_file
+	echo "Hierarchy check for $TOP_SOURCE failed. See $WORK_ROOT/hier.csv" |
+		tee -a $WORK_ROOT/hier.log
 fi
 
-date "+END: %c" >>$log_file
+date "+END: %c" >>$WORK_ROOT/hier.log
 runtime=$((SECONDS - start_time))
 hours=$((runtime / 3600))
 minutes=$(((runtime % 3600) / 60))
 seconds=$(((runtime % 3600) % 60))
-printf "Runtime: %d:%02d:%02d (hh:mm:ss)\n" $hours $minutes $seconds >>$log_file
+printf "Runtime: %d:%02d:%02d (hh:mm:ss)\n" $hours $minutes $seconds >>$WORK_ROOT/hier.log
+if [[ $WORK_ROOT != $LOG_ROOT ]]; then
+	cp $WORK_ROOT/hier.log $LOG_ROOT/.
+fi
+if [[ $WORK_ROOT != $SIGNOFF_ROOT ]]; then
+	cp $WORK_ROOT/hier.csv $LOG_ROOT/.
+fi

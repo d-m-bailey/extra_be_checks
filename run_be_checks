@@ -84,6 +84,7 @@ fi
 export LOG_ROOT SIGNOFF_ROOT WORK_ROOT
 
 mkdir -p $LOG_ROOT $SIGNOFF_ROOT $WORK_ROOT
+rm -f $LOG_ROOT/{ext,nowell.ext,soft,lvs,cvc}.log $SIGNOFF_ROOT/{soft,lvs,cvc,cvc.oeb}.report
 
 start_time=$SECONDS
 
@@ -103,12 +104,17 @@ fi
 $LVS_ROOT/run_full_lvs --noextract 
 lvs_status=$?
 
-if [[ -f $LVS_ROOT/$PDK/cvc.power.$TOP_SOURCE || -f ${CONFIG_FILE%/*}/cvc.power.$TOP_SOURCE ]]; then
+if [[ -f $LVS_ROOT/tech/$PDK/cvc.power.$TOP_SOURCE || -f ${CONFIG_FILE%/*}/cvc.power.$TOP_SOURCE ]]; then
 	if [[ -f ${CONFIG_FILE%/*}/cvc.power.$TOP_SOURCE ]]; then
 		cp ${CONFIG_FILE%/*}/cvc.power.$TOP_SOURCE $WORK_ROOT/cvc.power.$TOP_LAYOUT
 	fi
 	$LVS_ROOT/run_cvc $TOP_LAYOUT
 	cvc_status=$?
+fi
+
+if [[ $TOP_SOURCE == *user_*project_wrapper ]]; then
+	$LVS_ROOT/check_user_oeb $TOP_LAYOUT
+	oeb_status=$?
 fi
 
 echo "
@@ -138,6 +144,12 @@ CVC result:"
 	grep 'CVC: Total:' $LOG_ROOT/cvc.log
 fi
 
+if [[ $TOP_SOURCE == *user_*project_wrapper ]]; then
+	echo "
+OEB check result:"
+	cat $SIGNOFF_ROOT/cvc.oeb.report
+fi
+
 runtime=$((SECONDS - start_time))
 hours=$((runtime / 3600))
 minutes=$(((runtime % 3600) / 60))
@@ -146,14 +158,14 @@ printf "\nRuntime: %d:%02d:%02d (hh:mm:ss)\n" $hours $minutes $seconds
 
 # If any of the checks had an error, set return code.
 # NOTE: ignores hierarchy check errors
-# NOTE: cvc_status ignored if not run
-if [[ $scheck_status -eq 0 && $lvs_status -eq 0 && ${cvc_status:=0} -eq 0 ]]; then
+# NOTE: cvc_status and oeb_status ignored if not run
+if [[ $scheck_status -eq 0 && $lvs_status -eq 0 && ${cvc_status:=0} -eq 0 && ${oeb_status:=0} -eq 0 ]]; then
 	echo "
 No errors detected"
 	exit 0
 
 else
 	echo "
-WARNING: possible errors SOFT $scheck_status LVS $lvs_status CVC $cvc_status"
+WARNING: possible errors SOFT $scheck_status LVS $lvs_status CVC $cvc_status OEB $oeb_status"
 	exit 1
 fi

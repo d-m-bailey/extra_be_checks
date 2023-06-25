@@ -410,7 +410,7 @@ runtime=$((SECONDS - start_time))
 hours=$((runtime / 3600))
 minutes=$(((runtime % 3600) / 60))
 seconds=$(((runtime % 3600) % 60))
-printf "Runtime: %d:%02d:%02d (hh:mm:ss)\n" $hours $minutes $seconds >>$WORK_ROOT/cvc.log
+printf "Runtime: %d:%02d:%02d (hh:mm:ss)\n" $hours $minutes $seconds >>$WORK_ROOT/cvc.oeb.log
 
 if [[ $WORK_ROOT != $LOG_ROOT ]]; then
 	cp $WORK_ROOT/cvc.oeb.log $LOG_ROOT/cvc.oeb.log
@@ -476,21 +476,21 @@ awk '
 		for ( i in oeb_connections ) {
 			if ( analog_connections[i] > 0 ) {
 				if ( in_connections[i] > 0 || out_connections[i] > 0 ) {
-					printf "ERROR: analog and digital connections at gpio-%d ", i;
+					printf "ERROR: gpio-%d analog and digital connections ", i;
 					printf "analog:%d in:%d out%d ", analog_connections[i], in_connections[i], out_connections[i];
 					printf "oeb: min/sim/max=%s/%s/%s\n", min[i], sim[i], max[i];
 				} else if ( ! ( sim[i] ~ /vdd/ ) ) {
-					printf "Warning: oeb should always be high for analog gpio-%d ", i;
+					printf "Warning: gpio-%d oeb should always be high for analog ", i;
 					printf "analog:%d oeb: min/sim/max=%s/%s/%s\n", analog_connections[i], min[i], sim[i], max[i];
 				}
 			} else if ( in_connections[i] > 0 && out_connections[i] == 0 ) {
 				if ( ! ( sim[i] ~ /vdd/ ) ) {
-					printf "Warning: oeb should always be high for input only gpio-%d ", i;
+					printf "Warning: gpio-%d oeb should always be high for input only ", i;
 					printf "in:%d out:%d oeb: min/sim/max=%s/%s/%s\n", in_connections[i], out_connections[i], min[i], sim[i], max[i];
 				}
 			} else if ( out_connections[i] > 0 ) {
 				if ( min[i] !~ /vss/ ) {
-					printf "ERROR: oeb must have possible low for output gpio-%d ", i;
+					printf "ERROR: gpio-%d oeb must have possible low for output ", i;
 					printf "in:%d out:%d oeb: min/sim/max=%s/%s/%s\n", in_connections[i], out_connections[i], min[i], sim[i], max[i];
 				}
 			}

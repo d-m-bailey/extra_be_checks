@@ -184,7 +184,7 @@ if [[ $LAYOUT_FILE ]]; then
 
 	#  1. Extract gds_file
 	#  Note: uses the same extraction commands as sconnect, so symbolic links to the EXT_DIR may be used
-	date "+BEGIN: %c" >$LOG_ROOT/ext.log
+	date "+BEGIN: %c" >$WORK_ROOT/ext.log
 	start_time=$SECONDS
 
 	echo " "
@@ -197,15 +197,18 @@ if [[ $LAYOUT_FILE ]]; then
 	fi
 
 	env TOP=$TOP_LAYOUT RUN_DIR=$EXT_DIR CIFIN_STYLE="" EXTRACT_STYLE="" magic -dnull -noc -rcfile $LVS_ROOT/tech/magicrc $LVS_ROOT/scripts/gds.$EXT_TYPE.spice.tcl </dev/null |
-		tee -a $LOG_ROOT/ext.log 2>&1
+		tee -a $WORK_ROOT/ext.log 2>&1
 	ext_status=${PIPESTATUS[0]}
 
-	date "+END: %c" >>$LOG_ROOT/ext.log
+	date "+END: %c" >>$WORK_ROOT/ext.log
 	runtime=$((SECONDS - start_time))
 	hours=$((runtime / 3600))
 	minutes=$(((runtime % 3600) / 60))
 	seconds=$(((runtime % 3600) % 60))
-	printf "Runtime: %d:%02d:%02d (hh:mm:ss)\n" $hours $minutes $seconds >>$LOG_ROOT/ext.log
+	printf "Runtime: %d:%02d:%02d (hh:mm:ss)\n" $hours $minutes $seconds >>$WORK_ROOT/ext.log
+	if [[ $WORK_ROOT != $LOG_ROOT ]]; then
+		cp $WORK_ROOT/ext.log $LOG_ROOT/ext.log
+	fi
 
 	# Compress large ext files
 	find $EXT_DIR -name '*.ext' -size +1M -exec gzip {} \;
@@ -301,51 +304,57 @@ while read verilog_file; do
 done <$WORK_ROOT/verilog_files
 
 cat >>$WORK_ROOT/lvs.script <<-lvs
-	lvs "\$layout $TOP_LAYOUT" "\$source $TOP_SOURCE" $WORK_ROOT/${PDK}_setup.tcl $SIGNOFF_ROOT/lvs.report -blackbox -json -noflatten=$WORK_ROOT/noflatten.glob
+	lvs "\$layout $TOP_LAYOUT" "\$source $TOP_SOURCE" $WORK_ROOT/${PDK}_setup.tcl $WORK_ROOT/lvs.report -blackbox -json -noflatten=$WORK_ROOT/noflatten.glob
 lvs
 
-date "+BEGIN: %c" >$LOG_ROOT/lvs.log
+date "+BEGIN: %c" >$WORK_ROOT/lvs.log
 start_time=$SECONDS
 
 echo " "
 : "${NETGEN_COLUMNS:=80}"
 export NETGEN_COLUMNS
 netgen -batch source $WORK_ROOT/lvs.script 2>&1 |
-	tee -a $LOG_ROOT/lvs.log
+	tee -a $WORK_ROOT/lvs.log
 netgen_status=${PIPESTATUS[0]}
 
 # Check for circuits that were compared as black boxes.
 awk '
 /Circuit 1 .* will not flatten/ {print $4, "is a black box in the layout"}
 /Circuit 2 .* will not flatten/ {print $4, "is a black box in the source"}
-' $SIGNOFF_ROOT/lvs.report >$SIGNOFF_ROOT/lvs.unflattened
+' $WORK_ROOT/lvs.report >$WORK_ROOT/lvs.unflattened
 awk '
 /__fill/ {next} # ignore abstract devices
 /__tapvpwrvgnd/ {next}
 /__fakediode/ {next}
 /sky130_fd_pr__/ {next} # ignore primitive devices
 /Matching pins/ {print $4, "is a black box in the layout and source"}
-' $LOG_ROOT/lvs.log >>$SIGNOFF_ROOT/lvs.unflattened
-if [[ -s $SIGNOFF_ROOT/lvs.unflattened ]]; then
-	echo "Warning: device level LVS may be incomplete due to $(cat $SIGNOFF_ROOT/lvs.unflattened | wc -l) unflattened cell(s): see $SIGNOFF_ROOT/lvs.unflattened" |
-		tee -a $SIGNOFF_ROOT/lvs.report |
-		tee -a $LOG_ROOT/lvs.log
+' $WORK_ROOT/lvs.log >>$WORK_ROOT/lvs.unflattened
+if [[ -s $WORK_ROOT/lvs.unflattened ]]; then
+	echo "Warning: device level LVS may be incomplete due to $(cat $WORK_ROOT/lvs.unflattened | wc -l) unflattened cell(s): see $SIGNOFF_ROOT/lvs.unflattened" |
+		tee -a $WORK_ROOT/lvs.report |
+		tee -a $WORK_ROOT/lvs.log
 	lvs_warning=1
 fi
 
 if [[ -s $WORK_ROOT/ignore.glob ]]; then
 	echo "Warning: device level LVS may be incomplete because $(cat $WORK_ROOT/ignore.glob | wc -l) cell(s) was/were ignored: see $WORK_ROOT/ignore.glob" |
-		tee -a $SIGNOFF_ROOT/lvs.report |
-		tee -a $LOG_ROOT/lvs.log
+		tee -a $WORK_ROOT/lvs.report |
+		tee -a $WORK_ROOT/lvs.log
 	lvs_warning=1
 fi
 
-date "+END: %c" >>$LOG_ROOT/lvs.log
+date "+END: %c" >>$WORK_ROOT/lvs.log
 runtime=$((SECONDS - start_time))
 hours=$((runtime / 3600))
 minutes=$(((runtime % 3600) / 60))
 seconds=$(((runtime % 3600) % 60))
-printf "Runtime: %d:%02d:%02d (hh:mm:ss)\n" $hours $minutes $seconds >>$LOG_ROOT/lvs.log
+printf "Runtime: %d:%02d:%02d (hh:mm:ss)\n" $hours $minutes $seconds >>$WORK_ROOT/lvs.log
+if [[ $WORK_ROOT != $LOG_ROOT ]]; then
+	cp $WORK_ROOT/lvs.log $LOG_ROOT/.
+fi
+if [[ $WORK_ROOT != $SIGNOFF_ROOT ]]; then
+	cp $WORK_ROOT/lvs.report $WORK_ROOT/lvs.unflattened $SIGNOFF_ROOT/.
+fi
 
 # Set exit code
 if [[ $netgen_status -ne 0 ]]; then
