@@ -472,28 +472,42 @@ awk '
 		}
 	}
 	END {
-		print "oeb connections:", length(oeb_connections);
+		#print "oeb connections:", length(oeb_connections);
+		print " gpio |   in   |   out  | analog |  oeb min/sim/max  | Message";
+		     #"  xx  | xxxxxx | xxxxxx | xxxxxx | vxxx*/vxxx*/vxxx* |
 		for ( i in oeb_connections ) {
+			printf "  %2d  | %6s | %6s | %6s | %5s/%5s/%5s | ", \
+				i, (in_connections[i] == 0) ? "" : sprintf("%6d", in_connections[i]), \
+				(out_connections[i] == 0) ? "" : sprintf("%6d", out_connections[i]), \
+				(analog_connections[i] == 0) ? "" : sprintf("%6d", analog_connections[i]), \
+				min[i], sim[i], max[i];
 			if ( analog_connections[i] > 0 ) {
-				if ( in_connections[i] > 0 || out_connections[i] > 0 ) {
-					printf "ERROR: gpio-%d analog and digital connections ", i;
-					printf "analog:%d in:%d out%d ", analog_connections[i], in_connections[i], out_connections[i];
-					printf "oeb: min/sim/max=%s/%s/%s\n", min[i], sim[i], max[i];
-				} else if ( ! ( sim[i] ~ /vdd/ ) ) {
-					printf "Warning: gpio-%d oeb should always be high for analog ", i;
-					printf "analog:%d oeb: min/sim/max=%s/%s/%s\n", analog_connections[i], min[i], sim[i], max[i];
+				if ( in_connections[i] > 0 || out_connections[i] > 0 ) {  # both digital and analog
+					printf "ERROR: can not have both analog and digital connections";
+					#printf "ERROR: gpio-%d analog and digital connections ", i;
+					#printf "analog:%d in:%d out%d ", analog_connections[i], in_connections[i], out_connections[i];
+					#printf "oeb: min/sim/max=%s/%s/%s\n", min[i], sim[i], max[i];
+				} else if ( ! ( sim[i] ~ /vccd/ ) ) {  # analog signals should disable output
+					printf "Warning: oeb should always be high for analog";
+					#printf "Warning: gpio-%d oeb should always be high for analog ", i;
+					#printf "analog:%d oeb: min/sim/max=%s/%s/%s\n", analog_connections[i], min[i], sim[i], max[i];
 				}
 			} else if ( in_connections[i] > 0 && out_connections[i] == 0 ) {
-				if ( ! ( sim[i] ~ /vdd/ ) ) {
-					printf "Warning: gpio-%d oeb should always be high for input only ", i;
-					printf "in:%d out:%d oeb: min/sim/max=%s/%s/%s\n", in_connections[i], out_connections[i], min[i], sim[i], max[i];
+				if ( ! ( sim[i] ~ /vccd/ ) ) {  # input only signals should never enable output
+					printf "Warning: oeb should always be high for input only";
+					#printf "Warning: gpio-%d oeb should always be high for input only ", i;
+					#printf "in:%d out:%d oeb: min/sim/max=%s/%s/%s\n", in_connections[i], out_connections[i], min[i], sim[i], max[i];
 				}
 			} else if ( out_connections[i] > 0 ) {
-				if ( min[i] !~ /vss/ ) {
-					printf "ERROR: gpio-%d oeb must have possible low for output ", i;
-					printf "in:%d out:%d oeb: min/sim/max=%s/%s/%s\n", in_connections[i], out_connections[i], min[i], sim[i], max[i];
+				if ( min[i] !~ /vssd/ ) {  # output signals must be enable-able
+					printf "ERROR: oeb must have possible low for output";
+					#printf "ERROR: gpio-%d oeb must have possible low for output ", i;
+					#printf "in:%d out:%d oeb: min/sim/max=%s/%s/%s\n", in_connections[i], out_connections[i], min[i], sim[i], max[i];
+				} else if ( in_connections[i] > 0 && sim[i] ~ /vssd/ ) {  # input is always driven by user output in user mode
+					printf "Warning: output always drives input in user mode";
 				}
 			}
+			printf "\n";
 			#print "gpio-" i, "analog:", analog_connections[i], "in:", in_connections[i], "out:", out_connections[i], "oeb: " min[i] "/" sim[i] "/" max[i];
 		}
 	}' $LOG_ROOT/cvc.oeb.log > $SIGNOFF_ROOT/cvc.oeb.report
