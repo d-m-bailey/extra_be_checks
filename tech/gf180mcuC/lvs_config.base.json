@@ -4,8 +4,8 @@
 	],
 	"EXTRACT_ABSTRACT": [
 		"*__fill_*",
-		"*__fakediode_*",
-		"*__tapvpwrvgnd_*"
+		"*__endcap",
+		"*__filltie"
 	],
 	"LVS_FLATTEN": [
 		""
