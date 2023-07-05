@@ -64,6 +64,7 @@ fi
 
 if [[ $DESIGN_NAME == *user_analog_project_wrapper ]]; then
 	cat >$WORK_ROOT/cvc.oeb.script <<-cvcin
+		c 6
 		gn io_in[0]
 		gn io_in[1]
 		gn io_in[2]
@@ -488,13 +489,13 @@ awk '
 					#printf "analog:%d in:%d out%d ", analog_connections[i], in_connections[i], out_connections[i];
 					#printf "oeb: min/sim/max=%s/%s/%s\n", min[i], sim[i], max[i];
 				} else if ( ! ( sim[i] ~ /vccd/ ) ) {  # analog signals should disable output
-					printf "Warning: oeb should always be high for analog";
+					printf "ERROR: oeb should always be high for analog";
 					#printf "Warning: gpio-%d oeb should always be high for analog ", i;
 					#printf "analog:%d oeb: min/sim/max=%s/%s/%s\n", analog_connections[i], min[i], sim[i], max[i];
 				}
 			} else if ( in_connections[i] > 0 && out_connections[i] == 0 ) {
 				if ( ! ( sim[i] ~ /vccd/ ) ) {  # input only signals should never enable output
-					printf "Warning: oeb should always be high for input only";
+					printf "ERROR: oeb should always be high for input only";
 					#printf "Warning: gpio-%d oeb should always be high for input only ", i;
 					#printf "in:%d out:%d oeb: min/sim/max=%s/%s/%s\n", in_connections[i], out_connections[i], min[i], sim[i], max[i];
 				}
@@ -504,23 +505,27 @@ awk '
 					#printf "ERROR: gpio-%d oeb must have possible low for output ", i;
 					#printf "in:%d out:%d oeb: min/sim/max=%s/%s/%s\n", in_connections[i], out_connections[i], min[i], sim[i], max[i];
 				} else if ( in_connections[i] > 0 && sim[i] ~ /vssd/ ) {  # input is always driven by user output in user mode
-					printf "Warning: output always drives input in user mode";
+					printf "Warning: output always drives input. sky130: OK for pull up/down.";
 				}
 			}
 			printf "\n";
 			#print "gpio-" i, "analog:", analog_connections[i], "in:", in_connections[i], "out:", out_connections[i], "oeb: " min[i] "/" sim[i] "/" max[i];
 		}
-	}' $LOG_ROOT/cvc.oeb.log > $SIGNOFF_ROOT/cvc.oeb.report
+	}' $LOG_ROOT/cvc.oeb.log > $WORK_ROOT/cvc.oeb.report
 
-if [[ $cvc_status -eq 0 && $(grep '^CVC: End:' $LOG_ROOT/cvc.oeb.log | wc -l) -ne 1 ]]; then
+if [[ $WORK_ROOT != $SIGNOFF_ROOT ]]; then
+	cp $WORK_ROOT/cvc.oeb.report $SIGNOFF_ROOT/cvc.oeb.report
+fi
+
+if [[ $cvc_status -eq 0 && $(grep -c '^CVC: End:' $LOG_ROOT/cvc.oeb.log) -ne 1 ]]; then
 	# CVC finished abnormally
 	exit 4
 
-elif [[ $cvc_status -eq 0 && $(grep '^ERROR' $SIGNOFF_ROOT/cvc.oeb.report | wc -w) -gt 0 ]]; then
+elif [[ $cvc_status -eq 0 && $(grep -c ERROR $SIGNOFF_ROOT/cvc.oeb.report) -gt 0 ]]; then
 	# CVC finished normally, but detected errors
 	exit 5
 
-elif [[ $cvc_status -eq 0 && $(grep '^Warning' $SIGNOFF_ROOT/cvc.oeb.report | wc -w) -gt 0 ]]; then
+elif [[ $cvc_status -eq 0 && $(grep -c Warning $SIGNOFF_ROOT/cvc.oeb.report) -gt 0 ]]; then
 	# CVC finished normally, but detected warings
 	exit 6
 

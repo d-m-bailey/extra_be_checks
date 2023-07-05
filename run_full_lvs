@@ -224,7 +224,7 @@ else
 fi
 
 # Check that extraction completed successfully
-if [[ ${magic_status:=0} -ne 0 || $(grep 'exttospice finished.' $LOG_ROOT/ext.log | wc -l) -ne 1 ]]; then
+if [[ ${magic_status:=0} -ne 0 || $(grep -c 'exttospice finished.' $LOG_ROOT/ext.log) -ne 1 ]]; then
 	echo "
 Error: extraction did not complete successfully"
 	exit 4
@@ -362,19 +362,19 @@ if [[ $netgen_status -ne 0 ]]; then
 Error: netgen ended abnormally."
 
 # Missing 'Final result' line.
-elif [[ $(grep 'Final result:' $SIGNOFF_ROOT/lvs.report | wc -l) -ne 1 ]]; then
+elif [[ $(grep -c 'Final result:' $SIGNOFF_ROOT/lvs.report) -ne 1 ]]; then
 	netgen_status=4
 	echo "
 Error: netgen did not complete."
 
 # Did not uniquely match.
-elif [[ $(grep 'Final result: Circuits match uniquely\.' $SIGNOFF_ROOT/lvs.report | wc -l) -ne 1 ]]; then
+elif [[ $(grep -c 'Final result: Circuits match uniquely\.' $SIGNOFF_ROOT/lvs.report) -ne 1 ]]; then
 	netgen_status=4
 	echo "
 Error: LVS mismatch."
 
 # Property errors
-elif [[ $(grep 'The following cells had property errors:' $SIGNOFF_ROOT/lvs.report | wc -l) -gt 0 ]]; then
+elif [[ $(grep -c 'The following cells had property errors:' $SIGNOFF_ROOT/lvs.report) -gt 0 ]]; then
 	netgen_status=6
 	echo "
 Error: Property mismatch."

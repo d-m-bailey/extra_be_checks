@@ -84,14 +84,15 @@ fi
 export LOG_ROOT SIGNOFF_ROOT WORK_ROOT
 
 mkdir -p $LOG_ROOT $SIGNOFF_ROOT $WORK_ROOT
-rm -f $LOG_ROOT/{ext,nowell.ext,soft,lvs,cvc}.log $SIGNOFF_ROOT/{soft,lvs,cvc,cvc.oeb}.report
+rm -f $LOG_ROOT/{soft,lvs,cvc,cvc.oeb}.log $SIGNOFF_ROOT/{soft,lvs,cvc,cvc.oeb}.report $SIGNOFF_ROOT/hier.csv
+if [[ $EXTRACT_LAYOUT = yes ]]; then
+	rm -f $LOG_ROOT/{ext,nowell.ext}.log
+fi
 
 start_time=$SECONDS
 
-if [[ $LAYOUT_FILE ]]; then
-	$LVS_ROOT/run_hier_check $TOP_SOURCE "$(echo $LVS_VERILOG_FILES | sed 's/#[^ ]*//g')" $TOP_LAYOUT $LAYOUT_FILE
-	hier_status=$?
-fi
+$LVS_ROOT/run_hier_check $TOP_SOURCE "$(echo $LVS_VERILOG_FILES | sed 's/#[^ ]*//g')" $TOP_LAYOUT $LAYOUT_FILE
+hier_status=$?
 
 if [[ $EXTRACT_LAYOUT = yes ]]; then
 	$LVS_ROOT/run_scheck 
@@ -115,6 +116,7 @@ fi
 if [[ $TOP_SOURCE == *user_*project_wrapper ]]; then
 	$LVS_ROOT/check_user_oeb $TOP_LAYOUT
 	oeb_status=$?
+	cat $SIGNOFF_ROOT/cvc.oeb.report
 fi
 
 echo "
@@ -145,9 +147,10 @@ CVC result:"
 fi
 
 if [[ $TOP_SOURCE == *user_*project_wrapper ]]; then
+	oeb_errors=$( grep -c ERROR $SIGNOFF_ROOT/cvc.oeb.report )
+	oeb_warnings=$( grep -c Warning $SIGNOFF_ROOT/cvc.oeb.report )
 	echo "
-OEB check result:"
-	cat $SIGNOFF_ROOT/cvc.oeb.report
+OEB check result: ERRORS: $oeb_errors  Warnings: $oeb_warnings"
 fi
 
 runtime=$((SECONDS - start_time))

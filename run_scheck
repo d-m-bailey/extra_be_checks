@@ -200,7 +200,7 @@ if [[ $LAYOUT_FILE ]]; then
 	# Compress large ext files
 	find $WORK_ROOT/*ext -name '*.ext' -size +1M -exec gzip {} \;
 
-	if [[ $(grep 'exttospice finished' $LOG_ROOT/ext.log $LOG_ROOT/nowell.ext.log | wc -l) -ne 2 ]]; then
+	if [[ $(grep -c 'exttospice finished' $LOG_ROOT/ext.log $LOG_ROOT/nowell.ext.log) -ne 2 ]]; then
 		echo "Extraction error: see $LOG_ROOT/ext.log
 and/or $LOG_ROOT/nowell.ext.log"
 		exit 2
@@ -219,13 +219,13 @@ else
 		echo "usage: run_scheck top_block [gds_file]"
 		exit 2
 	fi
-	if [[ $(grep 'exttospice finished.' $LOG_ROOT/ext.log | wc -l) -ne 1 ]]; then
+	if [[ $(grep -c 'exttospice finished.' $LOG_ROOT/ext.log) -ne 1 ]]; then
 		echo "
 Error: extraction did not complete successfully. See
 $LOG_ROOT/ext.log"
 		exit 4
 	fi
-	if [[ $(grep 'exttospice finished.' $LOG_ROOT/nowell.ext.log | wc -l) -ne 1 ]]; then
+	if [[ $(grep -c 'exttospice finished.' $LOG_ROOT/nowell.ext.log) -ne 1 ]]; then
 		echo "
 Error: extraction did not complete successfully. See
 $LOG_ROOT/nowell.ext.log"
@@ -242,7 +242,7 @@ export NETGEN_COLUMNS
 netgen -batch source $LVS_ROOT/tech/soft.lvs.script |
 	tee -a $WORK_ROOT/soft.log 2>&1
 scheck_status=${PIPESTATUS[0]}
-if [[ $scheck_status -ne 0 || $(tail $WORK_ROOT/soft.report | grep 'Circuits match uniquely\.' | wc -l) -ne 1 ]]; then
+if [[ $scheck_status -ne 0 || $(tail $WORK_ROOT/soft.report | grep -c 'Circuits match uniquely\.') -ne 1 ]]; then
 	echo "scheck status $scheck_status"
 	scheck_status=3
 fi
