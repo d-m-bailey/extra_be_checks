@@ -79,36 +79,31 @@ if [[ -z "$PDK_ROOT" || -z "$PDK" ]]; then
 	exit 1
 fi
 
-rm -f $LOG_ROOT/lvs.log $SIGNOFF_ROOT/lvs.report
-if [[ $EXTRACT_LAYOUT = yes ]]; then
-	rm -f $LOG_ROOT/ext.log
-fi
-
-if cmp -s $PDK_ROOT/$PDK/libs.tech/magic/$PDK.tech $LVS_ROOT/tech/$PDK/$PDK.tech; then
-	awk 'NF > 1 && /version/' $LVS_ROOT/tech/$PDK/$PDK.tech
-else
-	echo "Tech files do not match:"
-	grep version $PDK_ROOT/$PDK/libs.tech/magic/$PDK.tech $LVS_ROOT/tech/$PDK/$PDK.tech |
-		awk 'NF > 2 && ! /^ *#/'
-	echo "Results may be incorrect. Contact efabless to update the soft connection rules."
-	#exit 1
-fi
-
 if [[ ! -f $WORK_ROOT/layout.cells || ! -f $WORK_ROOT/verilog.cells ]]; then
 	$LVS_ROOT/run_hier_check $TOP_SOURCE "$(echo $LVS_VERILOG_FILES | sed 's/#[^ ]*//g')" $TOP_LAYOUT $LAYOUT_FILE
 fi
 
-echo $EXTRACT_FLATGLOB |
-	sed 's/  */\n/g' >$WORK_ROOT/flatglob
-
-# create work abstract file based on actual cells used (pseudo globbing)
-echo $EXTRACT_ABSTRACT |
-	sed 's/  */\n/g' >$WORK_ROOT/abstract
-if [[ -f $WORK_ROOT/layout.cells ]]; then
-	sed -e 's/\*/.*/g' -e 's/^/^/' -e 's/$/$/' $WORK_ROOT/abstract |
-		grep -f - $WORK_ROOT/layout.cells >$WORK_ROOT/abstract.glob
+# Extraction is now a separate program.
+rm -f $LOG_ROOT/lvs.log $SIGNOFF_ROOT/lvs.report
+export EXT_DIR=$WORK_ROOT/ext
+if [[ $EXTRACT_LAYOUT = yes ]]; then
+	env CIFIN_STYLE= EXTRACT_STYLE= $LVS_ROOT/run_extract
+	extract_status=$?
 else
-	cp $WORK_ROOT/abstract $WORK_ROOT/abstract.glob
+	if [[ ! -f $EXT_DIR/$TOP_LAYOUT.gds.spice ]]; then
+		echo "Error: missing $EXT_DIR/$TOP_LAYOUT.gds.spice"
+		echo "Specify gds_file to create"
+		echo $usage
+		exit 2
+	fi
+	echo "Reusing $EXT_DIR/$TOP_LAYOUT.gds.spice."
+fi
+
+# Check that extraction completed successfully
+if [[ ${extract_status:=0} -ne 0 || $(grep -c 'exttospice finished.' $LOG_ROOT/ext.log) -ne 1 ]]; then
+	echo "
+Error: extraction did not complete successfully"
+	exit 4
 fi
 
 # create work flatten file based on actual cells used (pseudo globbing)
@@ -150,84 +145,10 @@ else
 	cp $WORK_ROOT/ignore $WORK_ROOT/ignore.glob
 fi
 
-# Add any cells that should be flattened before extraction to 'flatten'. globbing allowed.
-export FLATGLOB_CELLS="$(cat $WORK_ROOT/flatglob 2>/dev/null | grep -v '^#')"
-# Add any empty cells that should be extracted as black-boxes to 'abstract'. (globbed version is 'abstract.glob')
-export ABSTRACT_CELLS="$(cat $WORK_ROOT/abstract.glob 2>/dev/null | grep -v '^#')"
-
-# Verify that magic and netgen are executable.
-if [[ $LAYOUT_FILE ]]; then # only if gds is specified
-	if ! which magic >&/dev/null; then
-		echo "Error: Could not execute magic."
-		exit 1
-	fi
-fi
+# Verify that netgen is executable.
 if ! which netgen >&/dev/null; then
 	echo "Error: Could not execute netgen."
 	exit 1
-fi
-
-#  Create extraction result directories. No error if they already exist.
-EXT_DIR=$WORK_ROOT/ext
-mkdir -p $EXT_DIR
-
-if [[ $LAYOUT_FILE ]]; then
-	# Specified gds_file, so extract it.
-
-	if [[ ! -f $LAYOUT_FILE ]]; then
-		echo "Error: File not found: $LAYOUT_FILE"
-		exit 2
-	fi
-
-	# Remove any previous extraction results
-	rm -rf $EXT_DIR/*.ext{,.gz}
-
-	#  1. Extract gds_file
-	#  Note: uses the same extraction commands as sconnect, so symbolic links to the EXT_DIR may be used
-	date "+BEGIN: %c" >$WORK_ROOT/ext.log
-	start_time=$SECONDS
-
-	echo " "
-	if [[ -z $LVS_VERILOG_FILES ]]; then
-		echo "Extracting as analog. Top ports connected by name."
-		EXT_TYPE=analog
-	else
-		echo "Extracting as digital. Top ports unique."
-		EXT_TYPE=digital
-	fi
-
-	env TOP=$TOP_LAYOUT RUN_DIR=$EXT_DIR CIFIN_STYLE="" EXTRACT_STYLE="" magic -dnull -noc -rcfile $LVS_ROOT/tech/magicrc $LVS_ROOT/scripts/gds.$EXT_TYPE.spice.tcl </dev/null |
-		tee -a $WORK_ROOT/ext.log 2>&1
-	ext_status=${PIPESTATUS[0]}
-
-	date "+END: %c" >>$WORK_ROOT/ext.log
-	runtime=$((SECONDS - start_time))
-	hours=$((runtime / 3600))
-	minutes=$(((runtime % 3600) / 60))
-	seconds=$(((runtime % 3600) % 60))
-	printf "Runtime: %d:%02d:%02d (hh:mm:ss)\n" $hours $minutes $seconds >>$WORK_ROOT/ext.log
-	if [[ $WORK_ROOT != $LOG_ROOT ]]; then
-		cp $WORK_ROOT/ext.log $LOG_ROOT/ext.log
-	fi
-
-	# Compress large ext files
-	find $EXT_DIR -name '*.ext' -size +1M -exec gzip {} \;
-else
-	# No gds_file so LVS only. Check for existing extraction results.
-	if [[ ! -f $EXT_DIR/$TOP_LAYOUT.gds.spice ]]; then
-		echo "Error: missing $EXT_DIR/$TOP_LAYOUT.gds.spice"
-		echo "Specify gds_file to create"
-		echo $usage
-		exit 2
-	fi
-	echo "Reusing $EXT_DIR/$TOP_LAYOUT.gds.spice."
-fi
-
-# Check that extraction completed successfully
-if [[ ${magic_status:=0} -ne 0 || $(grep -c 'exttospice finished.' $LOG_ROOT/ext.log) -ne 1 ]]; then
-	echo "
-Error: extraction did not complete successfully"
-	exit 4
 fi
 
 #  5. Compare
@@ -328,6 +249,7 @@ awk '
 /__fakediode/ {next}
 /sky130_fd_pr__/ {next} # ignore primitive devices
 /Matching pins/ {print $4, "is a black box in the layout and source"}
+/contains no devices/ {print $2, "contains no devices"}
 ' $WORK_ROOT/lvs.log >>$WORK_ROOT/lvs.unflattened
 if [[ -s $WORK_ROOT/lvs.unflattened ]]; then
 	echo "Warning: device level LVS may be incomplete due to $(cat $WORK_ROOT/lvs.unflattened | wc -l) unflattened cell(s): see $SIGNOFF_ROOT/lvs.unflattened" |

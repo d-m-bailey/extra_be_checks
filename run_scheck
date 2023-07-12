@@ -96,16 +96,6 @@ mkdir -p $WORK_ROOT
 mkdir -p $SIGNOFF_ROOT
 
 rm -f $LOG_ROOT/soft.log $SIGNOFF_ROOT/soft.report
-if [[ $EXTRACT_LAYOUT = yes ]]; then
-	rm -f $LOG_ROOT/ext.log
-fi
-
-if [[ ${TOP/*analog*/analog} = analog ]]; then
-	export EXT_TYPE=analog
-else
-	export EXT_TYPE=digital
-fi
-
 echo $EXTRACT_FLATGLOB |
 	sed 's/  */\n/g' >$WORK_ROOT/flatglob
 echo $EXTRACT_ABSTRACT |
@@ -122,85 +112,38 @@ export FLATGLOB_CELLS="$(cat $WORK_ROOT/flatglob 2>/dev/null | grep -v '^#')"
 # Add any empty cells that should be extracted as black-boxes to 'abstract'.
 export ABSTRACT_CELLS="$(cat $WORK_ROOT/abstract.glob 2>/dev/null | grep -v '^#')"
 
-# Verify that magic and netgen are executable.
-if ! which magic >&/dev/null; then
-	echo "Error: Could not execute magic."
-	exit 1
-fi
+# Verify that netgen is executable.
 if ! which netgen >&/dev/null; then
 	echo "Error: Could not execute netgen."
 	exit 1
 fi
 
-#  Create extraction result directories. No error if they already exist.
-mkdir -p $WORK_ROOT/ext
-mkdir -p $WORK_ROOT/nowell.ext
-
-if [[ $LAYOUT_FILE ]]; then
-	# Specified gds_file, so extract it.
-
-	if [[ ! -f $LAYOUT_FILE ]]; then
-		echo "Error: File not found: $LAYOUT_FILE"
-		exit 2
-	fi
-
-	# Remove any previous extraction results
-	find $WORK_ROOT/{ext,nowell.ext} -type f -name '*.ext' -delete
-	find $WORK_ROOT/{ext,nowell.ext} -type f -name '*.ext.gz' -delete
-
-	export RUN_DIR=$WORK_ROOT/ext
+if [[ $EXTRACT_LAYOUT = yes ]]; then
 	rm -f $LOG_ROOT/ext.log
+	# Extract gds_file.
+
+	export EXT_DIR=$WORK_ROOT/ext
 	echo "Extracting layout with well in background process. See $WORK_ROOT/ext.log."
 	(
 		#  1. Extract gds_file with well connectivity
-		date "+BEGIN: %c" >$WORK_ROOT/ext.log
-		start_time=$SECONDS
-		export CIFIN_STYLE=""
-		export EXTRACT_STYLE=""
-		magic -dnull -noc -rcfile $LVS_ROOT/tech/magicrc $LVS_ROOT/scripts/gds.$EXT_TYPE.spice.tcl </dev/null >>$WORK_ROOT/ext.log 2>&1
+		env CIFIN_STYLE="" EXTRACT_STYLE="" LOG_FILE=ext.log $LVS_ROOT/run_extract >$WORK_ROOT/ext.out 2>&1
 		#  2. Remove well connections and disconnected nets.
-		sed -f $LVS_ROOT/scripts/remove_well.sed $RUN_DIR/$TOP.gds.spice |
-			awk -f $LVS_ROOT/scripts/remove_disconnect.awk - >$RUN_DIR/$TOP.gds.nowell.spice
-		date "+END: %c" >>$WORK_ROOT/ext.log
-		runtime=$((SECONDS - start_time))
-		hours=$((runtime / 3600))
-		minutes=$(((runtime % 3600) / 60))
-		seconds=$(((runtime % 3600) % 60))
-		printf "Runtime: %d:%02d:%02d (hh:mm:ss)\n" $hours $minutes $seconds >>$WORK_ROOT/ext.log
-		if [[ $WORK_ROOT != $LOG_ROOT ]]; then
-			cp $WORK_ROOT/ext.log $LOG_ROOT/ext.log
-		fi
+		sed -f $LVS_ROOT/scripts/remove_well.sed $EXT_DIR/$TOP.gds.spice |
+			awk -f $LVS_ROOT/scripts/remove_disconnect.awk - >$EXT_DIR/$TOP.gds.nowell.spice
 	) &
 
-	export RUN_DIR=$WORK_ROOT/nowell.ext
-	rm -f $LOG_ROOT/nowell.ext.log
+	export EXT_DIR=$WORK_ROOT/nowell.ext
 	echo "Extracting layout without well in background process. See $WORK_ROOT/nowell.ext.log."
 	(
 		#  3. Extract gds_file without well connectivity
-		date "+BEGIN: %c" >$WORK_ROOT/nowell.ext.log
-		start_time=$SECONDS
-		export CIFIN_STYLE=nowell
-		export EXTRACT_STYLE=nowell
-		magic -dnull -noc -rcfile $LVS_ROOT/tech/magicrc $LVS_ROOT/scripts/gds.$EXT_TYPE.spice.tcl </dev/null >>$WORK_ROOT/nowell.ext.log 2>&1
+		env CIFIN_STYLE="nowell" EXTRACT_STYLE="nowell" LOG_FILE=nowell.ext.log $LVS_ROOT/run_extract >$WORK_ROOT/nowell.ext.out 2>&1
 		#  4. Remove disconnected nets.
-		awk -f $LVS_ROOT/scripts/remove_disconnect.awk $RUN_DIR/$TOP.gds.spice >$RUN_DIR/$TOP.gds.nowell.spice
-		date "+END: %c" >>$WORK_ROOT/nowell.ext.log
-		runtime=$((SECONDS - start_time))
-		hours=$((runtime / 3600))
-		minutes=$(((runtime % 3600) / 60))
-		seconds=$(((runtime % 3600) % 60))
-		printf "Runtime: %d:%02d:%02d (hh:mm:ss)\n" $hours $minutes $seconds >>$WORK_ROOT/nowell.ext.log
-		if [[ $WORK_ROOT != $LOG_ROOT ]]; then
-			cp $WORK_ROOT/nowell.ext.log $LOG_ROOT/nowell.ext.log
-		fi
+		awk -f $LVS_ROOT/scripts/remove_disconnect.awk $EXT_DIR/$TOP.gds.spice >$EXT_DIR/$TOP.gds.nowell.spice
 	) &
 
 	wait
 
-	# Compress large ext files
-	find $WORK_ROOT/*ext -name '*.ext' -size +1M -exec gzip {} \;
-
-	if [[ $(grep -c 'exttospice finished' $LOG_ROOT/ext.log $LOG_ROOT/nowell.ext.log) -ne 2 ]]; then
+	if [[ $(cat $LOG_ROOT/ext.log $LOG_ROOT/nowell.ext.log | grep -c 'exttospice finished' ) -ne 2 ]]; then
 		echo "Extraction error: see $LOG_ROOT/ext.log
 and/or $LOG_ROOT/nowell.ext.log"
 		exit 2

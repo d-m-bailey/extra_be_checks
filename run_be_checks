@@ -109,14 +109,13 @@ if [[ -f $LVS_ROOT/tech/$PDK/cvc.power.$TOP_SOURCE || -f ${CONFIG_FILE%/*}/cvc.p
 	if [[ -f ${CONFIG_FILE%/*}/cvc.power.$TOP_SOURCE ]]; then
 		cp ${CONFIG_FILE%/*}/cvc.power.$TOP_SOURCE $WORK_ROOT/cvc.power.$TOP_LAYOUT
 	fi
-	$LVS_ROOT/run_cvc $TOP_LAYOUT
+	$LVS_ROOT/run_cvc --noextract 
 	cvc_status=$?
 fi
 
 if [[ $TOP_SOURCE == *user_*project_wrapper ]]; then
-	$LVS_ROOT/check_user_oeb $TOP_LAYOUT
+	$LVS_ROOT/run_oeb_check --noextract 
 	oeb_status=$?
-	cat $SIGNOFF_ROOT/cvc.oeb.report
 fi
 
 echo "
