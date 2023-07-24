@@ -564,11 +564,11 @@ awk '
 					#printf "in:%d out:%d oeb: min/sim/max=%s/%s/%s\n", in_connections[i], out_connections[i], min[i], sim[i], max[i];
 				}
 			} else if ( out_connections[i] > 0 ) {
-				if ( min[i] !~ /vssd/ ) {  # output signals must be enable-able
+				if ( min[i] !~ /vss/ ) {  # output signals must be enable-able
 					printf "ERROR: oeb must have possible low for output";
 					#printf "ERROR: gpio-%d oeb must have possible low for output ", i;
 					#printf "in:%d out:%d oeb: min/sim/max=%s/%s/%s\n", in_connections[i], out_connections[i], min[i], sim[i], max[i];
-				} else if ( in_connections[i] > 0 && sim[i] ~ /vssd/ ) {  # input is always driven by user output in user mode
+				} else if ( in_connections[i] > 0 && sim[i] ~ /vss/ ) {  # input is always driven by user output in user mode
 					printf "Warning: output always drives input. sky130: OK for pull up/down.";
 				}
 			}
