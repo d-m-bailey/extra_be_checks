@@ -87,7 +87,7 @@ if [[ ! -f $RESULTS_DIR/$DESIGN_NAME.cdl.gz || $RESULTS_DIR/$DESIGN_NAME.gds.spi
 		exit 2
 	else
 		echo "Creating $RESULTS_DIR/$DESIGN_NAME.cdl"
-		$LVS_ROOT/spi2cdl $RESULTS_DIR/$DESIGN_NAME.gds.spice |
+		$LVS_ROOT/tech/$PDK/spi2cdl $RESULTS_DIR/$DESIGN_NAME.gds.spice |
 			gzip -c >$RESULTS_DIR/$DESIGN_NAME.cdl.gz
 	fi
 fi
