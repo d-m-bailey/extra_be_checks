@@ -312,106 +312,41 @@ foreach dev $devices {
 }
 
 #---------------------------------------------------------------
-# Digital cells (ignore decap, fill, and tap cells)
-# Make a separate list for each supported library
-#---------------------------------------------------------------
-# e.g., ignore class "-circuit2 gf180mcu_fd_sc_7t5v0__endcap"
-#---------------------------------------------------------------
-
-foreach cell $cells1 {
-#   if {[regexp {gf180mcu_fd_sc_[^_]+__fillcap_[[:digit:]]+} $cell match]} {
-#       ignore class "-circuit1 $cell"
-#   }
-    if {[regexp {gf180mcu_fd_sc_[^_]+__endcap} $cell match]} {
-        ignore class "-circuit1 $cell"
-    }
-    if {[regexp {gf180mcu_fd_sc_[^_]+__fill_[[:digit:]]+} $cell match]} {
-        ignore class "-circuit1 $cell"
-    }
-    if {[regexp {gf180mcu_fd_sc_[^_]+__filltie} $cell match]} {
-        ignore class "-circuit1 $cell"
-    }
-}
-
-foreach cell $cells2 {
-#   if {[regexp {gf180mcu_fd_sc_[^_]+__fillcap_[[:digit:]]+} $cell match]} {
-#       ignore class "-circuit2 $cell"
-#   }
-    if {[regexp {gf180mcu_fd_sc_[^_]+__endcap} $cell match]} {
-        ignore class "-circuit2 $cell"
-    }
-    if {[regexp {gf180mcu_fd_sc_[^_]+__fill_[[:digit:]]+} $cell match]} {
-        ignore class "-circuit2 $cell"
-    }
-    if {[regexp {gf180mcu_fd_sc_[^_]+__filltie} $cell match]} {
-        ignore class "-circuit2 $cell"
-    }
-}
-
-# Do the same for the OSU standard cell libraries
-
-foreach cell $cells1 {
-    if {[regexp {gf180mcu_osu_sc_[^_]+__fill_[[:digit:]]+} $cell match]} {
-        ignore class "-circuit1 $cell"
-    }
-}
-
-foreach cell $cells2 {
-    if {[regexp {gf180mcu_osu_sc_[^_]+__fill_[[:digit:]]+} $cell match]} {
-        ignore class "-circuit2 $cell"
-    }
-}
-
-#---------------------------------------------------------------
 # Allow the fill, decap, etc., cells to be parallelized
 #---------------------------------------------------------------
 
 foreach cell $cells1 {
-    if {[regexp {gf180mcu_fd_sc_[^_]+__fillcap_[[:digit:]]+} $cell match]} {
+    if {[regexp {.*gf180mcu_[^_]*_sc_[^_]+__fillcap_[[:digit:]]+} $cell match]} {
         property "-circuit1 $cell" parallel enable
     }
-    if {[regexp {gf180mcu_fd_sc_[^_]+__endcap} $cell match]} {
+    if {[regexp {.*gf180mcu_[^_]*_sc_[^_]+__endcap} $cell match]} {
         property "-circuit1 $cell" parallel enable
     }
-    if {[regexp {gf180mcu_fd_sc_[^_]+__fill_[[:digit:]]+} $cell match]} {
+    if {[regexp {.*gf180mcu_[^_]*_sc_[^_]+__fill_[[:digit:]]+} $cell match]} {
         property "-circuit1 $cell" parallel enable
     }
-    if {[regexp {gf180mcu_fd_sc_[^_]+__filltie} $cell match]} {
+    if {[regexp {.*gf180mcu_[^_]*_sc_[^_]+__filltie} $cell match]} {
         property "-circuit1 $cell" parallel enable
     }
-    if {[regexp {gf180mcu_fd_sc_[^_]+__antenna} $cell match]} {
-        property "-circuit1 $cell" parallel enable
-    }
-}
-
-foreach cell $cells2 {
-    if {[regexp {gf180mcu_fd_sc_[^_]+__fillcap_[[:digit:]]+} $cell match]} {
-        property "-circuit2 $cell" parallel enable
-    }
-    if {[regexp {gf180mcu_fd_sc_[^_]+__endcap} $cell match]} {
-        property "-circuit2 $cell" parallel enable
-    }
-    if {[regexp {gf180mcu_fd_sc_[^_]+__fill_[[:digit:]]+} $cell match]} {
-        property "-circuit2 $cell" parallel enable
-    }
-    if {[regexp {gf180mcu_fd_sc_[^_]+__filltie} $cell match]} {
-        property "-circuit2 $cell" parallel enable
-    }
-    if {[regexp {gf180mcu_fd_sc_[^_]+__antenna} $cell match]} {
-        property "-circuit2 $cell" parallel enable
-    }
-}
-
-# Do the same for the OSU 3.3V standard cell library
-
-foreach cell $cells1 {
-    if {[regexp {gf180mcu_osu_sc_[^_]+__fill_[[:digit:]]+} $cell match]} {
+    if {[regexp {.*gf180mcu_[^_]*_sc_[^_]+__antenna} $cell match]} {
         property "-circuit1 $cell" parallel enable
     }
 }
 
 foreach cell $cells2 {
-    if {[regexp {gf180mcu_osu_sc_[^_]+__fill_[[:digit:]]+} $cell match]} {
+    if {[regexp {gf180mcu_[^_]*_sc_[^_]+__fillcap_[[:digit:]]+} $cell match]} {
+        property "-circuit2 $cell" parallel enable
+    }
+    if {[regexp {gf180mcu_[^_]*_sc_[^_]+__endcap} $cell match]} {
+        property "-circuit2 $cell" parallel enable
+    }
+    if {[regexp {gf180mcu_[^_]*_sc_[^_]+__fill_[[:digit:]]+} $cell match]} {
+        property "-circuit2 $cell" parallel enable
+    }
+    if {[regexp {gf180mcu_[^_]*_sc_[^_]+__filltie} $cell match]} {
+        property "-circuit2 $cell" parallel enable
+    }
+    if {[regexp {gf180mcu_[^_]*_sc_[^_]+__antenna} $cell match]} {
         property "-circuit2 $cell" parallel enable
     }
 }
@@ -430,14 +365,35 @@ if {[model blackbox]} {
 
 #---------------------------------------------------------------
 
-# parallel reduce abstract cells
+# Equate prefixed layout cells with corresponding source
 foreach cell $cells1 {
-    if {[regexp {.*gf180mcu_fd_sc_mcu7t5v0__fillcap_[[:digit:]]+} $cell match]} {
-	property "-circuit1 $cell" parallel enable
+    set layout $cell
+    while {[regexp {([A-Z][A-Z0-9]_)(.*)} $layout match prefix cellname]} {
+	if {([lsearch $cells2 $cell] < 0) && \
+		([lsearch $cells2 $cellname] >= 0)} {
+	    # netlist with the N names should always be the second netlist
+	    equate classes "-circuit2 $cellname" "-circuit1 $cell"
+	    puts stdout "Equating $cell in circuit 1 and $cellname in circuit 2"
+	    #if  { [lsearch $cells1 $cellname] > 0 } {
+		#equate classes "-circuit2 $cellname" "-circuit1 $cellname"
+		#puts stdout "Equating $cellname in circuit 1 and $cellname in circuit 2"
+	    #}
+	    #equate pins "-circuit1 $cell" "-circuit2 $cellname"
+	}
+	set layout $cellname
     }
 }
-foreach cell $cells2 {
-    if {[regexp {gf180mcu_fd_sc_mcu7t5v0__fillcap_[[:digit:]]+} $cell match]} {
-	property "-circuit2 $cell" parallel enable
+
+# Equate suffixed layout cells with corresponding source
+foreach cell $cells1 {
+    if {[regexp {(.*)(\$[0-9])} $cell match cellname suffix]} {
+	if {([lsearch $cells2 $cell] < 0) && \
+		([lsearch $cells2 $cellname] >= 0)} {
+	    # netlist with the N names should always be the second netlist
+	    equate classes "-circuit2 $cellname" "-circuit1 $cell"
+	    puts stdout "Equating $cell in circuit 1 and $cellname in circuit 2"
+	}
     }
 }
+
+#Added programatically.

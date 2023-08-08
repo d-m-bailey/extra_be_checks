@@ -4817,7 +4817,7 @@ extract
  # Use extract style "ngspice(si)" to override this and produce
  # a file with SI units for length/area.
 
- variants (),(orig),(hrhc),(lrhc),(hrlc),(lrlc)
+ variants (),(orig),(hrhc),(lrhc),(hrlc),(lrlc),(nowell)
  lambda  1E6
  variants (si)
  lambda 1.0
