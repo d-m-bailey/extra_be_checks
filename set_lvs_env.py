@@ -27,6 +27,7 @@ lvs_vars = [
     'LAYOUT_FILE',
     'EXTRACT_FLATGLOB',
     'EXTRACT_ABSTRACT',
+    'EXTRACT_TYPE',
     'LVS_FLATTEN',
     'LVS_NOFLATTEN',
     'LVS_IGNORE',
