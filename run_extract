@@ -134,8 +134,8 @@ fi
 # script uses TOP, RUN_DIR, CIFIN_STYLE, and EXTRACT_STYLE
 echo "CIFIN_STYLE: ${CIFIN_STYLE:=}"
 echo "EXTRACT_STYLE: ${EXTRACT_STYLE:=}"
-env TOP=$TOP_LAYOUT RUN_DIR=$EXT_DIR magic -dnull -noc -rcfile $LVS_ROOT/tech/magicrc $LVS_ROOT/scripts/gds.$EXT_TYPE.spice.tcl </dev/null |
-	tee -a $WORK_ROOT/$LOG_FILE 2>&1
+env TOP=$TOP_LAYOUT RUN_DIR=$EXT_DIR magic -dnull -noc -rcfile $LVS_ROOT/tech/magicrc $LVS_ROOT/scripts/gds.$EXT_TYPE.spice.tcl </dev/null 2>&1 |
+	tee -a $WORK_ROOT/$LOG_FILE
 ext_status=${PIPESTATUS[0]}
 
 date "+END: %c" >>$WORK_ROOT/$LOG_FILE
