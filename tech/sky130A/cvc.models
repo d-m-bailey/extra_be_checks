@@ -5,6 +5,7 @@ R short model=switch_on
 
 D sky130_fd_pr__diode_pw2nd_05v5 
 D sky130_fd_pr__diode_pw2nd_11v0 
+D sky130_fd_pr__diode_pw2nd_05v5_lvt
 D sky130_fd_pr__diode_pw2nd_05v5_nvt 
 D sky130_fd_pr__diode_pd2nw_05v5
 D sky130_fd_pr__diode_pd2nw_05v5_lvt

@@ -5,7 +5,7 @@ awk '
         print "D" $0;
         next;
 }
-/^X.*pr__special_[^ _]*fet.*=/ || /^X.*pr__.fet.*=/ || /^X.*pr__esd_.fet.*=/ || /^X.*[np]fet_[0-9]*v[0-9].*=/ {
+/^X.*__special_[^ _]*fet.*=/ || /^X.*pr__.fet.*=/ || /^X.*pr__esd_.fet.*=/ || /^X.*[np]fet_[0-9]*v[0-9].*=/ {
         print "M" $0;
         next;
 }
