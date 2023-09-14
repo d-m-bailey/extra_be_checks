@@ -9,7 +9,7 @@ awk '
         print "M" $0;
         next;
 }
-/^X.*pr__pnp_.*=/ {
+/^X.*pr__pnp_.*=/ || /^X.*pr__pnp_[^ ]* *$/ {
         print "Q" $0;
         next;
 }
