@@ -14,7 +14,7 @@ tech
 end
 
 version
- version 1.0.439-0-g1341f54
+ version 1.0.446-0-gdd7771c
  description "SkyWater SKY130: Open Source rules and DRC"
  requires magic-8.3.411
 end

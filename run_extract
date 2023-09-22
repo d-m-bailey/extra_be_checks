@@ -148,6 +148,10 @@ if [[ $WORK_ROOT != $LOG_ROOT ]]; then
 	cp $WORK_ROOT/$LOG_FILE $LOG_ROOT/$LOG_FILE
 fi
 
+# Create extracted hierarchy
+echo "Creating layout hierarchy in $EXT_DIR/$TOP_LAYOUT.hier..."
+awk -f $LVS_ROOT/scripts/ext.hier.awk  -v TOP=$TOP_LAYOUT $EXT_DIR/*.ext > $EXT_DIR/$TOP_LAYOUT.hier
+
 # Compress large ext files
 find $EXT_DIR -name '*.ext' -size +1M -exec gzip {} \;
 

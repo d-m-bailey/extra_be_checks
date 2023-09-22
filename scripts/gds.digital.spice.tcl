@@ -21,6 +21,7 @@ foreach cell $::env(FLATGLOB_CELLS) {
 # list cells to be flattened
 puts "Flattening [gds flatglob]"
 gds flatten yes
+#gds polygon subcells temporary
 puts "Extracting $::env(LAYOUT_FILE)"
 gds read $::env(LAYOUT_FILE)
 
