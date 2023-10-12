@@ -45,7 +45,7 @@ zegrep -c '^use' $1/*.ext* |
 	grep ':0$' |
 	sed -e 's,.*/,,' -e 's/.ext:.*//' |
 	sort |
-	comm -12 - $/../device.subckt > $1/../leaf.subckt
+	comm -12 - $1/../device.subckt > $1/../leaf.subckt
 
 echo "
 Leaf cells without explict ports"
