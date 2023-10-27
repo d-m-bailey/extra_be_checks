@@ -594,7 +594,7 @@ awk '
 			printf "\n";
 		}
 	}' $LOG_ROOT/cvc.oeb.log |
-tee $WORK_ROOT/cvc.oeb.report
+	tee $WORK_ROOT/cvc.oeb.report
 
 if [[ $WORK_ROOT != $SIGNOFF_ROOT ]]; then
 	cp $WORK_ROOT/cvc.oeb.report $SIGNOFF_ROOT/cvc.oeb.report
