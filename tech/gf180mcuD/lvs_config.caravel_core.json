@@ -23,7 +23,7 @@
 		""
 	],
 	"LVS_SPICE_FILES": [
-		"$CARAVEL_ROOT/xschem/simple_por.spice"
+		"$CARAVEL_ROOT/macros/simple_por/netlist/simple_por.spice"
 	],
 	"LVS_VERILOG_FILES": [
 		"$MCW_ROOT/verilog/gl/gf180_ram_512x8_wrapper.v",

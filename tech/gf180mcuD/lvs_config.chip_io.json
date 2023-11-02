@@ -10,6 +10,7 @@
 		"*NMOS_*",
 		"*moscap_*",
 		"*nmos_*",
+		"*pmos_*",
 		"*comp018green*",
 		"*POWER_RAIL_COR*",
 		"*top_route*",

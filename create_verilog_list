@@ -1,0 +1,55 @@
+#! /usr/bin/env bash
+
+if [[ $# -ne 2 ]]; then
+	echo "usage: $0 <directory> <top>"
+	exit 1
+fi
+
+DIR=$1
+TOP=$2
+
+cd $DIR
+#ls $PWD/*.v
+grep ' (' *.v |
+	sed 's/:/ /' |
+	awk -v top=$TOP '
+		$1 ~ /\/\// {
+			next;
+		}
+		$2 == "module" { 
+			module = $3;
+			source[$3] = $1;
+			#print "source", $3, $1;
+			next;
+		}
+		 {
+			key = module SUBSEP $2;
+			if ( ! ( key in hierarchy ) ) {
+				hierarchy[module, $2] = $2;
+				#print module, $2;
+			}
+		}
+		END {
+			if ( ! ( top in source ) ) {
+				print "ERROR: Could not find", top;
+				exit 1;
+			}
+			PrintFile(top);
+		}
+		function PrintFile(cell) {
+			for ( key in hierarchy ) {
+				regex = "^" cell SUBSEP;
+				if ( key ~ regex && hierarchy[key] != "" ) {
+					PrintFile(hierarchy[key]);
+					hierarcy[key] = "";
+				}
+			}
+			if ( cell in source ) {
+				print source[cell];
+			}
+		}' |
+	sed -e '1i/VERILOG_FILES/a\\' -e 's:.*:		"$UPRJ_ROOT/verilog/gl/&",\\:' |
+	grep -v $TOP |
+	sed -e '/user_proj_example/d' -f - $LVS_ROOT/tech/$PDK/lvs_config.user_project_wrapper.json |
+	grep -v "^$" |
+	uniq

@@ -42,6 +42,8 @@
 		"*power_*",
 		"*control_*",
 		"*GF018_*x8M8WM1_*",
+		"*col_*",
+		"*rcol4_*",
 		"*lcol4_*"
 	],
 	"EXTRACT_ABSTRACT": [
@@ -57,7 +59,7 @@
 		""
 	],
 	"LVS_SPICE_FILES": [
-		"$LVS_ROOT/spice/gf180mcu_fd_ip_sram__sram512x8m8wm1.cdl"
+		"$PDK_ROOT/$PDK/libs.ref/gf180mcu_fd_ip_sram/spice/gf180mcu_fd_ip_sram__sram512x8m8wm1.spice"
 	],
 	"LVS_VERILOG_FILES": [
 		""
