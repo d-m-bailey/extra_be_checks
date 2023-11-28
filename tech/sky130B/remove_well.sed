@@ -12,6 +12,7 @@ s/[^ ]* \(ppolyf_u\)/\1/
 s/[^ ]* \(.fet_06v0\)/\1/
 /^D.* sky130_fd_pr__diode_pd2nw_/d
 /^D.* sky130_fd_pr__diode_pw2nd_/d
+/^D.* sky130_fd_pr__model__parasitic__diode_ps2dn/d
 /^D.* diode_pd2nw_06v0/d
 /^D.* diode_nd2ps_06v0/d
 /^D.* np_6p0/d
