@@ -1,0 +1,34 @@
+{
+	"STD_CELL_LIBRARY": "sky130_fd_sc_hd",
+	"SRAM_MACRO": "sky130_sram_1kbyte_1rw1r_32x256_8",
+	"INCLUDE_CONFIGS": [
+		"$LVS_ROOT/tech/$PDK/lvs_config.sram.json",
+		"$LVS_ROOT/tech/$PDK/lvs_config.base.json"
+	],
+	"TOP_SOURCE": "user_project_wrapper",
+	"TOP_LAYOUT": "$TOP_SOURCE",
+	"EXTRACT_FLATGLOB": [
+		""
+	],
+	"EXTRACT_ABSTRACT": [
+		""
+	],
+	"LVS_FLATTEN": [
+		""
+	],
+	"LVS_NOFLATTEN": [
+		""
+	],
+	"LVS_IGNORE": [
+		""
+	],
+	"LVS_SPICE_FILES": [
+		"$LVS_ROOT/spice/sky130_sram_2kbyte_1rw1r_32x512_8.spice"
+	],
+	"LVS_VERILOG_FILES": [
+		"$UPRJ_ROOT/verilog/gl/Marmot.v",
+		"$UPRJ_ROOT/verilog/gl/clk_skew_adjust.v",
+		"$UPRJ_ROOT/verilog/gl/user_project_wrapper.v"
+	],
+	"LAYOUT_FILE": "$UPRJ_ROOT/gds/user_project_wrapper.gds"
+}

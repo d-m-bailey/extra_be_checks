@@ -1,0 +1,31 @@
+{
+	"STD_CELL_LIBRARY": "sky130_fd_sc_hd",
+	"INCLUDE_CONFIGS": [
+		"$LVS_ROOT/tech/$PDK/lvs_config.base.json"
+	],
+	"TOP_SOURCE": "user_analog_project_wrapper",
+	"TOP_LAYOUT": "$TOP_SOURCE",
+	"EXTRACT_FLATGLOB": [
+		""
+	],
+	"EXTRACT_ABSTRACT": [
+		"*CharSP6T512x8",
+		"*DP8T512x8"
+	],
+	"LVS_FLATTEN": [
+		""
+	],
+	"LVS_NOFLATTEN": [
+		""
+	],
+	"LVS_IGNORE": [
+		""
+	],
+	"LVS_SPICE_FILES": [
+		"$UPRJ_ROOT/netgen/user_analog_project_wrapper.spice"
+	],
+	"LVS_VERILOG_FILES": [
+		""
+	],
+	"LAYOUT_FILE": "$UPRJ_ROOT/gds/user_analog_project_wrapper.gds"
+}
