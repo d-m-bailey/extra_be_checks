@@ -3011,11 +3011,12 @@ extract
 
  tiedown alldiffnonfet
 
+variants ()
  substrate *ppdiff,*mvppdiff,space/w,pwell well $SUB -dnwell,isosub
 
-# Layer resistance
-
 variants (),(nowell)
+
+# Layer resistance
 
 # Resistances are in milliohms per square
 # Optional 3rd argument is the corner adjustment fraction
