@@ -246,6 +246,7 @@ types
   metal2 metal2,m2,met2
   metal2 rmetal2,rm2,rmet2
   metal2 via2,m3contact,m3cut,m3c,v2
+  metal2 momcap2
  -metal2 obsm2
  -metal2 m2fill
 
@@ -523,6 +524,7 @@ styles
   m2c       metal2         metal3  via2arrow
 
   reram	    metal2	   metal3  via2 contact_X'es
+  momcap2   metal2	   mems
 
   metal2    metal3
   m2fill    metal3
@@ -669,6 +671,7 @@ connect
   *li,coreli,lifill	*li,coreli,lifill
   *m1,m1fill,obsmcon	*m1,m1fill,obsmcon
   *m2,m2fill,reram	*m2,m2fill,reram
+  momcap2	momcap2
   *m3,m3fill	*m3,m3fill
   *m4,m4fill	*m4,m4fill
   *m5,m5fill	*m5,m5fill
@@ -1344,6 +1347,8 @@ style gdsii
  layer CAPM2 	*mimcap2
  	labels 	mimcap2
  	calma 	97 44
+
+
 
 #----------------------------------------------------------------
 # Chip top level marker for DRC latchup rules to check 15um
@@ -2247,7 +2252,7 @@ style  sky130 variants (),(vendor),(nowell)
 
  ignore NPC
  ignore SEALID
- ignore CAPID
+ #ignore CAPID
  ignore LDNTM
  ignore HVNTM
  ignore POLYMOD
@@ -3383,6 +3388,9 @@ variants *
 
  layer m1fill MET1FILL
  labels MET1FILL
+
+ layer momcap2 CAPID
+ and-not MET2
 
  layer mimcap MET3
  and CAPM
@@ -5874,6 +5882,8 @@ variants (),(si),(hrhc),(lrhc),(hrlc),(lrlc)
  device csubcircuit sky130_fd_pr__cap_mim_m3_1 *mimcap  *m3 w=w l=l
  device csubcircuit sky130_fd_pr__cap_mim_m3_2 *mimcap2 *m4 w=w l=l
 
+ device rsubcircuit sky130_ef_pr__momcap2 momcap2 *m2 w=w l=l
+
 variants (nowell)
 
  device msubcircuit sky130_fd_pr__pfet_01v8 pfet,scpfet \
@@ -5931,7 +5941,7 @@ variants (nowell)
 # device msubcircuit sky130_fd_pr__npn_11v0 npn *mvndiff dnwell space/w error a1=area
 # device msubcircuit sky130_fd_pr__npn_11v0_W1p00L1p00 npn *mvndiff \
 #	dnwell space/w error a1>0.99 a1<1.01
-#
+
  # Ignore the extended-drain FET geometry that forms part of the high-voltage
  # bipolar devices.
 # device msubcircuit Ignore mvnfet *mvndiff,mvndiffres dnwell pwell,space/w error +npn,pnp
@@ -6028,6 +6038,8 @@ variants (nowell)
  device csubcircuit sky130_fd_pr__cap_mim_m3_1 *mimcap  *m3 w=w l=l
  device csubcircuit sky130_fd_pr__cap_mim_m3_2 *mimcap2 *m4 w=w l=l
 
+ device rsubcircuit sky130_ef_pr__momcap2 momcap2 *m2 w=w l=l
+
  variants (orig)
 
  device mosfet sky130_fd_pr__pfet_01v8 scpfet,pfet pdiff,pdiffres,pdc nwell 
@@ -6119,6 +6131,8 @@ variants (nowell)
 
  device capacitor sky130_fd_pr__cap_mim_m3_1 *mimcap  *m3 1
  device capacitor sky130_fd_pr__cap_mim_m3_2 *mimcap2 *m4 1
+
+ device rsubcircuit sky130_ef_pr__momcap2 momcap2 *m2 w=w l=l
 
 end
 

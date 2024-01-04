@@ -47,6 +47,7 @@ foreach dev $devices {
 	property "-circuit1 $dev" series enable
 	property "-circuit1 $dev" series {w critical}
 	property "-circuit1 $dev" series {l add}
+	property "-circuit1 $dev" series {value add}
 	property "-circuit1 $dev" parallel enable
 	property "-circuit1 $dev" parallel {l critical}
 	property "-circuit1 $dev" parallel {w add}
@@ -60,6 +61,7 @@ foreach dev $devices {
 	property "-circuit2 $dev" series enable
 	property "-circuit2 $dev" series {w critical}
 	property "-circuit2 $dev" series {l add}
+	property "-circuit2 $dev" series {value add}
 	property "-circuit2 $dev" parallel enable
 	property "-circuit2 $dev" parallel {l critical}
 	property "-circuit2 $dev" parallel {w add}
@@ -124,6 +126,7 @@ foreach dev $devices {
 	property "-circuit1 $dev" series enable
 	property "-circuit1 $dev" series {w critical}
 	property "-circuit1 $dev" series {l add}
+	property "-circuit1 $dev" series {value add}
 	property "-circuit1 $dev" parallel enable
 	property "-circuit1 $dev" parallel {l critical}
 	property "-circuit1 $dev" parallel {w add}
@@ -137,6 +140,7 @@ foreach dev $devices {
 	property "-circuit2 $dev" series enable
 	property "-circuit2 $dev" series {w critical}
 	property "-circuit2 $dev" series {l add}
+	property "-circuit2 $dev" series {value add}
 	property "-circuit2 $dev" parallel enable
 	property "-circuit2 $dev" parallel {l critical}
 	property "-circuit2 $dev" parallel {w add}
@@ -303,6 +307,8 @@ lappend devices sky130_fd_pr__cap_mim_m3_2
 foreach dev $devices {
     if {[lsearch $cells1 $dev] >= 0} {
 	property "-circuit1 $dev" parallel enable
+	property "-circuit1 $dev" parallel {l critical}
+	property "-circuit1 $dev" parallel {w add}
 	property "-circuit1 $dev" parallel {area add}
 	property "-circuit1 $dev" parallel {value add}
 	property "-circuit1 $dev" tolerance {l 0.01} {w 0.01}
@@ -311,8 +317,39 @@ foreach dev $devices {
     }
     if {[lsearch $cells2 $dev] >= 0} {
 	property "-circuit2 $dev" parallel enable
+	property "-circuit1 $dev" parallel {l critical}
+	property "-circuit1 $dev" parallel {w add}
 	property "-circuit2 $dev" parallel {area add}
 	property "-circuit2 $dev" parallel {value add}
+	property "-circuit2 $dev" tolerance {l 0.01} {w 0.01}
+	# Ignore these properties
+	property "-circuit2 $dev" delete mult perim mf
+    }
+}
+
+#-------------------------------------------
+# capacitors
+# MOM capacitors
+#-------------------------------------------
+
+set devices {}
+lappend devices sky130_ef_pr__momcap2
+
+foreach dev $devices {
+    if {[lsearch $cells1 $dev] >= 0} {
+	permute "-circuit1 $dev" 1 2
+	property "-circuit1 $dev" parallel enable
+	property "-circuit1 $dev" parallel {l critical}
+	property "-circuit1 $dev" parallel {w add}
+	property "-circuit1 $dev" tolerance {l 0.01} {w 0.01}
+	# Ignore these properties
+	property "-circuit1 $dev" delete mult perim mf
+    }
+    if {[lsearch $cells2 $dev] >= 0} {
+	permute "-circuit2 $dev" 1 2
+	property "-circuit2 $dev" parallel enable
+	property "-circuit2 $dev" parallel {l critical}
+	property "-circuit2 $dev" parallel {w add}
 	property "-circuit2 $dev" tolerance {l 0.01} {w 0.01}
 	# Ignore these properties
 	property "-circuit2 $dev" delete mult perim mf
@@ -366,7 +403,7 @@ foreach dev $devices {
     if {[lsearch $cells2 $dev] >= 0} {
 	property "-circuit2 $dev" parallel enable
 	# Ignore these properties
-	property "-circuit2 $dev" delete mult
+	property "-circuit2 $dev" delete mult NE
     }
 }
 

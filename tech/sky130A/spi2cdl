@@ -13,7 +13,7 @@ awk '
         print "Q" $0;
         next;
 }
-/^X.*pr__cap_mim_.*=/ || /^X.*mim_2p0fF.*=/ || /^X.*cap_mim_2f0_m4m5/ {
+/^X.*pr__cap_mim_.*=/ || /^X.*mim_2p0fF.*=/ || /^X.*cap_mim_2f0_m4m5/ || /^X.*pr__momcap.*=/ {
         print "C" $0;
         next;
 }

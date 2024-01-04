@@ -67,6 +67,7 @@ C sky130_fd_pr__cap_mim_m3_1
 C sky130_fd_pr__cap_mim_m3_2
 C sky130_fd_pr__cap_var
 C sky130_fd_pr__cap_var_lvt
+C sky130_ef_pr__momcap2
 
 Q sky130_fd_pr__pnp_05v5
 Q sky130_fd_pr__pnp_05v5_W0p68L0p68
