@@ -79,10 +79,18 @@ if [[ ! -f $WORK_ROOT/layout.cells ]]; then
 	$LVS_ROOT/run_hier_check "" "" $TOP_LAYOUT $LAYOUT_FILE "${PDK%?}_([^/_]*_)*_"
 fi
 
+# create work abstract file based on actual cells used (psuedo globbing)
+# Will work with wildcards directly, but use psuedo globbing to check later.
 echo $EXTRACT_FLATGLOB |
 	sed 's/  */\n/g' >$WORK_ROOT/flatglob
+if [[ -f $WORK_ROOT/layout.cells ]]; then
+	sed -e 's/\*/.*/g' -e 's/^/^/' -e 's/$/$/' $WORK_ROOT/flatglob |
+		grep -f - $WORK_ROOT/layout.cells >$WORK_ROOT/flatglob.glob
+else
+	cp $WORK_ROOT/flatglob $WORK_ROOT/flatglob.glob
+fi
 
-# create work abstract file based on actual cells used (pseudo globbing)
+# create work abstract file based on actual cells used (psuedo globbing)
 echo $EXTRACT_ABSTRACT |
 	sed 's/  */\n/g' >$WORK_ROOT/abstract
 if [[ -f $WORK_ROOT/layout.cells ]]; then
@@ -92,7 +100,7 @@ else
 	cp $WORK_ROOT/abstract $WORK_ROOT/abstract.glob
 fi
 
-# create work subcut file based on actual cells used (pseudo globbing)
+# create work subcut file based on actual cells used (psuedo globbing)
 echo $EXTRACT_CREATE_SUBCUT |
 	sed 's/  */\n/g' >$WORK_ROOT/subcut
 if [[ -f $WORK_ROOT/layout.cells ]]; then
@@ -102,11 +110,11 @@ else
 	cp $WORK_ROOT/abstract $WORK_ROOT/subcut.glob
 fi
 
-# Add any cells that should be flattened before extraction to 'flatten'. globbing allowed.
-export FLATGLOB_CELLS="$(cat $WORK_ROOT/flatglob 2>/dev/null | grep -v '^#')"
-# Add any empty cells that should be extracted as black-boxes to 'abstract'. (globbed version is 'abstract.glob')
+# Add any cells that should be flattened before extraction to 'flatten'.
+export FLATGLOB_CELLS="$(cat $WORK_ROOT/flatglob.glob 2>/dev/null | grep -v '^#')"
+# Add any empty cells that should be extracted as black-boxes to 'abstract'.
 export ABSTRACT_CELLS="$(cat $WORK_ROOT/abstract.glob 2>/dev/null | grep -v '^#')"
-# Add any cells that should be have a subcut layer added. globbing allowed.
+# Add any cells that should be have a subcut layer added.
 export SUBCUT_CELLS="$(cat $WORK_ROOT/subcut.glob 2>/dev/null | grep -v '^#')"
 
 # Verify that magic is executable.
@@ -175,6 +183,21 @@ puts "Flattening [string map {" " "\n"} [gds flatglob]]"
 gds flatten yes ;# Flattens cells with few layers
 puts "Extracting $LAYOUT_FILE"
 gds read $LAYOUT_FILE
+
+set flatglob_error 0
+foreach cell { $FLATGLOB_CELLS } { ;# Check for unflattened flatglob cells.
+	if { [llength [cellname list children \$cell]] > 0 } {
+		set flatglob_error 1
+		puts "Could not flatten \$cell because it contains these subcells:"
+		foreach subcell [cellname list children \$cell] {
+			puts "  \$subcell"
+		}
+	}	
+}
+if { \$flatglob_error } { ;# Quit if there are unflattened flatglob cells.
+	exit 1
+}
+
 gds flatten no ;# subcut cells will have few shapes, so don't flatten them when reading their gds later.
 
 foreach cell { $SUBCUT_CELLS } {
