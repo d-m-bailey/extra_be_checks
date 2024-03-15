@@ -92,10 +92,22 @@ else
 	cp $WORK_ROOT/abstract $WORK_ROOT/abstract.glob
 fi
 
+# create work subcut file based on actual cells used (pseudo globbing)
+echo $EXTRACT_CREATE_SUBCUT |
+	sed 's/  */\n/g' >$WORK_ROOT/subcut
+if [[ -f $WORK_ROOT/layout.cells ]]; then
+	sed -e 's/\*/.*/g' -e 's/^/^/' -e 's/$/$/' $WORK_ROOT/subcut |
+		grep -f - $WORK_ROOT/layout.cells >$WORK_ROOT/subcut.glob
+else
+	cp $WORK_ROOT/abstract $WORK_ROOT/subcut.glob
+fi
+
 # Add any cells that should be flattened before extraction to 'flatten'. globbing allowed.
 export FLATGLOB_CELLS="$(cat $WORK_ROOT/flatglob 2>/dev/null | grep -v '^#')"
 # Add any empty cells that should be extracted as black-boxes to 'abstract'. (globbed version is 'abstract.glob')
 export ABSTRACT_CELLS="$(cat $WORK_ROOT/abstract.glob 2>/dev/null | grep -v '^#')"
+# Add any cells that should be have a subcut layer added. globbing allowed.
+export SUBCUT_CELLS="$(cat $WORK_ROOT/subcut.glob 2>/dev/null | grep -v '^#')"
 
 # Verify that magic is executable.
 if ! which magic >&/dev/null; then
@@ -126,15 +138,96 @@ fi
 if [[ $EXTRACT_TYPE == analog ]]; then
 	echo "Extracting as analog. Top ports connected by name." >>$WORK_ROOT/$LOG_FILE
 	export EXT_TYPE=analog
+	EXT_MESSAGE="connected by name (analog)"
+	EXT_TEXT="unique notopports"
 else
 	echo "Extracting as digital. Top ports unique." >>$WORK_ROOT/$LOG_FILE
 	export EXT_TYPE=digital
+	EXT_MESSAGE="unique (digital)"
+	EXT_TEXT="unique"
 fi
 
+# create gds extraction script
+cat > $EXT_DIR/extract.tcl <<-EOF
+# magic commands to extract netlist.
+# well connectivity is detemined by CIFIN_STYLE and EXTRACT_STYLE.
+# output directory set by environment variable RUN_DIR
+
+puts "Extracting with top ports $EXT_MESSAGE"
+drc off
+gds drccheck off
+if {[string first sky130 $PDK] >= 0} {
+    cif istyle sky130($CIFIN_STYLE)
+
+} elseif {[string first gf180mcu $PDK] >= 0} {
+    cif istyle import($CIFIN_STYLE)
+
+} else {
+    puts "ERROR: Unknown PDK - $PDK"
+    exit 1
+}
+
+foreach cell { $FLATGLOB_CELLS } {
+	gds flatglob \$cell
+}
+# list cells to be flattened
+puts "Flattening [string map {" " "\n"} [gds flatglob]]"
+gds flatten yes ;# Flattens cells with few layers
+puts "Extracting $LAYOUT_FILE"
+gds read $LAYOUT_FILE
+gds flatten no ;# subcut cells will have few shapes, so don't flatten them when reading their gds later.
+
+foreach cell { $SUBCUT_CELLS } {
+	# Adds an isosub/subcut layer to the cell.
+	# 1. For each cell, create a new cell with an isosub/subcut layer = boundary - ( dnwell | isosub ).
+	# 2. Add this new cell to the original cell.
+	# 3. Flatten the new cell instance in the original cell.
+	load \$cell
+	select top cell
+	set cellboundary [view bbox] ;# Save the boundary.
+	expand
+	puts stdout "Creating subcut for \$cell ..."
+	set subcut_cell_name \${cell}_subcut
+	flatten -nolabels \$subcut_cell_name ;# Flatten into a cell with a new name.
+	load \$subcut_cell_name
+	property FIXED_BBOX \$cellboundary ;# Reset the boundary after flattening.
+	cif ostyle subcutout
+	set gds_subcut_file [file join $EXT_DIR \$subcut_cell_name]
+	gds write \$gds_subcut_file ;# Write just the subcut layer.
+	cellname delete \$subcut_cell_name
+	gds read \$gds_subcut_file ;# Read the subcut only cell.
+	load \$cell
+	select top cell
+	getcell \$subcut_cell_name child 0 0 parent 0 0 ;# Place the subcut cell at the origin.
+	expand
+	flatten -doinplace [instance list self] ;# flatten subcut cell to place subcut layer.
+}
+
+foreach cell { $ABSTRACT_CELLS } {
+	load \$cell
+	property LEFview true
+}
+
+cd $EXT_DIR
+load $TOP_LAYOUT
+select top cell
+expand
+extract no all
+extract do aliases
+extract do local
+extract $EXT_TEXT
+extract style ngspice($EXTRACT_STYLE)
+extract
+
+ext2spice lvs
+ext2spice merge conservative
+ext2spice short resistor
+ext2spice -o $TOP_LAYOUT.gds.spice $TOP_LAYOUT.ext
+feedback save $TOP_LAYOUT-ext2gds.spice.feedback.txt
+EOF
+
 # script uses TOP, RUN_DIR, CIFIN_STYLE, and EXTRACT_STYLE
-echo "CIFIN_STYLE: ${CIFIN_STYLE:=}"
-echo "EXTRACT_STYLE: ${EXTRACT_STYLE:=}"
-env TOP=$TOP_LAYOUT RUN_DIR=$EXT_DIR magic -dnull -noc -rcfile $LVS_ROOT/tech/magicrc $LVS_ROOT/scripts/gds.$EXT_TYPE.spice.tcl </dev/null 2>&1 |
+magic -dnull -noc -rcfile $LVS_ROOT/tech/magicrc $EXT_DIR/extract.tcl </dev/null 2>&1 |
 	tee -a $WORK_ROOT/$LOG_FILE
 ext_status=${PIPESTATUS[0]}
 

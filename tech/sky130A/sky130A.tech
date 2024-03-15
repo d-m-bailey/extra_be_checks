@@ -2221,6 +2221,27 @@ style wafflefill variants (),(tiled)
 	or	met5fill_medium
  	calma 	59 28
 
+style subcutout
+ # generates a new subcut layer from the cell boundary, with windows for existing subcut and dnwell
+ # should be used on a flattened layout
+ scalefactor 10  nanometers
+ options calma-permissive-labels
+ gridlimit 5
+
+ templayer CELLBOUND
+	boundary
+
+ templayer large_dnwell dnwell
+	grow 10
+
+ templayer large_isosub isosub
+	grow 10
+
+ layer  SUBCUT	CELLBOUND
+	grow 10
+	and-not large_dnwell
+	and-not large_isosub
+	calma	81 53
 end
 
 #-----------------------------------------------------------------------
