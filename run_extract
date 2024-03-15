@@ -226,15 +226,38 @@ foreach cell { $SUBCUT_CELLS } {
 	flatten -doinplace [instance list self] ;# flatten subcut cell to place subcut layer.
 }
 
-foreach cell { $ABSTRACT_CELLS } {
+foreach cell { $ABSTRACT_CELLS } { ;# Set abstract cells and delete all their subcell instances.
 	load \$cell
 	property LEFview true
+	puts "Abstracting \$cell"
+	select clear
+	foreach instance [cellname list childinst \$cell] {
+		puts "Removing \$instance from \$cell"
+		select cell \$instance
+		delete
+	}
 }
 
-cd $EXT_DIR
 load $TOP_LAYOUT
 select top cell
 expand
+
+set delete_cell 1
+while { \$delete_cell } {
+	set delete_cell 0
+	foreach cell [cellname list topcells] { ;# delete unused cells.
+		if { "\$cell" != "$TOP_LAYOUT" } { ;# Keep top block.
+			puts "Deleting \$cell"
+			cellname delete "\$cell" ;# This is a no-op for used cells
+			set delete_cell 1
+		}
+	}
+}
+
+load $TOP_LAYOUT
+select top cell
+expand
+cd $EXT_DIR
 extract no all
 extract do aliases
 extract do local
