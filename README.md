@@ -3,7 +3,7 @@ Scripts to run additional back-end checks on gds files.
 
 INSTALLATION:
 Requires:
-- magic 3.8.413  https://github.com/RTimothyEdwards/magic.git
+- magic 8.3.413  https://github.com/RTimothyEdwards/magic.git
 - netgen 1.5.255  https://github.com/RTimothyEdwards/netgen.git
 - cvc 1.1.4  https://github.com/d-m-bailey/cvc.git
 
