@@ -164,6 +164,7 @@ drc off
 crashbackups stop
 gds drccheck off
 undo disable
+locking disable
 if {[string first sky130 $PDK] >= 0} {
 	cif istyle sky130($CIFIN_STYLE)
 
@@ -304,6 +305,7 @@ drc off
 crashbackups stop
 gds drccheck off
 undo disable
+locking disable
 if {[string first sky130 $PDK] >= 0} {
 	cif istyle sky130($CIFIN_STYLE)
 
