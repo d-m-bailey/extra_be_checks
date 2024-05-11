@@ -112,7 +112,7 @@ if [[ -f $WORK_ROOT/layout.cells ]]; then
 	sed -e 's/\*/.*/g' -e 's/^/^/' -e 's/$/$/' $EXT_DIR/subcut |
 		grep -f - $WORK_ROOT/layout.cells >$EXT_DIR/subcut.glob
 else
-	cp $EXT_DIR/abstract $EXT_DIR/subcut.glob
+	cp $EXT_DIR/subcut $EXT_DIR/subcut.glob
 fi
 
 # Add any cells that should be flattened before extraction to 'flatten'.
