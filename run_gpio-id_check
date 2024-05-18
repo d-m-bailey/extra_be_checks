@@ -1,0 +1,206 @@
+#! /bin/bash
+#   run_hier_check: Checks layout hierarchy against verilog
+
+#   Copyright 2024 D. Mitch Bailey  cvc at shuharisystem dot com
+
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+
+# Overview:
+#  1. Extract gds/oas hierachy.
+#  2. Compare expected values to layout values
+#
+# Uses WORK_ROOT and LOG_ROOT if set.
+
+# Use case
+# run_gpio-id_check top_layout layout_file 
+if [[ $# -ne 2 ]]; then
+	echo "usage: run_gpio-id_check top_layout oas_file|gds_file"
+	exit 1
+fi
+
+# define location of expected values. Missing files do not generate fatal errors but do cause mismatches.
+CHIP_ID_SOURCE=tapeout/logs/set_user_id.log
+GPIO_DEFAULT_SOURCE=mpw_precheck/outputs/reports/gpio_defines.report 
+
+export TOP_LAYOUT=$1
+export LAYOUT_FILE=$2
+
+echo "WORK_ROOT   : ${WORK_ROOT:=$(pwd)/$TOP_SOURCE}"
+echo "LOG_ROOT    : ${LOG_ROOT:=$WORK_ROOT}"
+export LOG_ROOT WORK_ROOT
+
+mkdir -p $LOG_ROOT
+mkdir -p $WORK_ROOT
+rm -f $LOG_ROOT/gpio-id.log
+
+log_file=$WORK_ROOT/gpio-id.log
+layout_cell_file=$WORK_ROOT/layout.cells
+rm -f $log_file $layout_cell_file
+
+date "+BEGIN: %c" >$log_file
+start_time=$SECONDS
+
+echo "Step 1. extracting $TOP_LAYOUT layout hierarchy from $LAYOUT_FILE..."
+if [[ $LAYOUT_FILE == *.gz ]]; then
+	CAT=zcat
+	BASE_LAYOUT=${LAYOUT_FILE%.gz}
+else
+	CAT=cat
+	BASE_LAYOUT=$LAYOUT_FILE
+fi
+EXT=${BASE_LAYOUT##*.}
+if [[ "$EXT" == "txt" ]]; then
+	TEXT_FILE=$BASE_LAYOUT
+elif [[ "$EXT" == "gds" || "$EXT" == "oas" ]]; then
+	TEXT_FILE=$WORK_ROOT/layout.txt
+	cat >$WORK_ROOT/gds2txt.py <<-EOF
+		import pya
+
+		app = pya.Application.instance()
+		opt = pya.SaveLayoutOptions()
+		layout_view = pya.Layout()
+
+		input_layout = "$LAYOUT_FILE"
+		output = "$TEXT_FILE"
+		# Setting the name of the output file and setting the substitution character
+		print("[INFO] Changing from " + input_layout + "\n	to " + output)
+		opt.set_format_from_filename(output)
+		opt.oasis_substitution_char=''
+
+		# Reading the input file and writing it to the output file name
+		layout_view.read(input_layout)
+		for cell_it in layout_view.each_cell():
+		    if cell_it.name.endswith("$TOP_LAYOUT"):
+		       myIndex = layout_view.cell(cell_it.name).cell_index()
+		       break
+		opt.select_cell(myIndex)
+		opt.add_layer(0, pya.LayerInfo())
+		layout_view.write(output, opt)
+
+		app.exit(0)
+	EOF
+	klayout -b -rm $WORK_ROOT/gds2txt.py |
+		tee -a $log_file
+	gzip -f $TEXT_FILE
+	CAT=zcat
+fi
+
+echo "Step 2. comparing expected values to layout values..."
+if [[ -f $CHIP_ID_SOURCE ]]; then
+	echo "Reading gpio defaults from $CHIP_ID_SOURCE" |
+		tee -a $log_file
+else
+	printf "\n** Missing $CHIP_ID_SOURCE **\n" |
+		tee -a $log_file
+	CHIP_ID_SOURCE=
+fi
+if [[ -f $GPIO_DEFAULT_SOURCE ]]; then
+	echo "Reading gpio defaults from $GPIO_DEFAULT_SOURCE" |
+		tee -a $log_file
+else
+	printf "\n** Missing $GPIO_DEFAULT_SOURCE **\n" |
+		tee -a $log_file
+	GPIO_DEFAULT_SOURCE=
+fi
+cat $CHIP_ID_SOURCE $GPIO_DEFAULT_SOURCE <($CAT $TEXT_FILE) |
+awk '
+	BEGIN {
+		# Set constant defaults that are not in the gpio_defines.report
+		default_gpio[0] = "1803";
+		default_gpio[1] = "1803";
+		default_gpio[2] = "0403";
+		default_gpio[3] = "0801";
+		default_gpio[4] = "0403";
+	}
+	/Setting Project Chip ID to:/ {
+		expected_user_id = toupper($NF);
+	}
+	/^USER_CONFIG_GPIO_.*_INIT/ {
+		# Remember expected default_gpio
+		gpio = gensub(/USER_CONFIG_GPIO_(.*)_INIT.*/, "\\1", "g") + 0; # extract gpio number
+		default_gpio[gpio] = gensub(/13.h/, "", "g", $2); # remove width and base prefix
+	}
+	/^STRNAMR/ {
+		get_user_id = 0; # reset user id search flag
+	}
+	/^STRNAME/ && $2 ~ /user_id_textblock/ {
+		get_user_id = 1; # in user_id_textblock, so set user id search flag
+	}
+	/^SNAME/ && get_user_id == 1 && $2 ~ /alpha_/ {
+		# the user_id_textblock contains alpha_? cells where ? is the display character
+		# these cells have an instance name property alphaX_x where x is a position 7-0 from left to right
+		cell = $2;
+		# including ENDEL in condition prevents infinite loop with unexpected formats
+		while ( ! ( /PROPATTR 61/ || /ENDEL/ ) ) { 
+			getline;
+		}
+		getline;
+		if ( ! /PROPVALUE/ ) next; # skip if unexpected format
+		pos = gensub(/.*alphaX_([0-9]).*/, "\\1", "g") + 0; # extract the position from the instance name property
+		text[pos] = gensub(/.*alpha_(.).*/, "\\1", "g", cell); # extract the text character from the cell name
+	}
+	/^SNAME/ && $2 ~ /gpio_defaults_block/ {
+		# from the cell name gpio_defaults_block_xxxx, xxxx is the 4 byte hex code for the gpio defaults.
+		# from the instance name property (61) gpio_defaults_block_x, x is the gpio number
+		cell = $2;
+		# including ENDEL in condition prevents infinite loop with unexpected formats
+		while ( ! ( /PROPATTR 61/ || /ENDEL/ ) ) {
+			getline;
+		}
+		getline;
+		if ( ! /PROPVALUE/ ) next; # skip if unexpected format
+		gpio = gensub(/.*gpio_defaults_block_([0-9]+).*/, "\\1", "g") + 0; # extracct the gpio number from the instance name property
+		layout[gpio] = gensub(/.*gpio_defaults_block_(....).*/, "\\1", "g", cell); # extract the layout gpio default from the cell name
+	}
+	END {
+		layout_id = "";
+		# concatenate the id characters in order
+		for ( position_it = 7; position_it >= 0; position_it--) {
+			layout_id = layout_id text[position_it];
+		}
+		mismatch = 0;
+		# for unexpected values, print "*" at the end of the line. Also set mismatch flag.
+		check = ( expected_user_id == layout_id ) ? "" : "*";
+		mismatch = mismatch || ( check == "*" );
+		printf "\nChip ID expected %s found %s %s\n\n", expected_user_id, layout_id, check;
+
+		print "GPIO default check";
+		print "gpio expected found";
+		for ( gpio_it = 0; gpio_it <= 37; gpio_it++) {
+			if ( gpio_it in layout ) {
+				check = ( default_gpio[gpio_it] == layout[gpio_it] ) ? "" : "*";
+				mismatch = mismatch || ( check == "*" );
+				printf "%4d %8s %5s %s\n", gpio_it, default_gpio[gpio_it], layout[gpio_it], check;
+			}
+		}
+		if ( mismatch ) {
+			print "\n** Unexpected values **";
+		} else {
+			print "\nExpected values match";
+		}
+	}' - |
+	tee -a $log_file
+
+date "+END: %c" >>$log_file
+runtime=$((SECONDS - start_time))
+hours=$((runtime / 3600))
+minutes=$(((runtime % 3600) / 60))
+seconds=$(((runtime % 3600) % 60))
+printf "Runtime: %d:%02d:%02d (hh:mm:ss)\n" $hours $minutes $seconds >>$log_file
+
+if [[ $WORK_ROOT != $LOG_ROOT ]]; then
+	cp $log_file $LOG_ROOT/.
+fi
+
+grep -q "Expected values" $log_file
+exit $?
