@@ -22,7 +22,7 @@
 # Uses WORK_ROOT and LOG_ROOT if set.
 
 # Use case
-# run_gpio-id_check top_layout layout_file 
+# run_gpio-id_check top_layout layout_file
 if [[ $# -ne 2 ]]; then
 	echo "usage: run_gpio-id_check top_layout oas_file|gds_file"
 	exit 1
@@ -30,7 +30,7 @@ fi
 
 # define location of expected values. Missing files do not generate fatal errors but do cause mismatches.
 CHIP_ID_SOURCE=tapeout/logs/set_user_id.log
-GPIO_DEFAULT_SOURCE=mpw_precheck/outputs/reports/gpio_defines.report 
+GPIO_DEFAULT_SOURCE=mpw_precheck/outputs/reports/gpio_defines.report
 
 export TOP_LAYOUT=$1
 export LAYOUT_FILE=$2
@@ -63,6 +63,8 @@ if [[ "$EXT" == "txt" ]]; then
 	TEXT_FILE=$BASE_LAYOUT
 elif [[ "$EXT" == "gds" || "$EXT" == "oas" ]]; then
 	TEXT_FILE=$WORK_ROOT/layout.txt
+	ID_TEXT_FILE=$WORK_ROOT/user_id_programming.txt
+	rm -f $TEXT_FILE $TEXT_FILE.gz $ID_TEXT_FILE
 	cat >$WORK_ROOT/gds2txt.py <<-EOF
 		import pya
 
@@ -72,6 +74,7 @@ elif [[ "$EXT" == "gds" || "$EXT" == "oas" ]]; then
 
 		input_layout = "$LAYOUT_FILE"
 		output = "$TEXT_FILE"
+		id_output = "$ID_TEXT_FILE"
 		# Setting the name of the output file and setting the substitution character
 		print("[INFO] Changing from " + input_layout + "\n	to " + output)
 		opt.set_format_from_filename(output)
@@ -81,11 +84,29 @@ elif [[ "$EXT" == "gds" || "$EXT" == "oas" ]]; then
 		layout_view.read(input_layout)
 		for cell_it in layout_view.each_cell():
 		    if cell_it.name.endswith("$TOP_LAYOUT"):
-		       myIndex = layout_view.cell(cell_it.name).cell_index()
-		       break
-		opt.select_cell(myIndex)
-		opt.add_layer(0, pya.LayerInfo())
-		layout_view.write(output, opt)
+		       myTopIndex = layout_view.cell(cell_it.name).cell_index()
+		    if cell_it.name.endswith("user_id_programming"):
+		       myUserIdIndex = layout_view.cell(cell_it.name).cell_index()
+		    try:
+		       if myTopIndex and myUserIdIndex: # stop searching once both have been found
+		          break
+		    except NameError: # continue if either is not defined
+		       continue
+
+		try:
+		    opt.select_cell(myTopIndex)
+		    opt.add_layer(0, pya.LayerInfo())
+		    layout_view.write(output, opt)
+		except NameError: # $TOP_LAYOUT not found
+		    print("[ERROR] Could not find $TOP_LAYOUT in $LAYOUT_FILE")
+
+		try:
+		    opt.select_cell(myUserIdIndex)
+		    mcon_layer = layout_view.find_layer(pya.LayerInfo(67, 44)) # logical mcon layer
+		    opt.add_layer(mcon_layer, pya.LayerInfo())
+		    layout_view.write(id_output, opt)
+		except NameError as myError: # user_id_programming not found
+		    print("[ERROR] Could not find user_id_programming in $LAYOUT_FILE")
 
 		app.exit(0)
 	EOF
@@ -112,7 +133,7 @@ else
 		tee -a $log_file
 	GPIO_DEFAULT_SOURCE=
 fi
-cat $CHIP_ID_SOURCE $GPIO_DEFAULT_SOURCE <($CAT $TEXT_FILE) |
+cat $CHIP_ID_SOURCE $GPIO_DEFAULT_SOURCE <($CAT $TEXT_FILE) <(cat $ID_TEXT_FILE) |
 awk '
 	BEGIN {
 		# Set constant defaults that are not in the gpio_defines.report
@@ -121,6 +142,44 @@ awk '
 		default_gpio[2] = "0403";
 		default_gpio[3] = "0801";
 		default_gpio[4] = "0403";
+		# Set user id programming bit constants
+		bitXY["14405:9265"]	= "0@0";	bitXY["13485:9265"] = "1@0";
+		bitXY["16245:9265"]	= "0@1";	bitXY["15325:9265"] = "1@1";
+		bitXY["10265:20145"]	= "0@2";	bitXY["9345:20145"] = "1@2";
+		bitXY["7965:9265"]	= "0@3";	bitXY["7045:9265"] = "1@3";
+		bitXY["28205:9265"]	= "0@4";	bitXY["27285:9265"] = "1@4";
+		bitXY["21765:25585"]	= "0@5";	bitXY["20845:25585"] = "1@5";
+		bitXY["7965:20145"]	= "0@6";	bitXY["7045:20145"] = "1@6";
+		bitXY["20385:9265"]	= "0@7";	bitXY["19465:9265"] = "1@7";
+		bitXY["17165:17765"]	= "0@8";	bitXY["16245:17765"] = "1@8";
+		bitXY["25445:11985"]	= "0@9";	bitXY["24525:11985"] = "1@9";
+		bitXY["22225:20145"]	= "0@10";	bitXY["21305:20145"] = "1@10";
+		bitXY["13025:9265"]	= "0@11";	bitXY["12105:9265"] = "1@11";
+		bitXY["23605:23205"]	= "0@12";	bitXY["22685:23205"] = "1@12";
+		bitXY["24065:11985"]	= "0@13";	bitXY["23145:11985"] = "1@13";
+		bitXY["13485:17765"]	= "0@14";	bitXY["12565:17765"] = "1@14";
+		bitXY["23145:6885"]	= "0@15";	bitXY["22225:6885"] = "1@15";
+		bitXY["24065:17765"]	= "0@16";	bitXY["23145:17765"] = "1@16";
+		bitXY["8425:17765"]	= "0@17";	bitXY["7505:17765"] = "1@17";
+		bitXY["23605:20145"]	= "0@18";	bitXY["22685:20145"] = "1@18";
+		bitXY["10725:23205"]	= "0@19";	bitXY["9805:23205"] = "1@19";
+		bitXY["14865:6885"]	= "0@20";	bitXY["13945:6885"] = "1@20";
+		bitXY["18085:23205"]	= "0@21";	bitXY["17165:23205"] = "1@21";
+		bitXY["21305:17765"]	= "0@22";	bitXY["20385:17765"] = "1@22";
+		bitXY["26365:25585"]	= "0@23";	bitXY["25445:25585"] = "1@23";
+		bitXY["9805:17765"]	= "0@24";	bitXY["8885:17765"] = "1@24";
+		bitXY["15785:17765"]	= "0@25";	bitXY["14865:17765"] = "1@25";
+		bitXY["26365:17765"]	= "0@26";	bitXY["25445:17765"] = "1@26";
+		bitXY["8425:6885"]	= "0@27";	bitXY["7505:6885"] = "1@27";
+		bitXY["10725:9265"]	= "0@28";	bitXY["9805:9265"] = "1@28";
+		bitXY["27745:20145"]	= "0@29";	bitXY["26825:20145"] = "1@29";
+		bitXY["16245:23205"]	= "0@30";	bitXY["15325:23205"] = "1@30";
+		bitXY["7965:14705"]	= "0@31";	bitXY["7045:14705"] = "1@31";
+		# binary to hexadecimal conversion constants
+		HEX["0000"] = "0"; HEX["0001"] = "1"; HEX["0010"] = "2"; HEX["0011"] = "3";
+		HEX["0100"] = "4"; HEX["0101"] = "5"; HEX["0110"] = "6"; HEX["0111"] = "7";
+		HEX["1000"] = "8"; HEX["1001"] = "9"; HEX["1010"] = "A"; HEX["1011"] = "B";
+		HEX["1100"] = "C"; HEX["1101"] = "D"; HEX["1110"] = "E"; HEX["1111"] = "F";
 	}
 	/Setting Project Chip ID to:/ {
 		expected_user_id = toupper($NF);
@@ -131,23 +190,39 @@ awk '
 		default_gpio[gpio] = gensub(/13.h/, "", "g", $2); # remove width and base prefix
 	}
 	/^STRNAMR/ {
-		get_user_id = 0; # reset user id search flag
+		get_user_id_text = 0; # reset user id search flag
+		get_user_id_bits = 0; # reset user id bits search flag
 	}
 	/^STRNAME/ && $2 ~ /user_id_textblock/ {
-		get_user_id = 1; # in user_id_textblock, so set user id search flag
+		get_user_id_text = 1; # in user_id_textblock, so set user id search flag
 	}
-	/^SNAME/ && get_user_id == 1 && $2 ~ /alpha_/ {
+	/^SNAME/ && get_user_id_text == 1 && $2 ~ /alpha_/ {
 		# the user_id_textblock contains alpha_? cells where ? is the display character
 		# these cells have an instance name property alphaX_x where x is a position 7-0 from left to right
 		cell = $2;
 		# including ENDEL in condition prevents infinite loop with unexpected formats
-		while ( ! ( /PROPATTR 61/ || /ENDEL/ ) ) { 
+		while ( ! ( /PROPATTR 61/ || /ENDEL/ ) ) {
 			getline;
 		}
 		getline;
 		if ( ! /PROPVALUE/ ) next; # skip if unexpected format
 		pos = gensub(/.*alphaX_([0-9]).*/, "\\1", "g") + 0; # extract the position from the instance name property
 		text[pos] = gensub(/.*alpha_(.).*/, "\\1", "g", cell); # extract the text character from the cell name
+	}
+	/^STRNAME/ && $2 ~ /user_id_programming/ {
+		get_user_id_bits = 1; # in user_id_programming, so set user id bits search flag
+	}
+	/BOUNDARY/ && get_user_id_bits == 1 {
+		# BOUNDARY elements instantiate the id programming bits
+		# including ENDEL in condition prevents infinite loop with unexpected formats
+		while ( ! ( /^XY/ || /ENDEL/ ) ) {
+			getline;
+		}
+		xy = $2 $3;
+		items = split(bitXY[xy], bit_data, /@/);
+		if ( items == 2 ) {
+			bit[bit_data[2]+0] = bit_data[1];
+		}
 	}
 	/^SNAME/ && $2 ~ /gpio_defaults_block/ {
 		# from the cell name gpio_defaults_block_xxxx, xxxx is the 4 byte hex code for the gpio defaults.
@@ -162,17 +237,53 @@ awk '
 		gpio = gensub(/.*gpio_defaults_block_([0-9]+).*/, "\\1", "g") + 0; # extracct the gpio number from the instance name property
 		layout[gpio] = gensub(/.*gpio_defaults_block_(....).*/, "\\1", "g", cell); # extract the layout gpio default from the cell name
 	}
+	function BinaryToHex(binary_number) {
+		# converts arbitrary length binary string to hexadecimal number string
+		binary_digits = length(binary_number);
+		while ( binary_digits % 4 != 0 ) { # pad binary number with leading zeros until length is multiple of 4
+			binary_number = "0" binary_number;
+			binary_digits = length(binary_number);
+		}
+		hex_number = "";
+		for ( bit_it = binary_digits - 3; bit_it > 0; bit_it -= 4 ) { # awk strings start from index 1
+			nibble = substr(binary_number, bit_it, 4);
+			if ( nibble in HEX ) {
+				hex_number = HEX[nibble] hex_number;
+			} else {
+				hex_number = "X" hex_number;
+			}
+		}
+		return hex_number;
+	}
 	END {
-		layout_id = "";
+		layout_text = "";
 		# concatenate the id characters in order
 		for ( position_it = 7; position_it >= 0; position_it--) {
-			layout_id = layout_id text[position_it];
+			layout_text = layout_text text[position_it];
 		}
 		mismatch = 0;
 		# for unexpected values, print "*" at the end of the line. Also set mismatch flag.
-		check = ( expected_user_id == layout_id ) ? "" : "*";
+		check = ( expected_user_id == layout_text ) ? "" : "*";
 		mismatch = mismatch || ( check == "*" );
-		printf "\nChip ID expected %s found %s %s\n\n", expected_user_id, layout_id, check;
+		printf "\nChip ID text: expected %s found %s %s\n\n", expected_user_id, layout_text, check;
+
+		id_bits = "";
+		reversed_bits = "";
+		for ( position_it = 31; position_it >= 0; position_it--) {
+			if ( position_it in bit ) { # use actual value if found, otherwise x.
+				myBit = bit[position_it];
+			} else {
+				myBit = "x";
+			}
+			id_bits = id_bits myBit;
+			reversed_bits = myBit reversed_bits;
+		}
+		layout_id = BinaryToHex(id_bits);
+		reversed_id = BinaryToHex(reversed_bits);
+		# Reversed ids are flagged "<" but not reported as an error
+		check = ( expected_user_id == layout_id ) ? "" : ( expected_user_id == reversed_id ) ? "<" : "*";
+		mismatch = mismatch || ( check == "*" );
+		printf "Chip ID bits: expected %s found(reversed) %s(%s) %s\n\n", expected_user_id, layout_id, reversed_id, check;
 
 		print "GPIO default check";
 		print "gpio expected found";
