@@ -1,0 +1,33 @@
+puts stdout "Sourcing design subcut.magicrc for technology sky130B ..."
+
+# Put grid on 0.005 pitch.  This is important, as some commands don't
+# rescale the grid automatically (such as lef read?).
+
+set scalefac [tech lambda]
+if {[lindex $scalefac 1] < 2} {
+    scalegrid 1 2
+}
+
+# drc off
+drc euclidean on
+# Change this to a fixed number for repeatable behavior with GDS writes
+# e.g., "random seed 12345"
+catch {random seed}
+
+# Turn off the scale option on ext2spice or else it conflicts with the
+# scale in the model files.
+ext2spice scale off
+
+# loading technology
+tech load $env(LVS_ROOT)/tech/$env(PDK)/$env(PDK).subcut.tech
+
+# set units to lambda grid 
+snap lambda
+
+# set sky130 standard power, ground, and substrate names
+set VDD VPWR
+set GND VGND
+set SUB VSUBS
+
+set MAGTYPE mag
+
