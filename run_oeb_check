@@ -461,7 +461,7 @@ elif [[ $DESIGN_NAME == *user_project_wrapper ]]; then
 		gn analog_io[28]
 		q
 	cvcin
-elif [[ $DESIGN_NAME == *user_project ]]; then
+elif [[ $DESIGN_NAME == *user_project_wrapper_mini4 ]]; then
 	cat >$WORK_ROOT/cvc.oeb.script <<-cvcin
 		c 6
 		gn io_in[0]
@@ -716,9 +716,6 @@ awk '
 		#print "oeb connections:", length(oeb_connections);
 		print " gpio |   in   |   out  | analog |  oeb min/sim/max  | Message";
 		     #"  xx  | xxxxxx | xxxxxx | xxxxxx | vxxx*/vxxx*/vxxx* |
-		#gpio_count = asorti(oeb_connections, ordered_gpio);
-		#for ( gpio_it = 1; gpio_it <= gpio_count; gpio_it++ ) {
-			#i = ordered_gpio[gpio_it];
 		PROCINFO["sorted_in"] = "@ind_num_asc";
 		for ( i in oeb_connections ) {
 			printf "  %2d  | %6s | %6s | %6s | %5s/%5s/%5s | ", \
@@ -755,15 +752,15 @@ fi
 
 if [[ $cvc_status -eq 0 && $(grep -c '^CVC: End:' $LOG_ROOT/cvc.oeb.log) -ne 1 ]]; then
 	# CVC finished abnormally
-	exit 4
+	exit 5
 
 elif [[ $cvc_status -eq 0 && $(grep -c ERROR $SIGNOFF_ROOT/cvc.oeb.report) -gt 0 ]]; then
 	# CVC finished normally, but detected errors
-	exit 5
+	exit 6
 
 elif [[ $cvc_status -eq 0 && $(grep -c Warning $SIGNOFF_ROOT/cvc.oeb.report) -gt 0 ]]; then
 	# CVC finished normally, but detected warings
-	exit 6
+	exit 4
 
 else
 	exit $cvc_status
