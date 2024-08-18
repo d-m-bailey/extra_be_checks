@@ -11,6 +11,9 @@
 	"EXTRACT_ABSTRACT": [
 		"*user_analog_project_wrapper"
 	],
+	"EXTRACT_CREATE_SUBCUT": [
+		""
+	],
 	"LVS_FLATTEN": [
 		"caravan_signal_routing",
 		"empty_macro_1"

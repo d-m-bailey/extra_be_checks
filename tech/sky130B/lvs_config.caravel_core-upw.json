@@ -9,8 +9,10 @@
 		""
 	],
 	"EXTRACT_ABSTRACT": [
-		"*user_project_wrapper",
-		"*sky130_fd_sc_hd__macro_sparecell"
+		"*user_project_wrapper"
+	],
+	"EXTRACT_CREATE_SUBCUT": [
+		""
 	],
 	"LVS_FLATTEN": [
 		""
