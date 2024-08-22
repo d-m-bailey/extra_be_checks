@@ -35,6 +35,11 @@ GPIO_DEFAULT_SOURCE=mpw_precheck/outputs/reports/gpio_defines.report
 export TOP_LAYOUT=$1
 export LAYOUT_FILE=$2
 
+if [[ ! -f $LAYOUT_FILE ]]; then
+	echo "Error: missing file $LAYOUT_FILE"
+	exit 2
+fi
+
 echo "WORK_ROOT   : ${WORK_ROOT:=$(pwd)/$TOP_SOURCE}"
 echo "LOG_ROOT    : ${LOG_ROOT:=$WORK_ROOT}"
 export LOG_ROOT WORK_ROOT
@@ -118,7 +123,7 @@ fi
 
 echo "Step 2. comparing expected values to layout values..."
 if [[ -f $CHIP_ID_SOURCE ]]; then
-	echo "Reading gpio defaults from $CHIP_ID_SOURCE" |
+	echo "Reading chip id from $CHIP_ID_SOURCE" |
 		tee -a $log_file
 else
 	printf "\n** Missing $CHIP_ID_SOURCE **\n" |
