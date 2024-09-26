@@ -420,25 +420,22 @@ foreach cell $cells1 {
     }
 }
 foreach cell $cells2 {
-    if {[regexp {sky130_ef_sc_[^_]+__decap_[[:digit:]]+} $cell match]} {
+    if {[regexp {sky130_.._sc_[^_]+__decap_[[:digit:]]+} $cell match]} {
 	property "-circuit2 $cell" parallel enable
     }
-    if {[regexp {sky130_fd_sc_[^_]+__decap_[[:digit:]]+} $cell match]} {
+    if {[regexp {sky130_.._sc_[^_]+__fill_[[:digit:]]+} $cell match]} {
 	property "-circuit2 $cell" parallel enable
     }
-    if {[regexp {sky130_fd_sc_[^_]+__fill_[[:digit:]]+} $cell match]} {
+    if {[regexp {sky130_.._sc_[^_]+__tapvpwrvgnd_[[:digit:]]+} $cell match]} {
 	property "-circuit2 $cell" parallel enable
     }
-    if {[regexp {sky130_fd_sc_[^_]+__tapvpwrvgnd_[[:digit:]]+} $cell match]} {
+    if {[regexp {sky130_.._sc_[^_]+__diode_[[:digit:]]+} $cell match]} {
 	property "-circuit2 $cell" parallel enable
     }
-    if {[regexp {sky130_fd_sc_[^_]+__diode_[[:digit:]]+} $cell match]} {
+    if {[regexp {sky130_.._sc_[^_]+__fill_diode_[[:digit:]]+} $cell match]} {
 	property "-circuit2 $cell" parallel enable
     }
-    if {[regexp {sky130_fd_sc_[^_]+__fill_diode_[[:digit:]]+} $cell match]} {
-	property "-circuit2 $cell" parallel enable
-    }
-    if {[regexp {sky130_ef_sc_[^_]+__fakediode_[[:digit:]]+} $cell match]} {
+    if {[regexp {sky130_.._sc_[^_]+__fakediode_[[:digit:]]+} $cell match]} {
 	property "-circuit2 $cell" parallel enable
     }
 }
@@ -508,10 +505,10 @@ foreach cell $cells1 {
     }
 }
 
-# Equate prefixed layout cells with corresponding source
+# Equate prefixed and suffixed layout cells with corresponding source
 foreach cell $cells1 {
     set layout $cell
-    while {[regexp {([A-Z][A-Z0-9]_)(.*)} $layout match prefix cellname]} {
+    while {[regexp {([A-Z][A-Z0-9]_)([^#\$]*)([#\$][0-9]+)*} $layout match prefix cellname suffix]} {
 	if {([lsearch $cells2 $cell] < 0) && \
 		([lsearch $cells2 $cellname] >= 0)} {
 	    # netlist with the N names should always be the second netlist
@@ -528,15 +525,15 @@ foreach cell $cells1 {
 }
 
 # Equate suffixed layout cells with corresponding source
-foreach cell $cells1 {
-    if {[regexp {([^\$]*)(\$[0-9])+} $cell match cellname suffix]} {
-	if {([lsearch $cells2 $cell] < 0) && \
-		([lsearch $cells2 $cellname] >= 0)} {
-	    # netlist with the N names should always be the second netlist
-	    equate classes "-circuit2 $cellname" "-circuit1 $cell"
-	    puts stdout "Equating $cell in circuit 1 and $cellname in circuit 2"
-	}
-    }
-}
+#foreach cell $cells1 {
+    #if {[regexp {([^\$]*)(\$[0-9])+} $cell match cellname suffix]} {
+	#if {([lsearch $cells2 $cell] < 0) && \
+		#([lsearch $cells2 $cellname] >= 0)} {
+	    ## netlist with the N names should always be the second netlist
+	    #equate classes "-circuit2 $cellname" "-circuit1 $cell"
+	    #puts stdout "Equating $cell in circuit 1 and $cellname in circuit 2"
+	#}
+    #}
+#}
 
 #Added programatically.

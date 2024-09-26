@@ -15,6 +15,10 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
+while [[ $# > 0 ]]; do
+
+echo "
+Checking $1..."
 echo "Merge shorts: shorts between ports that do not appear in the extraction report."
 for ext_path in $1/*.ext*; do
 	ext_file=${ext_path##*/}
@@ -50,9 +54,23 @@ zegrep -c '^use' $1/*.ext* |
 echo "
 Leaf cells without explict ports"
 comm -12 $1/../noport.subckt $1/../layout.subckt |
-	comm -12 - $1/../leaf.subckt 
+	comm -12 - $1/../leaf.subckt
 
 echo "
 Non-leaf cells without explict ports"
 comm -12 $1/../noport.subckt $1/../layout.subckt |
 	comm -23 - $1/../leaf.subckt
+
+echo "
+Illegal overlaps"
+grep -B1 legal $1/*feedback* |
+	awk '{
+		if ( /^box/ ) {
+			print $1, $2/200.0, $3/200.0, $4/200.0, $5/200.0;
+		} else {
+			print $0;
+		}
+	}'
+
+shift
+done

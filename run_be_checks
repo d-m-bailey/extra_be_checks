@@ -48,9 +48,17 @@ if [[ $# -gt 4 ]]; then
 	exit 1
 fi
 
-# Check for LVS_ROOT
+# Check for LVS_ROOT, PDK_ROOT and PDK
 if [[ -z "$LVS_ROOT" ]]; then
 	echo "LVS_ROOT not set."
+	exit 1
+fi
+if [[ -z "$PDK_ROOT" ]]; then
+	echo "PDK_ROOT not set."
+	exit 1
+fi
+if [[ -z "$PDK" ]]; then
+	echo "PDK not set."
 	exit 1
 fi
 
@@ -93,6 +101,11 @@ fi
 export LOG_ROOT SIGNOFF_ROOT WORK_ROOT
 
 mkdir -p $LOG_ROOT $SIGNOFF_ROOT $WORK_ROOT
+if [[ ${WORK_ROOT##*/} != $TOP_SOURCE && $(find $WORK_ROOT | wc -l) -gt 1 ]]; then
+	echo ${WORK_ROOT##*/} $TOP_SOURCE $(find $WORK_ROOT | wc -l)
+	echo "Error: $WORK_ROOT must be empty or match $TOP_SOURCE"
+	exit 1
+fi
 rm -f $LOG_ROOT/{soft,lvs,cvc}.log $SIGNOFF_ROOT/{soft,lvs,cvc}.report $SIGNOFF_ROOT/hier.csv
 if [[ $SKIP_OEB == no ]]; then
 	rm -f $LOG_ROOT/cvc.oeb.log $SIGNOFF_ROOT/cvc.oeb.report

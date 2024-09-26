@@ -40,7 +40,7 @@ if [[ ! -f $LAYOUT_FILE ]]; then
 	exit 2
 fi
 
-echo "WORK_ROOT   : ${WORK_ROOT:=$(pwd)/$TOP_SOURCE}"
+echo "WORK_ROOT   : ${WORK_ROOT:=$(pwd)/$TOP_LAYOUT}"
 echo "LOG_ROOT    : ${LOG_ROOT:=$WORK_ROOT}"
 export LOG_ROOT WORK_ROOT
 
