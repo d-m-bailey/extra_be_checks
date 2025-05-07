@@ -58,11 +58,12 @@ def substitute_env_variables(input_string, env):
     return string
 
 
-def parse_config_file(json_file, lvs_env):
+def parse_config_file(json_file, lvs_env, skip_includes=False):
     """ Parses a json file which may reference other json files and uses the values to set environment variables.
 
     List values are accumulated while scalar values are overwritten when processing sub files.
     Duplicate list values are silently ignored.
+    Don't recurse in duplicate includes to avoid infinite loops
     json syntax errors are fatal errors.
     """
     if not os.path.exists(f"{json_file}"):
@@ -78,13 +79,11 @@ def parse_config_file(json_file, lvs_env):
                 exports = lvs_env[key].split() if key in lvs_env else []  # current environment list values
                 for val in value:
                     val = substitute_env_variables(val, lvs_env)
+                    if key == 'INCLUDE_CONFIGS' and not skip_includes:  # load child configs, but don't recurse previous
+                        parse_config_file(val, lvs_env, val in exports)
                     if val not in exports:  # only add if not already in list
                         exports.append(val)
-                        if key == 'INCLUDE_CONFIGS':  # load child configs
-                            lvs_env['INCLUDE_CONFIGS'] += " " + val  # prevents loading same config twice
-                            parse_config_file(val, lvs_env)
-                if key != 'INCLUDE_CONFIGS':  # the value of the INCLUDE_CONFIGS key is already updated before the recursive call.
-                    lvs_env[key] = ' '.join(exports)
+                lvs_env[key] = ' '.join(exports)
             else:  # value is not a list. new value overrides any previous value.
                 value = substitute_env_variables(value, lvs_env)
                 lvs_env[key] = value

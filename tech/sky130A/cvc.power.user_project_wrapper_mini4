@@ -1,7 +1,5 @@
-vccd* power 1.8
-vdda* power 3.3
-vssa* power 0.0
-vssd* power 0.0
+VPWR power 1.8
+VGND power 0.0
 user_clock2 input min@0.0 max@1.8
 wb_clk_i input min@0.0 max@1.8
 wb_rst_i input min@0.0 max@1.8

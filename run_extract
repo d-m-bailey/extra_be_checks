@@ -29,7 +29,7 @@ fi
 CONFIG_FILE=$1
 DESIGN_NAME=${2:+"-d $2"}
 
-if [[ $# -ne 0 ]]; then  # if config file not specified, skip and use current environment
+if [[ $# -ne 0 ]]; then # if config file not specified, skip and use current environment
 	source <($LVS_ROOT/set_lvs_env.py -c $CONFIG_FILE $DESIGN_NAME)
 fi
 if [[ ! -v EXTRACT_FLATGLOB ]]; then
@@ -84,8 +84,8 @@ echo "Extracting to ${EXT_DIR:=$WORK_ROOT/ext}"
 rm -rf $EXT_DIR
 mkdir -p $EXT_DIR
 
-# create work abstract file based on actual cells used (psuedo globbing)
-# Will work with wildcards directly, but use psuedo globbing to check later.
+# create work abstract file based on actual cells used (pseudo globbing)
+# Will work with wildcards directly, but use pseudo globbing to check later.
 echo $EXTRACT_FLATGLOB |
 	sed 's/  */\n/g' >$EXT_DIR/flatglob
 if [[ -f $WORK_ROOT/layout.cells ]]; then
@@ -95,7 +95,7 @@ else
 	cp $EXT_DIR/flatglob $EXT_DIR/flatglob.glob
 fi
 
-# create work abstract file based on actual cells used (psuedo globbing)
+# create work abstract file based on actual cells used (pseudo globbing)
 echo $EXTRACT_ABSTRACT |
 	sed 's/  */\n/g' >$EXT_DIR/abstract
 if [[ -f $WORK_ROOT/layout.cells ]]; then
@@ -105,7 +105,7 @@ else
 	cp $EXT_DIR/abstract $EXT_DIR/abstract.glob
 fi
 
-# create work subcut file based on actual cells used (psuedo globbing)
+# create work subcut file based on actual cells used (pseudo globbing)
 echo $EXTRACT_CREATE_SUBCUT |
 	sed 's/  */\n/g' >$EXT_DIR/subcut
 if [[ -f $WORK_ROOT/layout.cells ]]; then
@@ -176,6 +176,11 @@ if {[string first sky130 $PDK] >= 0} {
 	exit 1
 }
 
+# Flatglob cells here too because may effect abstract connections (ex: sky130_ef_io__corner_pad)
+foreach cell { $FLATGLOB_CELLS } {
+	gds flatglob \$cell
+}
+
 set last_time [orig_clock seconds]
 puts "Abstracting $LAYOUT_FILE"
 gds read $LAYOUT_FILE
@@ -190,9 +195,14 @@ foreach cell { $SUBCUT_CELLS } {
 	# 1. For each cell, create a new cell with an isosub/subcut layer = boundary - ( dnwell | isosub ).
 	load \$cell
 	select top cell
-	set cellboundary [view bbox] ;# Save the boundary.
+	set cellboundary [property FIXED_BBOX] ;# Save the P&R boundary.
+	if { [string equal "" \$cellboundary] } { ;# no boundary
+		set cellboundary [view bbox] ;# Save the data boundary.
+		puts "Creating subcut for \$cell with data boundary \$cellboundary ..."
+	} else { # has boundary
+		puts "Creating subcut for \$cell with cell boundary \$cellboundary ..."
+	}
 	expand
-	puts stdout "Creating subcut for \$cell ..."
 	set subcut_cell_name \${cell}_subcut
 	flatten -nolabels \$subcut_cell_name ;# Flatten into a cell with a new name.
 	load \$subcut_cell_name
@@ -427,17 +437,17 @@ find $EXT_DIR -name '*.ext' -size +1M -exec gzip {} \;
 
 if [[ $(grep -c 'direction reversal in path' $LOG_ROOT/$LOG_FILE) -ne 0 ]]; then
 	echo "
-Error: invalid path reversal. See $LOG_ROOT/$LOG_FILE"
+Warning: invalid path reversal. See $LOG_ROOT/$LOG_FILE"
 	magic_status=1
 fi
 
 grep 'layer=' $LOG_ROOT/$LOG_FILE |
 	awk '/, layer=/ {print gensub(/.*, layer=/, "layer=", 1)}' |
 	sort -u |
-	comm -23 - $LVS_ROOT/tech/$PDK/known.undefined.layer >$EXT_DIR/unknown.layers
+	comm -23 - <(sed 's/ *#.*//' $LVS_ROOT/tech/$PDK/known.undefined.layer) >$EXT_DIR/unknown.layers
 if [[ $(cat $EXT_DIR/unknown.layers | wc -w) -ne 0 ]]; then
 	echo "
-Error: invalid layers. See $LOG_ROOT/$LOG_FILE"
+Warning: unknown layers. See $LOG_ROOT/$LOG_FILE"
 	cat $EXT_DIR/unknown.layers
 	magic_status=1
 fi
@@ -445,10 +455,12 @@ fi
 # Check that extraction completed successfully
 if [[ $abstract_status -ne 0 || \
 		$ext_status -ne 0 || \
-		${magic_status:=0} -ne 0 || \
 		$(grep -c 'exttospice finished.' $LOG_ROOT/$LOG_FILE) -ne 1 ]]; then
 	echo "
 Error: extraction did not complete successfully"
 	exit 4
+elif [[ ${magic_status:=0} -ne 0 ]]; then
+	echo "
+Warning: extraction completed with warnings"
 fi
 
