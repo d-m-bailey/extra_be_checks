@@ -1,4 +1,4 @@
-puts stdout "Sourcing design magicrc.well for technology $::env(PDK) ..."
+puts stdout "Sourcing design magicrc for technology $::env(PDK) ..."
 
 # Put internal grid on 0.005 pitch.  This is important to match vendor file
 # input (as opposed to SCMOS-style layout.  The default lambda grid is 0.05um).

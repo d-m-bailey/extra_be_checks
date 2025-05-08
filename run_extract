@@ -171,6 +171,9 @@ if {[string first sky130 $PDK] >= 0} {
 } elseif {[string first gf180mcu $PDK] >= 0} {
 	cif istyle import($CIFIN_STYLE)
 
+} elseif {[string first ihp-sg13g2 $PDK] >= 0} {
+	cif istyle ihp-sg13g2($CIFIN_STYLE)
+
 } else {
 	puts "ERROR: Unknown PDK - $PDK"
 	exit 1
