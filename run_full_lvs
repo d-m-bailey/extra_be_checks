@@ -189,7 +189,8 @@ if [[ $VERILOG_LIST ]]; then
 	ls --sort=none $VERILOG_LIST >>$WORK_ROOT/verilog_files
 fi
 
-cp $LVS_ROOT/tech/$PDK/${PDK}_setup.tcl $WORK_ROOT/${PDK}_setup.tcl
+#cp $LVS_ROOT/tech/$PDK/${PDK}_setup.tcl $WORK_ROOT/${PDK}_setup.tcl
+cp $PDK_ROOT/$PDK/libs.tech/netgen/${PDK}_setup.tcl $WORK_ROOT/${PDK}_setup.tcl
 
 while read cell; do
 	cat >>$WORK_ROOT/${PDK}_setup.tcl <<-flatten
