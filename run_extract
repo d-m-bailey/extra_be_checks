@@ -156,7 +156,7 @@ fi
 # create gds abstraction script
 cat > $EXT_DIR/abstract.tcl <<EOF
 # magic commands to abstract cells.
-# well connectivity is detemined by CIFIN_STYLE and EXTRACT_STYLE.
+# well connectivity is detemined by EXTRACT_STYLE.
 # output directory set by environment variable EXT_DIR
 
 puts "Abstracting"
@@ -165,19 +165,6 @@ crashbackups stop
 gds drccheck off
 undo disable
 locking disable
-if {[string first sky130 $PDK] >= 0} {
-	cif istyle sky130($CIFIN_STYLE)
-
-} elseif {[string first gf180mcu $PDK] >= 0} {
-	cif istyle import($CIFIN_STYLE)
-
-} elseif {[string first ihp-sg13g2 $PDK] >= 0} {
-	cif istyle sg13g2($CIFIN_STYLE)
-
-} else {
-	puts "ERROR: Unknown PDK - $PDK"
-	exit 1
-}
 
 # Flatglob cells here too because may effect abstract connections (ex: sky130_ef_io__corner_pad)
 foreach cell { $FLATGLOB_CELLS } {
@@ -310,7 +297,7 @@ abstract_status=${PIPESTATUS[0]}
 # create gds extraction script
 cat > $EXT_DIR/extract.tcl <<EOF
 # magic commands to extract netlist.
-# well connectivity is detemined by CIFIN_STYLE and EXTRACT_STYLE.
+# well connectivity is detemined by EXTRACT_STYLE.
 # output directory set by environment variable EXT_DIR
 
 puts "Extracting with top ports $EXT_MESSAGE"
@@ -319,19 +306,6 @@ crashbackups stop
 gds drccheck off
 undo disable
 locking disable
-if {[string first sky130 $PDK] >= 0} {
-	cif istyle sky130($CIFIN_STYLE)
-
-} elseif {[string first gf180mcu $PDK] >= 0} {
-	cif istyle import($CIFIN_STYLE)
-
-} elseif {[string first ihp-sg13g2 $PDK] >= 0} {
-	cif istyle sg13g2($CIFIN_STYLE)
-
-} else {
-	puts "ERROR: Unknown PDK - $PDK"
-	exit 1
-}
 
 set last_time [orig_clock seconds]
 foreach cell { $ABSTRACT_CELLS } { ;# Load abstract cells

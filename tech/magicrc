@@ -32,7 +32,7 @@ if {[string first sky130 $::env(PDK)] >= 0} {
     set SUB VSUB
 
 } else {
-	puts "ERROR: Unknown PDK - $::env(PDK)"
+    puts "ERROR: Unknown PDK - $::env(PDK)"
 }
 
 drc off
@@ -42,7 +42,15 @@ see no *
 # e.g., "random seed 12345"
 catch {random seed}
 
-tech load $::env(LVS_ROOT)/tech/$::env(PDK)/$::env(PDK).tech
+if {[string equal $::env(EXTRACT_STYLE) ""]} {
+    tech load $::env(PDK_ROOT)/$::env(PDK)/libs.tech/magic/$::env(PDK).tech
+
+} elseif {[string equal $::env(EXTRACT_STYLE) "nowell"]} {
+    tech load $::env(LVS_ROOT)/tech/$::env(PDK)/$::env(PDK).nowell.tech
+
+} else {
+    puts "ERROR: Unknown EXTRACT_STYLE - $::env(EXTRACT_STYLE)"
+}
 
 # set units to lambda grid 
 snap lambda

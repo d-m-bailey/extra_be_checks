@@ -126,7 +126,7 @@ if [[ $EXTRACT_LAYOUT == yes ]]; then
 	echo "Extracting layout with well in background process. See $WORK_ROOT/ext.log."
 	(
 		#  1. Extract gds_file with well connectivity
-		env CIFIN_STYLE="" EXTRACT_STYLE="" LOG_FILE=ext.log $LVS_ROOT/run_extract >$WORK_ROOT/ext.out 2>&1
+		env EXTRACT_STYLE="" LOG_FILE=ext.log $LVS_ROOT/run_extract >$WORK_ROOT/ext.out 2>&1
 		#  2. Remove well connections and disconnected nets.
 		sed -f $LVS_ROOT/tech/$PDK/remove_well.sed $EXT_DIR/$TOP_LAYOUT.gds.spice |
 			awk -f $LVS_ROOT/scripts/remove_disconnect.awk - >$EXT_DIR/$TOP_LAYOUT.gds.nowell.spice
@@ -136,7 +136,7 @@ if [[ $EXTRACT_LAYOUT == yes ]]; then
 	echo "Extracting layout without well in background process. See $WORK_ROOT/nowell.ext.log."
 	(
 		#  3. Extract gds_file without well connectivity
-		env CIFIN_STYLE="nowell" EXTRACT_STYLE="nowell" LOG_FILE=nowell.ext.log $LVS_ROOT/run_extract >$WORK_ROOT/nowell.ext.out 2>&1
+		env EXTRACT_STYLE="nowell" LOG_FILE=nowell.ext.log $LVS_ROOT/run_extract >$WORK_ROOT/nowell.ext.out 2>&1
 		#  4. Remove disconnected nets.
 		awk -f $LVS_ROOT/scripts/remove_disconnect.awk $EXT_DIR/$TOP_LAYOUT.gds.spice >$EXT_DIR/$TOP_LAYOUT.gds.nowell.spice
 	) &
