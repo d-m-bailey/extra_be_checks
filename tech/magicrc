@@ -23,6 +23,14 @@ if {[string first sky130 $::env(PDK)] >= 0} {
     set GND VSS
     set SUB VSUBS
 
+} elseif {[string first ihp-sg13g2 $::env(PDK)] >= 0} {
+    if {[lindex $scalefac 1] < 2} {
+        scalegrid 1 2
+    }
+    set VDD VDD
+    set GND VSS
+    set SUB VSUB
+
 } else {
 	puts "ERROR: Unknown PDK - $::env(PDK)"
 }
