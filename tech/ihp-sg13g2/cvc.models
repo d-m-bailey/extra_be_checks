@@ -1,0 +1,29 @@
+D dantenna 
+D dpantenna 
+
+R res_metal1 model=switch_on
+R res_metal2 model=switch_on
+R res_metal3 model=switch_on
+R res_metal4 model=switch_on
+R res_metal5 model=switch_on
+R res_topmetal1 model=switch_on
+R res_topmetal2 model=switch_on
+R rsil R=l/w*7
+R rppd R=l/w*260
+R rhigh R=l/w*1360
+
+MN sg13_lv_nmos Vth=0.50 Vgs=1.65 Vds=1.65
+MN sg13_hv_nmos Vth=0.70 Vgs=3.3 Vds=3.3
+MN rfnmos Vth=0.50 Vgs=1.65 Vds=1.65
+MN rfnmoshv Vth=0.70 Vgs=3.3 Vds=3.3
+
+MP sg13_lv_pmos Vth=-0.50 Vgs=1.65 Vds=1.65
+MP sg13_hv_pmos Vth=-0.70 Vgs=3.3 Vds=3.3
+MP rfpmos Vth=-0.50 Vgs=1.65 Vds1.65
+MP rfpmoshv Vth=-0.70 Vgs=3.3 Vds=3.3
+
+C cap_cmim
+C rfcmim
+
+Q pnpMPA diode=1-2,3-2
+ 
