@@ -1,0 +1,36 @@
+#! /bin/bash
+
+awk '
+/^X.*pr__diode.*=/ {
+        print "D" $0;
+        next;
+}
+/^X/ && $6 ~ /^sg13_[lh]v_[np]mos$/ / {
+        print "M" $0;
+        next;
+}
+/^X.*pr__pnp_.*=/ || /^X.*pr__pnp_[^ ]* *$/ {
+        print "Q" $0;
+        next;
+}
+/^X/ && $4 ~ /^cap_cmim$/ {
+        print "C" $0;
+        next;
+}
+/^X/ && $4 ~ /^(rsil|rppd|rhigh)$/ {
+        print "R" $0;
+        next;
+}
+/^X.*pr__res_.*=/ || /^X.*ppolyf_u_1k_6p0/ {
+	bulk = $4;
+	$4 = "";
+        print "R" $0, "$SUB=" bulk;
+        next;
+}
+/^R/ && NF == 4 && $4 == "0.000000" {
+	$4 = "short " $4;
+}
+ {
+        print $0;
+}' $1
+
