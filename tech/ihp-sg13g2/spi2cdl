@@ -5,7 +5,7 @@ awk '
         print "D" $0;
         next;
 }
-/^X/ && $6 ~ /^sg13_[lh]v_[np]mos$/ / {
+/^X/ && $6 ~ /^sg13_[lh]v_[np]mos$/ {
         print "M" $0;
         next;
 }
