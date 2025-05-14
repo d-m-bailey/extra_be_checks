@@ -19,7 +19,7 @@ MN rfnmoshv Vth=0.70 Vgs=3.3 Vds=3.3
 
 MP sg13_lv_pmos Vth=-0.50 Vgs=1.65 Vds=1.65
 MP sg13_hv_pmos Vth=-0.70 Vgs=3.3 Vds=3.3
-MP rfpmos Vth=-0.50 Vgs=1.65 Vds1.65
+MP rfpmos Vth=-0.50 Vgs=1.65 Vds=1.65
 MP rfpmoshv Vth=-0.70 Vgs=3.3 Vds=3.3
 
 C cap_cmim
