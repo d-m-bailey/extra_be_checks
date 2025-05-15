@@ -10,6 +10,8 @@ awk '
         next;
 }
 /^X/ && $6 ~ /^npn13g2$/ {
+	# remove substrate connection
+	$5 = "";
         print "Q" $0;
         next;
 }
