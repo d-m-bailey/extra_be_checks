@@ -26,4 +26,5 @@ C cap_cmim
 C rfcmim
 
 Q pnpMPA diode=1-2,3-2
+Q npn13g2 diode=2-1,2-3
  
