@@ -131,7 +131,8 @@ $LVS_ROOT/run_full_lvs --noextract
 lvs_status=$?
 
 if [[ -f $LVS_ROOT/tech/$PDK/cvc.power.$TOP_SOURCE || -f ${CONFIG_FILE%/*}/cvc.power.$TOP_SOURCE ]]; then
-	if [[ -f ${CONFIG_FILE%/*}/cvc.power.$TOP_SOURCE ]]; then
+	if [[ -f ${CONFIG_FILE%/*}/cvc.power.$TOP_SOURCE &&
+			${CONFIG_FILE%/*}/cvc.power.$TOP_SOURCE != $WORK_ROOT/cvc.power.$TOP_LAYOUT ]]; then
 		cp ${CONFIG_FILE%/*}/cvc.power.$TOP_SOURCE $WORK_ROOT/cvc.power.$TOP_LAYOUT
 	fi
 	$LVS_ROOT/run_cvc --noextract
