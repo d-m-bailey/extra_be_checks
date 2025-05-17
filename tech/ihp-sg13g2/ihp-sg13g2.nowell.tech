@@ -466,6 +466,7 @@ styles
   sealv5    metal5	   metal6  via5
 
   mimcap    metal5         mems
+  mimrfcap  metal5         mems
   mimcc     metal6         contact_X'es mems
   mimrfcc   metal6         contact_X'es mems
 
@@ -566,7 +567,7 @@ connect
   *m5,m5fill	*m5,m5fill
   *m6,m6fill	*m6,m6fill
   *m7,m7fill,pillar,solder,pad	*m7,m7fill,pillar,solder,pad
-  *mimcap       *mimcap
+  *mimcap,*mimrfcap       *mimcap,*mimrfcap
    allnactivenonfet	allnactivenonfet
    # Resistor to isolated pwell tap
    isodiffres	*ndiff,*psd
@@ -1383,7 +1384,7 @@ style gdsii
 #----------------------------------------------------------------
 # MIM
 #----------------------------------------------------------------
- layer MIM 	*mimcap
+ layer MIM 	*mimcap,*mimrfcap
  	labels 	mimcap
  	calma 	36 0
 
@@ -1612,12 +1613,12 @@ style drc
  templayer mimcap_with_via
 	bloat-all mimcc,mimrfcc mimcap,mimrfcap
 
- templayer mimcap_missing_via mimcap
+ templayer mimcap_missing_via mimcap,mimrfcap
 	and-not mimcap_with_via 
 
  # Check for mimcap overlapping via4
  templayer via_under_mimcap via4
-	and mimcap
+	and mimcap,mimrfcap
 
  # For metal6 spacing to MiM cap, a regular spacing rule will
  # not suffice, because only unrelated metal6 should be
@@ -1628,7 +1629,7 @@ style drc
  templayer metal6_spacing_to_mimcap metal6
 	and-not metal6_connects_mimcap
 	grow 600
-	and mimcap
+	and mimcap,mimrfcap
 
  # Identify butted p-tap areas
  templayer butted_tap
@@ -3010,6 +3011,11 @@ style  sg13g2 variants ()
  layer mimcap MET5
  and MIM
  and-not PWELLBLK
+ labels MIM
+
+ layer mimrfcap MET5
+ and MIM
+ and PWELLBLK
  labels MIM
 
  layer mimcc VIA5,MIMCC
@@ -4406,13 +4412,18 @@ variants *
  # MiM cap contact rules (Vmim)
 
  width mimcc/m5 620 "MiM contact width < %d (TV1.a + 2 * TV1.c)"
+ width mimrfcc/m5 620 "MiM contact width < %d (TV1.a + 2 * TV1.c)"
 
  spacing mimcc mimcc 220 touching_ok "MiM contact spacing < %d (TV1.b - 2 * TV1.c)"
+ spacing mimrfcc mimrfcc 220 touching_ok "MiM contact spacing < %d (TV1.b - 2 * TV1.c)"
 
  surround mimcc/m6 *m5,rm5 320 directional \
 	"Metal6 overlap of MiM contact < %d in one direction (TV1.d - TV1.c)"
+ surround mimrfcc/m6 *m5,rm5 320 directional \
+	"Metal6 overlap of MiM contact < %d in one direction (TV1.d - TV1.c)"
 
  exact_overlap mimcc/m5
+ exact_overlap mimrfcc/m5
 
  variants (full)
  cifmaxwidth mimcap_missing_via 0 bend_illegal \
