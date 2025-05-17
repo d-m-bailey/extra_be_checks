@@ -1,3 +1,5 @@
+########################################################################
+#
 # Copyright 2024 IHP PDK Authors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -556,8 +558,8 @@ end
 #-----------------------------------------------------
 
 connect
-  *nsd,*hvnsd *nsd,*hvnsd
-  *psd,*hvpsd  *psd,*hvpsd
+  *nwell,*nsd,*hvnsd,dnwell *nwell,*nsd,*hvnsd,dnwell
+  pwell,*psd,*hvpsd,isosub  pwell,*psd,*hvpsd,isosub
   npn,pbc	npn,pbc
   pbc,*m1	pbc,*m1
   *m1,m1fill,iprobe,diffprobe	*m1,m1fill,iprobe,diffprobe
@@ -5030,16 +5032,16 @@ variants *
 variants (),(hrhc),(lrhc),(hrlc),(lrlc)
 
  # MOSFETs
- device msubcircuit sg13_lv_pmos pfet *pdiff *pdiff  \
+ device msubcircuit sg13_lv_pmos pfet *pdiff *pdiff nwell error \
 	l=l w=w a1=as p1=ps a2=ad p2=pd
 
- device msubcircuit sg13_lv_nmos nfet *ndiff *ndiff  \
+ device msubcircuit sg13_lv_nmos nfet *ndiff *ndiff pwell,space/w error \
 	l=l w=w a1=as p1=ps a2=ad p2=pd
 
- device msubcircuit sg13_hv_pmos hvpfet *hvpdiff *hvpdiff  \
+ device msubcircuit sg13_hv_pmos hvpfet *hvpdiff *hvpdiff nwell error \
 	l=l w=w a1=as p1=ps a2=ad p2=pd
 
- device msubcircuit sg13_hv_nmos hvnfet *hvndiff *hvndiff  \
+ device msubcircuit sg13_hv_nmos hvnfet *hvndiff *hvndiff pwell,space/w error \
 	l=l w=w a1=as p1=ps a2=ad p2=pd
 
  # Devices in nmoscl_2, nmoscl_4, and scr1 are high-voltage nMOS FETs
@@ -5049,19 +5051,19 @@ variants (),(hrhc),(lrhc),(hrlc),(lrlc)
  # MOSFETs, which is probably not the best way to handle them.
 
  device msubcircuit sg13_hv_nmos hvnmosesd hvndiffres hvndiffres \
-	 l=l w=w a1=as p1=ps a2=ad p2=pd
+	pwell,space/w error l=l w=w a1=as p1=ps a2=ad p2=pd
 
  # Bipolars
-# device msubcircuit npn13g2 npn gec *ndiff space/w error w1=we l1=le
+ device msubcircuit npn13g2 npn gec *ndiff space/w error w1=we l1=le
 
  # 2nd layout type of low-voltage HBT bipolar
-# device msubcircuit npn13g2l npn nec *ndiff space/w error w1=we l1=le
+ device msubcircuit npn13g2l npn nec *ndiff space/w error w1=we l1=le
 
  # High voltage NPN bipolar
-# device msubcircuit npn13g2v npn hvnec *ndiff space/w error w1=we l1=le
+ device msubcircuit npn13g2v npn hvnec *ndiff space/w error w1=we l1=le
 
  # Lateral PNP bipolar
-# device msubcircuit pnpMPA pnp *pdiff pwell,space/w w1=we l1=le
+ device msubcircuit pnpMPA pnp *pdiff pwell,space/w w1=we l1=le
 
  # Capacitors
  device csubcircuit cap_cmim *mimcap *m5 w=w l=l
@@ -5070,9 +5072,9 @@ variants (),(hrhc),(lrhc),(hrlc),(lrlc)
  device csubcircuit SVaricap *hvvaractor *hvnsd w=w l=l
 
  # Diodes
-# device subcircuit dpantenna *pdiode nwell w=w l=l
-# device msubcircuit dantenna *ndiode pwell,space/w w=w l=l
-# device subcircuit schottky *schottky *hvnsd nwell error w=w l=l
+ device subcircuit dpantenna *pdiode nwell w=w l=l
+ device msubcircuit dantenna *ndiode pwell,space/w w=w l=l
+ device subcircuit schottky *schottky *hvnsd nwell error w=w l=l
 
  # Resistors
 
