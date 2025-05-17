@@ -19,6 +19,10 @@ awk '
         print "C" $0;
         next;
 }
+/^X/ && $5 ~ /^cap_rfcmim$/ {
+        print "C" $0;
+        next;
+}
 /^X/ && $4 ~ /^(rsil|rppd|rhigh)$/ {
         print "R" $0;
         next;
