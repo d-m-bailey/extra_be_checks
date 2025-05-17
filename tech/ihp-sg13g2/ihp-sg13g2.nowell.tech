@@ -42,7 +42,7 @@ end
 #------------------------------------------------------------------------
 # cparasitic					??
 # cap_cmim			mimcap		MiM cap
-# cap_rfcmim					RF model for MiM cap
+# cap_rfcmim			mimcap		RF model for MiM cap
 #
 # dantenna			ndiode		ndiff to psub diode (marked device)
 # dpantenna			pdiode		pdiff to nwell diode (marked device)
@@ -215,7 +215,9 @@ types
  -metal5 sealvia5,sealv5
 
   mimcap mimcap,mim,capm
+  mimcap mimrfcap,rfcapm
   mimcap mimcapcontact,mimcapc,mimcc,capmc
+  mimcap mimrfcapcontact,mimrfcapc,mimrfcc,rfcapmc
 
 # Metal 6
   metal6 metal6,m6,met6
@@ -274,6 +276,7 @@ contact
 
   # MiM cap contacts are not stackable!
   mimcc  mimcap metal6
+  mimrfcc  mimrfcap metal6
 end
 
 #-----------------------------------------------------
@@ -464,6 +467,7 @@ styles
 
   mimcap    metal5         mems
   mimcc     metal6         contact_X'es mems
+  mimrfcc   metal6         contact_X'es mems
 
   metal6    metal6
   m6fill    metal6
@@ -1289,7 +1293,7 @@ style gdsii
 	and sealring
 	calma	125 0
 
- layer MIMCC	mimcc
+ layer MIMCC	mimcc,mimrfcc
  	squares-grid 360 420 420
  	calma 	129 0
 
@@ -1606,7 +1610,7 @@ style drc
 
  # Check for (lack of) TopVia1 over MiM cap.
  templayer mimcap_with_via
-	bloat-all mimcc mimcap
+	bloat-all mimcc,mimrfcc mimcap,mimrfcap
 
  templayer mimcap_missing_via mimcap
 	and-not mimcap_with_via 
@@ -1619,7 +1623,7 @@ style drc
  # not suffice, because only unrelated metal6 should be
  # considered.
  templayer metal6_connects_mimcap
-	bloat-all mimcc/m6 metal6
+	bloat-all mimcc/m6,mimrfcc/m6 metal6
 
  templayer metal6_spacing_to_mimcap metal6
 	and-not metal6_connects_mimcap
@@ -2246,7 +2250,7 @@ style  sg13g2 variants ()
  ignore PADPIN
  ignore SRAMID
  ignore DIGITALID
- ignore PWELLBLK
+# ignore PWELLBLK
  ignore DEEPNBLK
  ignore EMITPOLY
  ignore RFMEMS
@@ -3005,10 +3009,20 @@ style  sg13g2 variants ()
 
  layer mimcap MET5
  and MIM
+ and-not PWELLBLK
  labels MIM
 
  layer mimcc VIA5,MIMCC
  and MIM
+ and-not PWELLBLK
+ grow 60
+ grow 40
+ shrink 40
+ labels MIM
+
+ layer mimrfcc VIA5,MIMCC
+ and MIM
+ and PWELLBLK
  grow 60
  grow 40
  shrink 40
@@ -4376,6 +4390,17 @@ variants *
 
  area *mimcap 1300000 1140 "MiM cap minimum area < %a (MIM.f)"
 
+ width *mimrfcap 1140 "MiM rfcap width < %d (MIM.a)"
+ spacing *mimrfcap *mimrfcap 600 touching_ok "MiM rfcap spacing < %d (MIM.b)"
+ surround *mimrfcc *mimrfcap 260 absence_illegal \
+	"MiM rfcap must surround MiM rfcap contact by %d (MIM.d - TV1.c)"
+ rect_only *mimrfcap "MiM rfcap must be rectangular (Grid Rules)
+
+ surround *mimrfcap *metal5/m5 600 absence_illegal \
+	"Metal5 must surround MiM rfcap by %d (MIM.c)"
+
+ area *mimrfcap 1300000 1140 "MiM rfcap minimum area < %a (MIM.f)"
+
  # MIM.g:  Need a maximum area rule?
 
  # MiM cap contact rules (Vmim)
@@ -5029,6 +5054,7 @@ variants (),(hrhc),(lrhc),(hrlc),(lrlc)
 
  # Capacitors
  device csubcircuit cap_cmim *mimcap *m5 w=w l=l
+ device csubcircuit cap_rfcmim *mimrfcap *m5 w=w l=l
  # Placeholder for SVaricap (for which there is no device model)
  device csubcircuit SVaricap *hvvaractor *hvnsd w=w l=l
 
@@ -5090,6 +5116,7 @@ variants (lvs)
 
  # Capacitors
  device capacitor cap_cmim *mimcap *m5
+ device capacitor cap_rfcmim *mimrfcap *m5
 
  # Diodes
  device pdiode dpantenna *pdiode nwell
