@@ -1,4 +1,5 @@
 / cap_cmim / {next} # ignore primitive devices
+/ cap_rfcmim / {next} # ignore primitive devices
 / npn13g2 / {next} # ignore primitive devices
 / rsil / {next} # ignore primitive devices
 / rppd / {next} # ignore primitive devices
