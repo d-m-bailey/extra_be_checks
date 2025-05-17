@@ -23,7 +23,7 @@ MP rfpmos Vth=-0.50 Vgs=1.65 Vds=1.65
 MP rfpmoshv Vth=-0.70 Vgs=3.3 Vds=3.3
 
 C cap_cmim
-C rfcmim
+C cap_rfcmim
 
 Q pnpMPA diode=1-2,3-2
 Q npn13g2 diode=2-1,2-3
