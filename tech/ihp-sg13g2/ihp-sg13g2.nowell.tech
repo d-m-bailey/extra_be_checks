@@ -561,7 +561,7 @@ connect
   *m4,m4fill	*m4,m4fill
   *m5,m5fill	*m5,m5fill
   *m6,m6fill	*m6,m6fill
-  *m7,m7fill,pillar,solder	*m7,m7fill,pillar,solder
+  *m7,m7fill,pillar,solder,pad	*m7,m7fill,pillar,solder,pad
   *mimcap       *mimcap
    allnactivenonfet	allnactivenonfet
    # Resistor to isolated pwell tap
@@ -3345,6 +3345,8 @@ style  sg13g2 variants ()
  and GLASS
  and-not EDGESEAL
  labels PADID
+ labels MET7PIN port
+ labels MET7TXT
 
  templayer boundary BOUND
  boundary
