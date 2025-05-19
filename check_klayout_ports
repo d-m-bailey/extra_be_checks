@@ -1,0 +1,41 @@
+#! /usr/bin/env bash
+
+# Script to check port name matches in klayout lvsdb file
+
+# Usage: check_klayout_ports <lvsdb-file>
+
+# Output: Mismatched ports in the format: layout_port source_port
+
+# 1. Change unknown ports "()" in the lvsdb to "?".
+# 2,3. Add space after "(" and before ")" to allow field parsing.
+sed -e 's/()/?/g' -e 's/(/( /g' -e 's/)/ )/g' $1 |
+	awk '
+BEGIN {
+	delete source;
+	delete layout;
+}
+/^J/ { # Process layout
+	while( ! /^ )/ ) { # until end of definition
+		if ( /^ *P/ ) {
+			# Save port name at port order
+			layout[length(layout)] = $4;
+		}
+		getline;
+	}
+	layout["?"] = "?"; # Add entry for unknown ports
+}
+/^H/ { # Process source
+	while( ! /^ )/ ) { # until end of definition
+		if ( /^ *P/ ) {
+			# Save port name at port order
+			source[length(source)] = $4;
+		}
+		getline;
+	}
+	source["?"] = "?"; # Add entry for unknown ports
+}
+/^ *P/ && toupper(layout[$2]) != toupper(source[$3]) { # Case insensitive port comparison.
+	# Ports are cross-referenced by respective port order.
+	print layout[$2], source[$3];
+}
+'
