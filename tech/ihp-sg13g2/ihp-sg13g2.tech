@@ -5067,7 +5067,7 @@ variants (),(hrhc),(lrhc),(hrlc),(lrlc)
 
  # Capacitors
  device csubcircuit cap_cmim *mimcap *m5 w=w l=l
- device csubcircuit cap_rfcmim *mimrfcap *m5 space/w =w l=l
+ device csubcircuit cap_rfcmim *mimrfcap *m5 space/w w=w l=l
  # Placeholder for SVaricap (for which there is no device model)
  device csubcircuit SVaricap *hvvaractor *hvnsd w=w l=l
 
