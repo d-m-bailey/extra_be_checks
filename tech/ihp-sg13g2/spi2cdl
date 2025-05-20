@@ -20,6 +20,7 @@ awk '
         next;
 }
 /^X/ && $5 ~ /^cap_rfcmim$/ {
+	$4 = "";
         print "C" $0;
         next;
 }
