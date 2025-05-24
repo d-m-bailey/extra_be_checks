@@ -32,7 +32,7 @@ DESIGN_NAME=${2:+"-d $2"}
 if [[ $# -ne 0 ]]; then # if config file not specified, skip and use current environment
 	source <($LVS_ROOT/set_lvs_env.py -c $CONFIG_FILE $DESIGN_NAME)
 fi
-if [[ ! -v EXTRACT_FLATGLOB ]]; then
+if [[ -z "${EXTRACT_FLATGLOB+x}" ]]; then
 	echo "Error: LVS environment problem."
 	exit 1
 fi
@@ -156,7 +156,7 @@ fi
 # create gds abstraction script
 cat > $EXT_DIR/abstract.tcl <<EOF
 # magic commands to abstract cells.
-# well connectivity is detemined by EXTRACT_STYLE.
+# well connectivity is detemined by EXTRACT_STYLE in magicrc file.
 # output directory set by environment variable EXT_DIR
 
 puts "Abstracting"
@@ -297,7 +297,7 @@ abstract_status=${PIPESTATUS[0]}
 # create gds extraction script
 cat > $EXT_DIR/extract.tcl <<EOF
 # magic commands to extract netlist.
-# well connectivity is detemined by EXTRACT_STYLE.
+# well connectivity is detemined by EXTRACT_STYLE in magicrc file.
 # output directory set by environment variable EXT_DIR
 
 puts "Extracting with top ports $EXT_MESSAGE"
@@ -377,7 +377,7 @@ extract no all ;# clear all flags
 extract do aliases
 extract do local
 extract $EXT_TEXT
-extract style ngspice($EXTRACT_STYLE)
+extract style ngspice()
 extract
 set current_time [orig_clock seconds]
 puts "\nTIME: extract: [orig_clock format [expr {\$current_time - \$last_time}] -gmt true -format %H:%M:%S] \n"

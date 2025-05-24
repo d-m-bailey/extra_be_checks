@@ -136,7 +136,7 @@ fi
 
 if [[ $LAYOUT_FILE ]]; then
 	if [[ $LAYOUT_FILE == *.gz ]]; then
-		CAT=zcat
+		CAT=gzcat
 		BASE_LAYOUT=${LAYOUT_FILE%.gz}
 	else
 		CAT=cat
@@ -176,7 +176,7 @@ if [[ $LAYOUT_FILE ]]; then
 		klayout -b -rm $WORK_ROOT/gds2txt.py |
 			tee -a $WORK_ROOT/hier.log
 		gzip -f $TEXT_FILE
-		CAT=zcat
+		CAT=gzcat
 	fi
 
 	$CAT $TEXT_FILE |

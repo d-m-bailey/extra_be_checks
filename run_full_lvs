@@ -39,7 +39,7 @@ DESIGN_NAME=${2:+"-d $2"}
 if [[ $# -ne 0 ]]; then  # if config file not specified, skip and use current environment
 	source <($LVS_ROOT/set_lvs_env.py -c $CONFIG_FILE $DESIGN_NAME)
 fi
-if [[ ! -v EXTRACT_FLATGLOB ]]; then
+if [[ -z "${EXTRACT_FLATGLOB+x}" ]]; then
 	echo "ERROR: LVS environment problem."
 	exit 1
 fi
@@ -174,19 +174,19 @@ SPICE_FIX_LIST=$(echo $LVS_SPICE_FILES_TO_FIX | sed 's/  */\n/g' | awk 'NF > 0 &
 if [[ $SPICE_FIX_LIST ]]; then
 	cp $SPICE_FIX_LIST $WORK_ROOT/spice_fix/.
 	$LVS_ROOT/tech/$PDK/fix_spice $WORK_ROOT/spice_fix/*.spice
-	ls --sort=none $WORK_ROOT/spice_fix/* |
+	ls -U $WORK_ROOT/spice_fix/* |
 		grep -v '.org$' >$WORK_ROOT/spice_files
 fi
 
 SPICE_LIST=$(echo $LVS_SPICE_FILES | sed 's/  */\n/g' | awk 'NF > 0 && ! /^#/')
 if [[ $SPICE_LIST ]]; then
-	ls --sort=none $SPICE_LIST >>$WORK_ROOT/spice_files
+	ls -U $SPICE_LIST >>$WORK_ROOT/spice_files
 fi
 
 cat /dev/null > $WORK_ROOT/verilog_files
 VERILOG_LIST=$(echo $LVS_VERILOG_FILES | sed 's/  */\n/g' | awk 'NF > 0 && ! /^#/')
 if [[ $VERILOG_LIST ]]; then
-	ls --sort=none $VERILOG_LIST >>$WORK_ROOT/verilog_files
+	ls -U $VERILOG_LIST >>$WORK_ROOT/verilog_files
 fi
 
 #cp $LVS_ROOT/tech/$PDK/${PDK}_setup.tcl $WORK_ROOT/${PDK}_setup.tcl
