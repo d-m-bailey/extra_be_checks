@@ -251,29 +251,29 @@ end
 #-----------------------------------------------------
 
 contact
-  pc       poly       m1
-  ndc      ndiff      m1
-  pdc      pdiff      m1
-  nsc      nsd        m1
-  psc      psd        m1
-  ndic     ndiode     m1
-  pdic     pdiode     m1
-  sdic     schottky   m1
-  nec	   nemitter   m1
-  hvnec	   hvnemitter m1
+  pc       poly       metal1
+  ndc      ndiff      metal1
+  pdc      pdiff      metal1
+  nsc      nsd        metal1
+  psc      psd        metal1
+  ndic     ndiode     metal1
+  pdic     pdiode     metal1
+  sdic     schottky   metal1
+  nec	   nemitter   metal1
+  hvnec	   hvnemitter metal1
 
-  hvndc   hvndiff   m1
-  hvpdc   hvpdiff   m1
-  hvnsc   hvnsd     m1
-  hvpsc   hvpsd     m1
-  hvvc	  hvvar	    m1
+  hvndc   hvndiff   metal1
+  hvpdc   hvpdiff   metal1
+  hvnsc   hvnsd     metal1
+  hvpsc   hvpsd     metal1
+  hvvc	  hvvar	    metal1
 
-  via1   m1 m2
-  via2   m2 m3
-  via3   m3 m4
-  via4   m4 m5
-  via5   m5 m6
-  via6   m6 m7
+  via1   metal1 metal2
+  via2   metal2 metal3
+  via3   metal3 metal4
+  via4   metal4 metal5
+  via5   metal5 metal6
+  via6   metal6 metal7
   stackable
 
   # MiM cap contacts are not stackable!
@@ -4435,7 +4435,7 @@ variants *
 	"Via4 not allowed under MiM cap (MIM.i)"
 
  cifmaxwidth metal6_spacing_to_mimcap 0 bend_illegal \
-	"MiM cap spacing to unrelated metal6 < %d (MIM.e)"
+	"MiM cap spacing to unrelated metal6 < 0.6um (MIM.e)"
  variants *
 
 #-----------------------------------------------------------
