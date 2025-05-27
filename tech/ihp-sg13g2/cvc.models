@@ -11,6 +11,7 @@ R res_topmetal2 model=switch_on
 R rsil R=l/w*7
 R rppd R=l/w*260
 R rhigh R=l/w*1360
+R short model=switch_on
 
 MN sg13_lv_nmos Vth=0.50 Vgs=1.65 Vds=1.65
 MN sg13_hv_nmos Vth=0.70 Vgs=3.3 Vds=3.3
