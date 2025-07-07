@@ -24,7 +24,7 @@ for ext_path in $1/*.ext*; do
 	ext_file=${ext_path##*/}
 	ext_cell=${ext_file%%.ext*}
 	if [[ ${ext_file##*.} == "gz" ]]; then
-		CAT=zcat
+		CAT="gunzip -c"
 	else
 		CAT=cat
 	fi
