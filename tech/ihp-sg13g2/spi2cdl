@@ -19,7 +19,7 @@ awk '
         print "C" $0;
         next;
 }
-/^X/ && $5 ~ /^cap_rfcmim$/ {
+/^X/ && $5 ~ /^rfcmim$/ {
 	$4 = "";
         print "C" $0;
         next;

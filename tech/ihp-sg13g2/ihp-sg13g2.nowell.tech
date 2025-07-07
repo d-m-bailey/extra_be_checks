@@ -44,7 +44,7 @@ end
 #------------------------------------------------------------------------
 # cparasitic					??
 # cap_cmim			mimcap		MiM cap
-# cap_rfcmim			mimrfcap	RF model for MiM cap
+# rfcmim			mimrfcap	RF model for MiM cap
 #
 # dantenna			ndiode		ndiff to psub diode (marked device)
 # dpantenna			pdiode		pdiff to nwell diode (marked device)
@@ -558,8 +558,7 @@ end
 #-----------------------------------------------------
 
 connect
-  *nsd,*hvnsd *nsd,*hvnsd
-  *psd,*hvpsd  *psd,*hvpsd
+  *psd,*hvpsd,*nsd,*hvnsd,pdiff,hvpdiff,ndiff,hvndiff *psd,*hvpsd,*nsd,*hvnsd,pdiff,hvpdiff,ndiff,hvndiff
   npn,pbc	npn,pbc
   pbc,*m1	pbc,*m1
   *m1,m1fill,iprobe,diffprobe	*m1,m1fill,iprobe,diffprobe
@@ -2334,6 +2333,7 @@ style  sg13g2 variants ()
  or SUBTXT
  grow 420
  shrink 420
+ and-not NWELL,nwelcheck
  labels SUBTXT text
 
  layer dnwell DNWELL
@@ -3368,7 +3368,7 @@ style  sg13g2 variants ()
  and-not EDGESEAL
  labels PADID
  labels MET7PIN port
- labels MET7TXT
+ labels MET7TXT text
 
  templayer boundary BOUND
  boundary
@@ -5067,7 +5067,7 @@ variants (),(hrhc),(lrhc),(hrlc),(lrlc)
 
  # Capacitors
  device csubcircuit cap_cmim *mimcap *m5 w=w l=l
- device csubcircuit cap_rfcmim *mimrfcap *m5 w=w l=l
+ device csubcircuit rfcmim *mimrfcap *m5 w=w l=l
  # Placeholder for SVaricap (for which there is no device model)
  device csubcircuit SVaricap *hvvaractor *hvnsd w=w l=l
 
@@ -5129,7 +5129,7 @@ variants (lvs)
 
  # Capacitors
  device capacitor cap_cmim *mimcap *m5
- device capacitor cap_rfcmim *mimrfcap *m5
+ device capacitor rfcmim *mimrfcap *m5
 
  # Diodes
  device pdiode dpantenna *pdiode nwell
