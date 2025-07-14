@@ -563,6 +563,7 @@ connect
   *psd,*hvpsd,*nsd,*hvnsd,pdiff,hvpdiff,ndiff,hvndiff *psd,*hvpsd,*nsd,*hvnsd,pdiff,hvpdiff,ndiff,hvndiff
   npn,pbc	npn,pbc
   pbc,*m1	pbc,*m1
+  gec,*m1	gec,*m1
   *m1,m1fill,iprobe,diffprobe	*m1,m1fill,iprobe,diffprobe
   *m2,m2fill	*m2,m2fill
   *m3,m3fill	*m3,m3fill
@@ -2388,10 +2389,12 @@ style  sg13g2 variants ()
  # Identify emitter area of low voltage bipolars (type npn13G2).
  templayer lvnpnarea EMITTER
  and DIFFMASK
- grow 890
- and DIFFMASK
- grow 1600
+ grow 770
  and DIFFMASK,NSDBLOCK
+ #grow 890
+ #and DIFFMASK
+ #grow 1600
+ #and DIFFMASK,NSDBLOCK
  
  # Identify emitter area of low voltage bipolars (type npn13G2L).
  templayer npnarea EMITTER
