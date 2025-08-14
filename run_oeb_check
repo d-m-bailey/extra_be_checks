@@ -3,7 +3,7 @@
 # check that the oeb pin is low/high based on io_in and io_out connections
 
 # Uses lvs_config to optionally extract a spice netlist
-# Requires a netlist $WORK_ROOT/ext/$DESIGN_NAME.gds.spice
+# Requires a netlist $WORK_ROOT/ext/$DESIGN_NAME.layout.spice
 # Converts this netlist to $WORK_ROOT/ext/$DESIGN_NAME.cdl.gz
 
 #   Copyright 2023 D. Mitch Bailey  cvc at shuharisystem dot com
@@ -89,13 +89,13 @@ echo " "
 echo "Running CVC for oeb check..."
 
 # Create cdl file from extracted spice file if it doesn't exist
-if [[ ! -f $RESULTS_DIR/$DESIGN_NAME.cdl.gz || $RESULTS_DIR/$DESIGN_NAME.gds.spice -nt $RESULTS_DIR/$DESIGN_NAME.cdl.gz ]]; then
-	if [[ ! -f $RESULTS_DIR/$DESIGN_NAME.gds.spice ]]; then
-		echo "Could not create cdl file from $RESULTS_DIR/$DESIGN_NAME.gds.spice"
+if [[ ! -f $RESULTS_DIR/$DESIGN_NAME.cdl.gz || $RESULTS_DIR/$DESIGN_NAME.layout.spice -nt $RESULTS_DIR/$DESIGN_NAME.cdl.gz ]]; then
+	if [[ ! -f $RESULTS_DIR/$DESIGN_NAME.layout.spice ]]; then
+		echo "Could not create cdl file from $RESULTS_DIR/$DESIGN_NAME.layout.spice"
 		exit 2
 	else
 		echo "Creating $RESULTS_DIR/$DESIGN_NAME.cdl"
-		$LVS_ROOT/tech/$PDK/spi2cdl $RESULTS_DIR/$DESIGN_NAME.gds.spice |
+		$LVS_ROOT/tech/$PDK/spi2cdl $RESULTS_DIR/$DESIGN_NAME.layout.spice |
 			gzip -c >$RESULTS_DIR/$DESIGN_NAME.cdl.gz
 	fi
 fi

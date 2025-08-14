@@ -37,7 +37,7 @@ zgrep -c ^port $1/*.ext* |
 	sed -e 's,.*/,,' -e 's/.ext:.*//' |
 	sort > $1/../noport.subckt
 
-awk '/^.subckt/ {print $2}' $1/*.gds.spice |
+awk '/^.subckt/ {print $2}' $1/*.layout.spice |
 	sort > $1/../layout.subckt
 
 zegrep -c '^device' $1/*.ext* |

@@ -62,6 +62,21 @@ if [[ -z "$PDK_ROOT" || -z "$PDK" ]]; then
 	exit 1
 fi
 
+# Check for layout format. cif and gds are supported. Files may be gzipped.
+basefile=${LAYOUT_FILE%.gz}
+case "${basefile##*.}" in   # get file extension without dot
+    gds)
+        FORMAT=gds
+        ;;
+    cif)
+        FORMAT=cif
+        ;;
+    *)
+        echo "Unsupported file type"
+	exit 2
+        ;;
+esac
+
 echo "LOG FILE: $LOG_ROOT/${LOG_FILE:=ext.log}"
 rm -f $LOG_ROOT/$LOG_FILE $WORK_ROOT/$LOG_FILE
 
@@ -133,7 +148,7 @@ if [[ ! -f $LAYOUT_FILE ]]; then
 	exit 2
 fi
 
-#  1. Extract gds_file
+#  1. Extract layout_file
 date "+BEGIN: %c" >$WORK_ROOT/$LOG_FILE
 start_time=$SECONDS
 
@@ -153,7 +168,7 @@ else
 	EXT_TEXT="unique"
 fi
 
-# create gds abstraction script
+# create layout abstraction script
 cat > $EXT_DIR/abstract.tcl <<EOF
 # magic commands to abstract cells.
 # well connectivity is detemined by EXTRACT_STYLE in magicrc file.
@@ -162,18 +177,18 @@ cat > $EXT_DIR/abstract.tcl <<EOF
 puts "Abstracting"
 drc off
 crashbackups stop
-gds drccheck off
+$FORMAT drccheck off
 undo disable
 locking disable
 
 # Flatglob cells here too because may effect abstract connections (ex: sky130_ef_io__corner_pad)
 foreach cell { $FLATGLOB_CELLS } {
-	gds flatglob \$cell
+	$FORMAT flatglob \$cell
 }
 
 set last_time [orig_clock seconds]
 puts "Abstracting $LAYOUT_FILE"
-gds read $LAYOUT_FILE
+$FORMAT read $LAYOUT_FILE
 cd $EXT_DIR
 set current_time [orig_clock seconds]
 puts "\nTIME: read GDS: [orig_clock format [expr {\$current_time - \$last_time}] -gmt true -format  %H:%M:%S] \n"
@@ -294,7 +309,7 @@ magic -dnull -noc -rcfile $LVS_ROOT/tech/magicrc $EXT_DIR/abstract.tcl </dev/nul
 	tee -a $WORK_ROOT/$LOG_FILE
 abstract_status=${PIPESTATUS[0]}
 
-# create gds extraction script
+# create layout extraction script
 cat > $EXT_DIR/extract.tcl <<EOF
 # magic commands to extract netlist.
 # well connectivity is detemined by EXTRACT_STYLE in magicrc file.
@@ -303,7 +318,7 @@ cat > $EXT_DIR/extract.tcl <<EOF
 puts "Extracting with top ports $EXT_MESSAGE"
 drc off
 crashbackups stop
-gds drccheck off
+$FORMAT drccheck off
 undo disable
 locking disable
 
@@ -316,14 +331,14 @@ foreach cell { $ABSTRACT_CELLS } { ;# Load abstract cells
 }
 
 foreach cell { $FLATGLOB_CELLS } {
-	gds flatglob \$cell
+	$FORMAT flatglob \$cell
 }
 # list cells to be flattened
-puts "Flattening [string map {" " "\n"} [gds flatglob]]"
-gds flatten yes ;# Flattens cells with few layers
-gds noduplicates yes ;# keep abstract views
+puts "Flattening [string map {" " "\n"} [$FORMAT flatglob]]"
+$FORMAT flatten yes ;# Flattens cells with few layers
+$FORMAT noduplicates yes ;# keep abstract views
 puts "\nExtracting $LAYOUT_FILE"
-gds read $LAYOUT_FILE
+$FORMAT read $LAYOUT_FILE
 cd $EXT_DIR
 set current_time [orig_clock seconds]
 puts "\nTIME: read GDS: [orig_clock format [expr {\$current_time - \$last_time}] -gmt true -format %H:%M:%S] \n"
@@ -386,12 +401,12 @@ set last_time \$current_time
 ext2spice lvs
 ext2spice merge conservative ;# reduce parallel devices
 ext2spice short resistor ;# keep both ports but connect them with a 0 ohm resistor
-ext2spice -o $TOP_LAYOUT.gds.spice $TOP_LAYOUT.ext
+ext2spice -o $TOP_LAYOUT.layout.spice $TOP_LAYOUT.ext
 set current_time [orig_clock seconds]
 puts "\nTIME: netlist: [orig_clock format [expr {\$current_time - \$last_time}] -gmt true -format %H:%M:%S] \n"
 set last_time \$current_time
 
-feedback save $TOP_LAYOUT-ext2gds.spice.feedback.txt
+feedback save $TOP_LAYOUT-ext.spice.feedback.txt
 EOF
 
 magic -dnull -noc -rcfile $LVS_ROOT/tech/magicrc $EXT_DIR/extract.tcl </dev/null 2>&1 |

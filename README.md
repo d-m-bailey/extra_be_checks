@@ -1,5 +1,5 @@
 # extra_be_checks
-Scripts to run additional back-end checks on gds files.
+Scripts to run additional back-end checks on layout files.
 
 INSTALLATION:
 Requires:
@@ -45,7 +45,7 @@ run_oeb_check: Check oeb connections
    - `top_source`: Top cell name from verilog
    - `verilog_files`: Verilog files (only cells in the listed verilog files will be checked)
    - `top_layout`: Top cell name in the layout
-   - `layout_file`: gds/oasis/text file (gzip compression allowed).
+   - `layout_file`: cif/gds/oasis/text file (gzip compression allowed).
    - `primitive_prefix`: If given, prefix is removed from both source and layout before comparison.
    - `layout_prefix`: If given, prefix is removed from layout cell names before comparison.
 
@@ -54,12 +54,12 @@ run_oeb_check: Check oeb connections
 
    Output:
    - `$WORK_ROOT/verilog.hier`: The netlist hierarchy.
-   - `$WORK_ROOT/layout.txt.gz`: If input is gds/oas, the layout hierarchy converted to text.
+   - `$WORK_ROOT/layout.txt.gz`: If input is cif/gds/oas, the layout hierarchy converted to text.
    - `$WORK_ROOT/layout.hier`: The layout hierarchy.
    - `$SIGNOFF_ROOT/hier.csv`: Comparison results.
 
    Algorithm:
-   - Convert gds/oasis to gds text file.
+   - Convert cif/gds/oasis to gds text file.
    - Extract netlist hierarchy.
    - Extract layout hierarchy.
    - Compare.
@@ -67,7 +67,7 @@ run_oeb_check: Check oeb connections
 2. Soft connection check: find high resistance connections (i.e. soft connections) through n/pwell.
 
    Usage:
-   `run_softcheck [--noextract] [<config_file> [<top_layout> [<gds_file>]]]`
+   `run_softcheck [--noextract] [<config_file> [<top_layout> [<layout_file>]]]`
 
    Requires:
    - magic 3.8.413
@@ -77,7 +77,7 @@ run_oeb_check: Check oeb connections
    - `--noextract`: Use previous extraction results.
    - `config_file`: Configuration file. For details, see sample in repo.
    - `top_layout`: Top layout name. Overrides config_file setting.
-   - `gds_file`: gds file (gzip compression allowed). Overrides config_file setting.
+   - `layout_file`: cif/gds file (gzip compression allowed). Overrides config_file setting.
 
    References: (created from config_file)
    - `$WORK_ROOT/flatglob`: cells to be flattened before extraction.
@@ -102,7 +102,7 @@ run_oeb_check: Check oeb connections
    Analysis:
    - Any discrepancies should be the result of well/substrate taps not connected to the correct power net.
    - Use the `$SIGNOFF_ROOT/soft.report` file to find problem nets.
-   - Use the problem nets to find a connected device in the `$WORK_ROOT/nowell.ext/<top_layout>.gds.nowell.spice` file.
+   - Use the problem nets to find a connected device in the `$WORK_ROOT/nowell.ext/<top_layout>.layout.nowell.spice` file.
    - Use the corresponding `$WORK_ROOT/nowell.ext/*.ext` file to find the coordinates of error devices. (divide by 200 to get coordinates in um).
 
 3. Full device level LVS
@@ -157,10 +157,10 @@ run_oeb_check: Check oeb connections
    - `--noextract`: Use previous extraction results.
    - `lvs_config_file`: Configuration file. For details, see sample in repo.
    - `top_layout`: Top layout name. Overrides config_file setting.
-   - `layout_file`: gds file (gzip compression allowed). Overrides config_file setting.
+   - `layout_file`: cif/gds file (gzip compression allowed). Overrides config_file setting.
 
    Input:
-   - `$WORK_ROOT/ext/<top_layout>.gds.spice`: Extracted spice file.
+   - `$WORK_ROOT/ext/<top_layout>.layout.spice`: Extracted spice file.
    - `$WORK_ROOT/cvc.power.<top_layout>`: Power settings.
    - `cvc.$PDK.models`: Model settings.
 
@@ -192,10 +192,10 @@ run_oeb_check: Check oeb connections
    - `--noextract`: Use previous extraction results.
    - `lvs_config_file`: Configuration file. For details, see sample in repo.
    - `top_layout`: Top layout name. Overrides config_file setting.
-   - `layout_file`: gds file (gzip compression allowed). Overrides config_file setting.
+   - `layout_file`: cif/gds file (gzip compression allowed). Overrides config_file setting.
 
    Input:
-   - `$WORK_ROOT/ext/<top_layout>.gds.spice`: Extracted spice file.
+   - `$WORK_ROOT/ext/<top_layout>.layout.spice`: Extracted spice file.
    - `$WORK_ROOT/cvc.power.<top_layout>`: Power settings.
    - `cvc.$PDK.models`: Model settings.
 

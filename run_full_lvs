@@ -90,13 +90,13 @@ if [[ $EXTRACT_LAYOUT == yes ]]; then
 	env CIFIN_STYLE= EXTRACT_STYLE= $LVS_ROOT/run_extract
 	extract_status=$?
 else
-	if [[ ! -f $EXT_DIR/$TOP_LAYOUT.gds.spice ]]; then
-		echo "Error: missing $EXT_DIR/$TOP_LAYOUT.gds.spice"
-		echo "Specify gds_file to create"
+	if [[ ! -f $EXT_DIR/$TOP_LAYOUT.layout.spice ]]; then
+		echo "Error: missing $EXT_DIR/$TOP_LAYOUT.layout.spice"
+		echo "Specify layout_file to create"
 		echo $usage
 		exit 2
 	fi
-	echo "Reusing $EXT_DIR/$TOP_LAYOUT.gds.spice."
+	echo "Reusing $EXT_DIR/$TOP_LAYOUT.layout.spice."
 fi
 
 # Check that extraction completed successfully
@@ -219,8 +219,8 @@ while read cell; do
 done <$WORK_ROOT/ignore.glob
 
 cat >$WORK_ROOT/lvs.script <<-script
-	puts "Reading layout $WORK_ROOT/ext/$TOP_LAYOUT.gds.spice..."
-	set layout [readnet spice $WORK_ROOT/ext/$TOP_LAYOUT.gds.spice]
+	puts "Reading layout $WORK_ROOT/ext/$TOP_LAYOUT.layout.spice..."
+	set layout [readnet spice $WORK_ROOT/ext/$TOP_LAYOUT.layout.spice]
 	set source [readnet spice /dev/null]
 script
 

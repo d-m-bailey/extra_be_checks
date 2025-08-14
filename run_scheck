@@ -16,16 +16,16 @@
 #   limitations under the License.
 
 # Overview:
-#  1. Extract gds_file with well connectivity.
+#  1. Extract layout_file with well connectivity.
 #  2. Remove well connections and disconnected nets.
-#  3. Extract gds_file without well connectivity.
+#  3. Extract layout_file without well connectivity.
 #  4. Remove disconnected nets.
 #  5. Compare
 #
 
 
 # Use cases
-# run_scheck [--noextract] [lvs_config_file [top_block [gds_file]]]
+# run_scheck [--noextract] [lvs_config_file [top_block [layout_file]]]
 
 if [[ $1 == "--noextract" ]]; then
 	export EXTRACT_LAYOUT=no
@@ -35,7 +35,7 @@ else
 fi
 
 if [[ $# -gt 3 ]]; then
-	echo "usage: run_scheck [--noextract] [lvs_config_file [top_block [gds_file]]]"
+	echo "usage: run_scheck [--noextract] [lvs_config_file [top_block [layout_file]]]"
 	exit 1
 fi
 
@@ -120,25 +120,25 @@ fi
 
 if [[ $EXTRACT_LAYOUT == yes ]]; then
 	rm -f $LOG_ROOT/ext.log
-	# Extract gds_file.
+	# Extract layout_file.
 
 	export EXT_DIR=$WORK_ROOT/ext
 	echo "Extracting layout with well in background process. See $WORK_ROOT/ext.log."
 	(
-		#  1. Extract gds_file with well connectivity
+		#  1. Extract layout_file with well connectivity
 		env EXTRACT_STYLE="" LOG_FILE=ext.log $LVS_ROOT/run_extract >$WORK_ROOT/ext.out 2>&1
 		#  2. Remove well connections and disconnected nets.
-		sed -f $LVS_ROOT/tech/$PDK/remove_well.sed $EXT_DIR/$TOP_LAYOUT.gds.spice |
-			awk -f $LVS_ROOT/scripts/remove_disconnect.awk - >$EXT_DIR/$TOP_LAYOUT.gds.nowell.spice
+		sed -f $LVS_ROOT/tech/$PDK/remove_well.sed $EXT_DIR/$TOP_LAYOUT.layout.spice |
+			awk -f $LVS_ROOT/scripts/remove_disconnect.awk - >$EXT_DIR/$TOP_LAYOUT.layout.nowell.spice
 	) &
 
 	export EXT_DIR=$WORK_ROOT/nowell.ext
 	echo "Extracting layout without well in background process. See $WORK_ROOT/nowell.ext.log."
 	(
-		#  3. Extract gds_file without well connectivity
+		#  3. Extract layout_file without well connectivity
 		env EXTRACT_STYLE="nowell" LOG_FILE=nowell.ext.log $LVS_ROOT/run_extract >$WORK_ROOT/nowell.ext.out 2>&1
 		#  4. Remove disconnected nets.
-		awk -f $LVS_ROOT/scripts/remove_disconnect.awk $EXT_DIR/$TOP_LAYOUT.gds.spice >$EXT_DIR/$TOP_LAYOUT.gds.nowell.spice
+		awk -f $LVS_ROOT/scripts/remove_disconnect.awk $EXT_DIR/$TOP_LAYOUT.layout.spice >$EXT_DIR/$TOP_LAYOUT.layout.nowell.spice
 	) &
 
 	wait
@@ -149,17 +149,17 @@ and/or $LOG_ROOT/nowell.ext.log"
 		exit 2
 	fi
 else
-	# No gds_file so LVS only. Check for existing valid extraction results.
-	if [[ ! -f $WORK_ROOT/ext/$TOP_LAYOUT.gds.nowell.spice ]]; then
-		echo "Error: missing $WORK_ROOT/ext/$TOP_LAYOUT.gds.nowell.spice"
-		echo "Specify gds_file to create"
-		echo "usage: run_scheck top_block [gds_file]"
+	# No layout_file so LVS only. Check for existing valid extraction results.
+	if [[ ! -f $WORK_ROOT/ext/$TOP_LAYOUT.layout.nowell.spice ]]; then
+		echo "Error: missing $WORK_ROOT/ext/$TOP_LAYOUT.layout.nowell.spice"
+		echo "Specify layout_file to create"
+		echo "usage: run_scheck top_block [layout_file]"
 		exit 2
 	fi
-	if [[ ! -f $WORK_ROOT/nowell.ext/$TOP_LAYOUT.gds.nowell.spice ]]; then
-		echo "Error: missing $WORK_ROOT/nowell.ext/$TOP_LAYOUT.gds.nowell.spice"
-		echo "Specify gds_file to create"
-		echo "usage: run_scheck top_block [gds_file]"
+	if [[ ! -f $WORK_ROOT/nowell.ext/$TOP_LAYOUT.layout.nowell.spice ]]; then
+		echo "Error: missing $WORK_ROOT/nowell.ext/$TOP_LAYOUT.layout.nowell.spice"
+		echo "Specify layout_file to create"
+		echo "usage: run_scheck top_block [layout_file]"
 		exit 2
 	fi
 	if [[ $(grep -c 'exttospice finished.' $LOG_ROOT/ext.log) -ne 1 ]]; then
