@@ -17,14 +17,14 @@
 
 # Overview:
 #  1. Extract verilog hierarchy, limit to TOP_CIRCUIT and child subcircuits.
-#  2. Extract gds/oas hierachy, if necessary.
+#  2. Extract cif/gds/oas hierachy, if necessary.
 #  3. Compare
 #
 
 # Use case
-# run_hier_check top_source verilog_files top_layout layout_file [primitive_prefix [gds_prefix]]
+# run_hier_check top_source verilog_files top_layout layout_file [primitive_prefix [layout_prefix]]
 if [[ $# -lt 4 || $# -gt 6 ]]; then
-	echo "usage: run_hier_check top_source verilog_files top_layout gds_file [primitive_prefix [gds_prefix]]"
+	echo "usage: run_hier_check top_source verilog_files top_layout layout_file [primitive_prefix [layout_prefix]]"
 	exit 1
 fi
 
@@ -145,9 +145,9 @@ if [[ $LAYOUT_FILE ]]; then
 	EXT=${BASE_LAYOUT##*.}
 	if [[ "$EXT" == "txt" ]]; then
 		TEXT_FILE=$BASE_LAYOUT
-	elif [[ "$EXT" == "gds" || "$EXT" == "oas" ]]; then
+	elif [[ "$EXT" == "cif" || "$EXT" == "gds" || "$EXT" == "oas" ]]; then
 		TEXT_FILE=$WORK_ROOT/layout.txt
-		cat >$WORK_ROOT/gds2txt.py <<-EOF
+		cat >$WORK_ROOT/layout2txt.py <<-EOF
 			import pya
 
 			app = pya.Application.instance()
@@ -173,10 +173,13 @@ if [[ $LAYOUT_FILE ]]; then
 
 			app.exit(0)
 		EOF
-		klayout -b -rm $WORK_ROOT/gds2txt.py |
+		klayout -b -rm $WORK_ROOT/layout2txt.py |
 			tee -a $WORK_ROOT/hier.log
 		gzip -f $TEXT_FILE
 		CAT='gunzip -c'
+	else
+		echo "ERROR: Unrecognized layout file extension '$EXT'"
+		exit 2
 	fi
 
 	$CAT $TEXT_FILE |
