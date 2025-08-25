@@ -62,19 +62,33 @@ if [[ -z "$PDK_ROOT" || -z "$PDK" ]]; then
 	exit 1
 fi
 
-# Check for layout format. cif and gds are supported. Files may be gzipped.
+# Check for layout format. cif, gds and oas are supported. Files may be gzipped.
+# cif and oas files must be converted to gds files.
 basefile=${LAYOUT_FILE%.gz}
 case "${basefile##*.}" in   # get file extension without dot
     gds)
-        FORMAT=gds
-        ;;
+	# native support
+	echo "Input is gds file"
+	new_file=
+	;;
     cif)
-        FORMAT=cif
-        ;;
+	# convert to gds
+	echo "Input is cif file"
+	new_file=${basefile%.cif}.$$.gds
+	$LVS_ROOT/convert_layout $LAYOUT_FILE $new_file.gz
+	export LAYOUT_FILE=$new_file.gz
+	;;
+    oas)
+	# convert to gds
+	echo "Input is oas file"
+	new_file=${basefile%.oas}.$$.gds
+	$LVS_ROOT/convert_layout $LAYOUT_FILE $new_file.gz
+	export LAYOUT_FILE=$new_file.gz
+	;;
     *)
-        echo "Unsupported file type"
+	echo "Unsupported file type"
 	exit 2
-        ;;
+	;;
 esac
 
 echo "LOG FILE: $LOG_ROOT/${LOG_FILE:=ext.log}"
@@ -177,18 +191,18 @@ cat > $EXT_DIR/abstract.tcl <<EOF
 puts "Abstracting"
 drc off
 crashbackups stop
-$FORMAT drccheck off
+gds drccheck no
 undo disable
 locking disable
 
 # Flatglob cells here too because may effect abstract connections (ex: sky130_ef_io__corner_pad)
 foreach cell { $FLATGLOB_CELLS } {
-	$FORMAT flatglob \$cell
+	gds flatglob \$cell
 }
 
 set last_time [orig_clock seconds]
 puts "Abstracting $LAYOUT_FILE"
-$FORMAT read $LAYOUT_FILE
+gds read $LAYOUT_FILE
 cd $EXT_DIR
 set current_time [orig_clock seconds]
 puts "\nTIME: read GDS: [orig_clock format [expr {\$current_time - \$last_time}] -gmt true -format  %H:%M:%S] \n"
@@ -318,7 +332,7 @@ cat > $EXT_DIR/extract.tcl <<EOF
 puts "Extracting with top ports $EXT_MESSAGE"
 drc off
 crashbackups stop
-$FORMAT drccheck off
+gds drccheck no
 undo disable
 locking disable
 
@@ -331,14 +345,14 @@ foreach cell { $ABSTRACT_CELLS } { ;# Load abstract cells
 }
 
 foreach cell { $FLATGLOB_CELLS } {
-	$FORMAT flatglob \$cell
+	gds flatglob \$cell
 }
 # list cells to be flattened
-puts "Flattening [string map {" " "\n"} [$FORMAT flatglob]]"
-$FORMAT flatten yes ;# Flattens cells with few layers
-$FORMAT noduplicates yes ;# keep abstract views
+puts "Flattening [string map {" " "\n"} [gds flatglob]]"
+gds flatten yes ;# Flattens cells with few layers
+gds noduplicates yes ;# keep abstract views
 puts "\nExtracting $LAYOUT_FILE"
-$FORMAT read $LAYOUT_FILE
+gds read $LAYOUT_FILE
 cd $EXT_DIR
 set current_time [orig_clock seconds]
 puts "\nTIME: read GDS: [orig_clock format [expr {\$current_time - \$last_time}] -gmt true -format %H:%M:%S] \n"
@@ -429,6 +443,9 @@ awk -f $LVS_ROOT/scripts/ext.hier.awk -v TOP=$TOP_LAYOUT $EXT_DIR/*.ext >$EXT_DI
 
 # Compress large ext files
 find $EXT_DIR -name '*.ext' -size +1M -exec gzip {} \;
+
+# Remove temporary files
+rm -f $new_file.gz
 
 if [[ $(grep -c 'direction reversal in path' $LOG_ROOT/$LOG_FILE) -ne 0 ]]; then
 	echo "
