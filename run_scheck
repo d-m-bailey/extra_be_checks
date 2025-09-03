@@ -25,17 +25,23 @@
 
 
 # Use cases
-# run_scheck [--noextract] [lvs_config_file [top_block [layout_file]]]
+# run_scheck [--noextract] [--single-thread] [lvs_config_file [top_block [layout_file]]]
 
-if [[ $1 == "--noextract" ]]; then
-	export EXTRACT_LAYOUT=no
-	shift
-else
-	export EXTRACT_LAYOUT=yes
-fi
+export EXTRACT_LAYOUT=yes
+export SINGLE_THREAD=no
+while [[ $1 ~ "--*" ]]; do
+	if [[ $1 == "--noextract" ]]; then
+		export EXTRACT_LAYOUT=no
+		shift
+	fi
+	if [[ $1 == "--single-thread" ]]; then
+		export SINGLE_THREAD=yes
+		shift
+	fi
+done
 
 if [[ $# -gt 3 ]]; then
-	echo "usage: run_scheck [--noextract] [lvs_config_file [top_block [layout_file]]]"
+	echo "usage: run_scheck [--noextract] [--single-thread] [lvs_config_file [top_block [layout_file]]]"
 	exit 1
 fi
 
@@ -131,6 +137,10 @@ if [[ $EXTRACT_LAYOUT == yes ]]; then
 		sed -f $LVS_ROOT/tech/$PDK/remove_well.sed $EXT_DIR/$TOP_LAYOUT.layout.spice |
 			awk -f $LVS_ROOT/scripts/remove_disconnect.awk - >$EXT_DIR/$TOP_LAYOUT.layout.nowell.spice
 	) &
+
+	if [[ $SINGLE_THREAD == yes ]]; then
+		wait
+	fi
 
 	export EXT_DIR=$WORK_ROOT/nowell.ext
 	echo "Extracting layout without well in background process. See $WORK_ROOT/nowell.ext.log."
