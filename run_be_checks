@@ -120,7 +120,7 @@ start_time=$SECONDS
 $LVS_ROOT/run_hier_check $TOP_SOURCE "$(echo $LVS_VERILOG_FILES | sed 's/#[^ ]*//g')" $TOP_LAYOUT $LAYOUT_FILE "${PDK%?}_([^/_]*_)*_"
 hier_status=$?
 
-if [[ -z "${SINGLE_THREAD_EXTRACTION+x}" ]]; then
+if ! [[ -z "${SINGLE_THREAD_EXTRACTION+x}" ]]; then
 	thread_flag=--single-thread
 fi
 if [[ $EXTRACT_LAYOUT == yes ]]; then
