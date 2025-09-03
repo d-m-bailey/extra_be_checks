@@ -29,7 +29,7 @@
 
 export EXTRACT_LAYOUT=yes
 export SINGLE_THREAD=no
-while [[ $1 ~ "--*" ]]; do
+while [[ $1 == --* ]]; do
 	if [[ $1 == "--noextract" ]]; then
 		export EXTRACT_LAYOUT=no
 		shift
