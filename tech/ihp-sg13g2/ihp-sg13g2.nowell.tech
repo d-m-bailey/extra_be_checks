@@ -274,12 +274,12 @@ contact
   via4   metal4 metal5
   via5   metal5 metal6
   via6   metal6 metal7
+  stackable
 
   # MiM cap contacts are not stackable!
   mimcc  mimcap metal6
   mimrfcc  mimrfcap metal6
 
-  stackable
 end
 
 #-----------------------------------------------------
@@ -5209,13 +5209,13 @@ variants (lvs)
  # device mosfet scr1
 
  # Bipolars
- device bjt npn13g2 npn gec *ndiff space/w error w1=we l1=le
+ device bjt npn13g2 npn gec *ndiff space/w error w1=le l1=we
 
  # 2nd layout type of low-voltage HBT bipolar
- device bjt npn13g2l npn nec *ndiff space/w error w1=we l1=le
+ device bjt npn13g2l npn nec *ndiff space/w error w1=le l1=we
 
  # High voltage NPN bipolar
- device bjt npn13g2v npn hvnec *ndiff space/w error w1=we l1=le
+ device bjt npn13g2v npn hvnec *ndiff space/w error w1=le l1=we
 
  # Currently no way to identify a pnpMPA device.
  # device bjt pnpMPA pnp *pdiff pwell,space/w
