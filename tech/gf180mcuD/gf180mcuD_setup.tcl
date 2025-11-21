@@ -421,7 +421,7 @@ if {[model blackbox]} {
 # Equate prefixed layout cells with corresponding source
 foreach cell $cells1 {
     set layout $cell
-    while {[regexp {([A-Z][A-Z0-9]_)([^#\$]*)([#\$][0-9]+)*} $layout match prefix cellname suffix]} {
+    while {[regexp {([A-Z][A-Z0-9]_)?([^#\$]*)([#\$][0-9]+)?} $layout match prefix cellname suffix]} {
 	if {([lsearch $cells2 $cell] < 0) && \
 		([lsearch $cells2 $cellname] >= 0)} {
 	    # netlist with the N names should always be the second netlist
@@ -432,6 +432,9 @@ foreach cell $cells1 {
 		#puts stdout "Equating $cellname in circuit 1 and $cellname in circuit 2"
 	    #}
 	    #equate pins "-circuit1 $cell" "-circuit2 $cellname"
+	}
+	if { [string compare $layout $cellname ] == 0 } {
+		break
 	}
 	set layout $cellname
     }
