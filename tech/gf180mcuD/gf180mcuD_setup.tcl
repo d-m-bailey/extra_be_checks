@@ -437,7 +437,4 @@ foreach cell $cells1 {
     }
 }
 
-    }
-}
-
 #Added programatically.
