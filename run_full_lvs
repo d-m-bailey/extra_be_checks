@@ -114,7 +114,7 @@ if [[ -f $WORK_ROOT/layout.cells && -f $WORK_ROOT/verilog.cells ]]; then
 	sed -e 's/\*/.*/g' $WORK_ROOT/flatten |
 		grep -hx -f - $WORK_ROOT/layout.cells $WORK_ROOT/verilog.cells |
 		cat - $WORK_ROOT/flatten |
-		sed 's/^\*//' |
+		sed -e 's/^\*//' -e 's/\*$//' |
 		awk 'NF > 0' |
 		sort -u >$WORK_ROOT/flatten.glob
 else
@@ -129,7 +129,7 @@ if [[ -f $WORK_ROOT/layout.cells && -f $WORK_ROOT/verilog.cells ]]; then
 	sed -e 's/\*/.*/g' $WORK_ROOT/noflatten |
 		grep -hx -f - $WORK_ROOT/layout.cells $WORK_ROOT/verilog.cells |
 		cat - $WORK_ROOT/noflatten |
-		sed 's/^\*//' |
+		sed -e 's/^\*//' -e 's/\*$//' |
 		awk 'NF > 0' |
 		sort -u >$WORK_ROOT/noflatten.glob
 else
@@ -189,8 +189,8 @@ if [[ $VERILOG_LIST ]]; then
 	ls -U $VERILOG_LIST >>$WORK_ROOT/verilog_files
 fi
 
-#cp $LVS_ROOT/tech/$PDK/${PDK}_setup.tcl $WORK_ROOT/${PDK}_setup.tcl
-cp $PDK_ROOT/$PDK/libs.tech/netgen/${PDK}_setup.tcl $WORK_ROOT/${PDK}_setup.tcl
+cp $LVS_ROOT/tech/$PDK/${PDK}_setup.tcl $WORK_ROOT/${PDK}_setup.tcl
+#cp $PDK_ROOT/$PDK/libs.tech/netgen/${PDK}_setup.tcl $WORK_ROOT/${PDK}_setup.tcl
 
 while read cell; do
 	cat >>$WORK_ROOT/${PDK}_setup.tcl <<-flatten

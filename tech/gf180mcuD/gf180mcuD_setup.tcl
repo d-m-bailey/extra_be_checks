@@ -112,7 +112,9 @@ foreach dev $devices {
 set devices {}
 lappend devices nfet_03v3
 lappend devices pfet_03v3
+lappend devices nfet_05v0
 lappend devices nfet_06v0
+lappend devices pfet_05v0
 lappend devices pfet_06v0
 lappend devices nfet_06v0_nvt
 
@@ -279,9 +281,7 @@ foreach dev $devices {
 }
 
 #-----------------------------------------------
-# Fixed-layout devices
-# NPN bipolar transistors,
-# sandwich (MoM) capacitors, and MiM capacitors
+# NPN and PNP bipolar transistors
 #-----------------------------------------------
 
 set devices {}
@@ -296,8 +296,6 @@ lappend devices pnp_05p00x00p42
 lappend devices pnp_10p00x10p00
 lappend devices pnp_05p00x05p00
 
-lappend devices cap_mim_2f0_m4m5_noshield
-
 foreach dev $devices {
     if {[lsearch $cells1 $dev] >= 0} {
 	property "-circuit1 $dev" parallel enable
@@ -311,24 +309,65 @@ foreach dev $devices {
     }
 }
 
+#-----------------------------------------------
+# MiM capacitors
+#-----------------------------------------------
+
+set devices {}
+# NOTE: cap_mim_2f0fF is a generic version of the
+# "noshield" names;  they are the same model, given
+# the specific metal stack.
+lappend devices cap_mim_2f0fF
+
+lappend devices cap_mim_2f0_m4m5_noshield
+
+foreach dev $devices {
+    if {[lsearch $cells1 $dev] >= 0} {
+	property "-circuit1 $dev" parallel enable
+	property "-circuit1 $dev" tolerance {c_width 0.01} {c_length 0.01}
+	# Ignore these properties
+	property "-circuit1 $dev" delete par1
+    }
+    if {[lsearch $cells2 $dev] >= 0} {
+	property "-circuit2 $dev" parallel enable
+	property "-circuit2 $dev" tolerance {c_width 0.01} {c_length 0.01}
+	# Ignore these properties
+	property "-circuit2 $dev" delete par1
+    }
+}
+
+# Ensure that the specific MiM cap model and non-specific MiM cap model will
+# be matched if they differ in the two netlists.
+set dev1 cap_mim_2f0_m4m5_noshield
+set dev2 cap_mim_2f0fF
+if {[lsearch $cells1 $dev1] >= 0 && [lsearch $cells2 $dev2] >= 0} {
+    equate classes "-circuit1 $dev1" "-circuit2 $dev2"
+}
+if {[lsearch $cells1 $dev2] >= 0 && [lsearch $cells2 $dev1] >= 0} {
+    equate classes "-circuit1 $dev2" "-circuit2 $dev1"
+}
+
+# Original setup ignores endcap, fill, and filltie cells. This setup compares them.
+
 #---------------------------------------------------------------
 # Allow the fill, decap, etc., cells to be parallelized
 #---------------------------------------------------------------
 
+# Combined layouts may produce cells with prefixes or suffixes.
 foreach cell $cells1 {
-    if {[regexp {.*gf180mcu_[^_]*_sc_[^_]+__fillcap_[[:digit:]]+} $cell match]} {
+    if {[regexp {.*gf180mcu_[^_]*_sc_[^_]+__fillcap_[[:digit:]]+(\$[0-9]+)*} $cell match]} {
         property "-circuit1 $cell" parallel enable
     }
-    if {[regexp {.*gf180mcu_[^_]*_sc_[^_]+__endcap} $cell match]} {
+    if {[regexp {.*gf180mcu_[^_]*_sc_[^_]+__endcap(\$[0-9]+)*} $cell match]} {
         property "-circuit1 $cell" parallel enable
     }
-    if {[regexp {.*gf180mcu_[^_]*_sc_[^_]+__fill_[[:digit:]]+} $cell match]} {
+    if {[regexp {.*gf180mcu_[^_]*_sc_[^_]+__fill_[[:digit:]]+(\$[0-9]+)*} $cell match]} {
         property "-circuit1 $cell" parallel enable
     }
-    if {[regexp {.*gf180mcu_[^_]*_sc_[^_]+__filltie} $cell match]} {
+    if {[regexp {.*gf180mcu_[^_]*_sc_[^_]+__filltie(\$[0-9]+)*} $cell match]} {
         property "-circuit1 $cell" parallel enable
     }
-    if {[regexp {.*gf180mcu_[^_]*_sc_[^_]+__antenna} $cell match]} {
+    if {[regexp {.*gf180mcu_[^_]*_sc_[^_]+__antenna(\$[0-9]+)*} $cell match]} {
         property "-circuit1 $cell" parallel enable
     }
 }
@@ -351,6 +390,20 @@ foreach cell $cells2 {
     }
 }
 
+# Do the same for the OSU 3.3V standard cell library
+
+foreach cell $cells1 {
+    if {[regexp {.*gf180mcu_osu_sc_[^_]+__fill_[[:digit:]]+(\$[0-9]+)*} $cell match]} {
+        property "-circuit1 $cell" parallel enable
+    }
+}
+
+foreach cell $cells2 {
+    if {[regexp {gf180mcu_osu_sc_[^_]+__fill_[[:digit:]]+} $cell match]} {
+        property "-circuit2 $cell" parallel enable
+    }
+}
+
 # Match pins on black-box cells if LVS is called with "-blackbox"
 if {[model blackbox]} {
     foreach cell $cells1 {
@@ -368,7 +421,7 @@ if {[model blackbox]} {
 # Equate prefixed layout cells with corresponding source
 foreach cell $cells1 {
     set layout $cell
-    while {[regexp {([A-Z][A-Z0-9]_)(.*)} $layout match prefix cellname]} {
+    while {[regexp {([A-Z][A-Z0-9]_)([^#\$]*)([#\$][0-9]+)*} $layout match prefix cellname suffix]} {
 	if {([lsearch $cells2 $cell] < 0) && \
 		([lsearch $cells2 $cellname] >= 0)} {
 	    # netlist with the N names should always be the second netlist
@@ -384,15 +437,6 @@ foreach cell $cells1 {
     }
 }
 
-# Equate suffixed layout cells with corresponding source
-foreach cell $cells1 {
-    if {[regexp {(.*)(\$[0-9])} $cell match cellname suffix]} {
-	if {([lsearch $cells2 $cell] < 0) && \
-		([lsearch $cells2 $cellname] >= 0)} {
-	    # netlist with the N names should always be the second netlist
-	    equate classes "-circuit2 $cellname" "-circuit1 $cell"
-	    puts stdout "Equating $cell in circuit 1 and $cellname in circuit 2"
-	}
     }
 }
 
