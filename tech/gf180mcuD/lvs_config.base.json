@@ -1,8 +1,11 @@
 {
 	"EXTRACT_FLATGLOB": [
+		"*diode_pd2nw_06v0_*[A-Z]*",
+		"*diode_nd2ps_06v0_*[A-Z]*",
+		"*nmos_*_*[A-Z]*",
 		"*nmos_*_*[A-Z]*",
 		"*mim_*_*[A-Z]*",
-		"*ppolyf_*_*[A-Z]*",
+		"*ppolyf_u_*[A-Z]*",
 		"*pmos_*_*[A-Z]*"
 	],
 	"EXTRACT_ABSTRACT": [

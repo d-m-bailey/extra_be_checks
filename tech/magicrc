@@ -44,7 +44,8 @@ see no *
 catch {random seed}
 
 if {[string equal $::env(EXTRACT_STYLE) ""]} {
-    set tech_file $::env(PDK_ROOT)/$::env(PDK)/libs.tech/magic/$::env(PDK).tech
+    #set tech_file $::env(PDK_ROOT)/$::env(PDK)/libs.tech/magic/$::env(PDK).tech
+    set tech_file $::env(LVS_ROOT)/tech/$::env(PDK)/$::env(PDK).tech
 
 } elseif {[string equal $::env(EXTRACT_STYLE) "nowell"]} {
     set tech_file $::env(LVS_ROOT)/tech/$::env(PDK)/$::env(PDK).nowell.tech

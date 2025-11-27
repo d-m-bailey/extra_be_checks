@@ -134,8 +134,8 @@ if [[ $EXTRACT_LAYOUT == yes ]]; then
 		#  1. Extract layout_file with well connectivity
 		env EXTRACT_STYLE="" LOG_FILE=ext.log $LVS_ROOT/run_extract >$WORK_ROOT/ext.out 2>&1
 		#  2. Remove well connections and disconnected nets.
-		sed -f $LVS_ROOT/tech/$PDK/remove_well.sed $EXT_DIR/$TOP_LAYOUT.layout.spice |
-			awk -f $LVS_ROOT/scripts/remove_disconnect.awk - >$EXT_DIR/$TOP_LAYOUT.layout.nowell.spice
+		sed -f $LVS_ROOT/tech/$PDK/remove_well.sed "$EXT_DIR/$TOP_LAYOUT.layout.spice" |
+			awk -f $LVS_ROOT/scripts/remove_disconnect.awk - >"$EXT_DIR/$TOP_LAYOUT.layout.nowell.spice"
 	) &
 
 	if [[ $SINGLE_THREAD == yes ]]; then
@@ -148,7 +148,7 @@ if [[ $EXTRACT_LAYOUT == yes ]]; then
 		#  3. Extract layout_file without well connectivity
 		env EXTRACT_STYLE="nowell" LOG_FILE=nowell.ext.log $LVS_ROOT/run_extract >$WORK_ROOT/nowell.ext.out 2>&1
 		#  4. Remove disconnected nets.
-		awk -f $LVS_ROOT/scripts/remove_disconnect.awk $EXT_DIR/$TOP_LAYOUT.layout.spice >$EXT_DIR/$TOP_LAYOUT.layout.nowell.spice
+		awk -f $LVS_ROOT/scripts/remove_disconnect.awk "$EXT_DIR/$TOP_LAYOUT.layout.spice" >"$EXT_DIR/$TOP_LAYOUT.layout.nowell.spice"
 	) &
 
 	wait

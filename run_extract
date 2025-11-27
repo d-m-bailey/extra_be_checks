@@ -399,7 +399,7 @@ set current_time [orig_clock seconds]
 puts "\nTIME: set abstract: [orig_clock format [expr {\$current_time - \$last_time}] -gmt true -format %H:%M:%S] \n"
 set last_time \$current_time
 
-load $TOP_LAYOUT
+load {$TOP_LAYOUT}
 select top cell
 expand
 extract no all ;# clear all flags
@@ -415,12 +415,12 @@ set last_time \$current_time
 ext2spice lvs
 ext2spice merge conservative ;# reduce parallel devices
 ext2spice short resistor ;# keep both ports but connect them with a 0 ohm resistor
-ext2spice -o $TOP_LAYOUT.layout.spice $TOP_LAYOUT.ext
+ext2spice -o {$TOP_LAYOUT.layout.spice} {$TOP_LAYOUT.ext}
 set current_time [orig_clock seconds]
 puts "\nTIME: netlist: [orig_clock format [expr {\$current_time - \$last_time}] -gmt true -format %H:%M:%S] \n"
 set last_time \$current_time
 
-feedback save $TOP_LAYOUT-ext.spice.feedback.txt
+feedback save {$TOP_LAYOUT-ext.spice.feedback.txt}
 EOF
 
 magic -dnull -noc -rcfile $LVS_ROOT/tech/magicrc $EXT_DIR/extract.tcl </dev/null 2>&1 |

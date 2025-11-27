@@ -3261,7 +3261,7 @@ extract
 
  tiedown alldiffnonfet
 
-# substrate *ppdiff,*mvppdiff,space/w,pwell well $SUB -dnwell,isosub
+ substrate *ppdiff,*mvppdiff,space/w,pwell well $SUB -dnwell,isosub
 
 # Layer resistance
 
@@ -4041,38 +4041,38 @@ variants *
 #
 # ***The top metal may be any of metal3 to metaltp, depending on the stackup
 
- device msubcircuit pfet_03v3 pfet pdiff,pdc pdiff,pdc \
+ device msubcircuit pfet_03v3 pfet pdiff,pdc pdiff,pdc allnwell error \
 	l=l w=w a1=as p1=ps a2=ad p2=pd
- device msubcircuit nfet_03v3 nfet ndiff,ndc ndiff,ndc \
+ device msubcircuit nfet_03v3 nfet ndiff,ndc ndiff,ndc allpsub error \
 	l=l w=w a1=as p1=ps a2=ad p2=pd
  device msubcircuit pfet_03v3 srampfet srampdiff,srampdc srampdiff,srampdc \
-	l=l w=w a1=as p1=ps a2=ad p2=pd
+	allnwell error l=l w=w a1=as p1=ps a2=ad p2=pd
  device msubcircuit nfet_03v3 sramnfet sramndiff,sramndc sramndiff,sramndc \
-	l=l w=w a1=as p1=ps a2=ad p2=pd
+	allpsub error l=l w=w a1=as p1=ps a2=ad p2=pd
  device msubcircuit pfet_05v0 srammvpfet srammvpdiff,srammvpdc \
-	srammvpdiff,srammvpdc l=l w=w a1=as p1=ps a2=ad p2=pd
- device msubcircuit pfet_06v0 hvpfet mvpdiff,mvpdc mvpdiff,mvpdc \
+	srammvpdiff,srammvpdc allnwell error l=l w=w a1=as p1=ps a2=ad p2=pd
+ device msubcircuit pfet_06v0 hvpfet mvpdiff,mvpdc mvpdiff,mvpdc allnwell error \
 	l=l w=w a1=as p1=ps a2=ad p2=pd
- device msubcircuit pfet_05v0 mvpfet mvpdiff,mvpdc mvpdiff,mvpdc \
+ device msubcircuit pfet_05v0 mvpfet mvpdiff,mvpdc mvpdiff,mvpdc allnwell error \
 	l=l w=w a1=as p1=ps a2=ad p2=pd
  device msubcircuit nfet_05v0 srammvnfet srammvndiff,srammvndc \
-	srammvndiff,srammvndc l=l w=w a1=as p1=ps a2=ad p2=pd
+	srammvndiff,srammvndc allpsub error l=l w=w a1=as p1=ps a2=ad p2=pd
  device msubcircuit nfet_05v0 srammvnfet srammvndiff,srammvndc \
-	srammvndiff,srammvndc l=l w=w a1=as p1=ps a2=ad p2=pd
- device msubcircuit nfet_06v0 hvnfet mvndiff,mvndc mvndiff,mvndc \
+	srammvndiff,srammvndc allpsub error l=l w=w a1=as p1=ps a2=ad p2=pd
+ device msubcircuit nfet_06v0 hvnfet mvndiff,mvndc mvndiff,mvndc allpsub error \
 	l=l w=w a1=as p1=ps a2=ad p2=pd
- device msubcircuit nfet_05v0 mvnfet mvndiff,mvndc mvndiff,mvndc \
+ device msubcircuit nfet_05v0 mvnfet mvndiff,mvndc mvndiff,mvndc allpsub error \
 	l=l w=w a1=as p1=ps a2=ad p2=pd
- device msubcircuit pfet_03v3_dss pfet pdiffres pdiffres \
+ device msubcircuit pfet_03v3_dss pfet pdiffres pdiffres allnwell error \
 	l=l w=w a1=as p1=ps a2=ad p2=pd l1=s_sab l2=d_sab
- device msubcircuit nfet_03v3_dss nfet ndiffres ndiffres \
+ device msubcircuit nfet_03v3_dss nfet ndiffres ndiffres allpsub error \
 	l=l w=w a1=as p1=ps a2=ad p2=pd l1=s_sab l2=d_sab
- device msubcircuit pfet_06v0_dss hvpfet,mvpfet mvpdiffres mvpdiffres \
+ device msubcircuit pfet_06v0_dss hvpfet,mvpfet mvpdiffres mvpdiffres allnwell error \
 	l=l w=w a1=as p1=ps a2=ad p2=pd l1=s_sab l2=d_sab
- device msubcircuit nfet_06v0_dss hvnfet,mvnfet mvndiffres mvndiffres \
+ device msubcircuit nfet_06v0_dss hvnfet,mvnfet mvndiffres mvndiffres allpsub error \
 	l=l w=w a1=as p1=ps a2=ad p2=pd l1=s_sab l2=d_sab
  device msubcircuit nfet_06v0_nvt mvnnfet mvndiff,mvndiffres,mvndc \
-	mvndiff,mvndiffres,mvndc \
+	mvndiff,mvndiffres,mvndc allpsub error \
 	l=l w=w a1=as p1=ps a2=ad p2=pd
  device subcircuit cap_nmos_03v3_b nvaractor *nndiff l=c_length w=c_width
  device subcircuit cap_nmos_06v0_b mvnvaractor *mvnndiff l=c_length w=c_width
@@ -4083,21 +4083,21 @@ variants *
  device subcircuit cap_pmos_06v0 mvpcap mvpdiff,mvpdc l=c_length w=c_width
  device subcircuit cap_nmos_06v0 mvncap mvndiff,mvndc l=c_length w=c_width
 
- #device msubcircuit npn_10p00x10p00 npn *ndiff dnwell space/w error a1>99.0 a1<101.0
- #device msubcircuit npn_05p00x05p00 npn *ndiff dnwell space/w error a1>24.0 a1<26.0
- #device msubcircuit npn_00p54x16p00 npn *ndiff dnwell space/w error a1>8.5 a1<8.7
- #device msubcircuit npn_00p54x08p00 npn *ndiff dnwell space/w error a1>4.2 a1<4.4
- #device msubcircuit npn_00p54x04p00 npn *ndiff dnwell space/w error a1>2.0 a1<2.2
- #device msubcircuit npn_00p54x02p00 npn *ndiff dnwell space/w error a1>1.0 a1<1.2
+ device msubcircuit npn_10p00x10p00 npn *ndiff dnwell space/w error a1>99.0 a1<101.0
+ device msubcircuit npn_05p00x05p00 npn *ndiff dnwell space/w error a1>24.0 a1<26.0
+ device msubcircuit npn_00p54x16p00 npn *ndiff dnwell space/w error a1>8.5 a1<8.7
+ device msubcircuit npn_00p54x08p00 npn *ndiff dnwell space/w error a1>4.2 a1<4.4
+ device msubcircuit npn_00p54x04p00 npn *ndiff dnwell space/w error a1>2.0 a1<2.2
+ device msubcircuit npn_00p54x02p00 npn *ndiff dnwell space/w error a1>1.0 a1<1.2
 
- #device msubcircuit pnp_10p00x00p42 pnp pwell,space/w *pdiff error a2>4.1 a2<4.3
- #device msubcircuit pnp_05p00x00p42 pnp pwell,space/w *pdiff error a2>2.0 a2<2.2
- #device msubcircuit pnp_10p00x10p00 pnp pwell,space/w *pdiff error a2>99.0 a2<101.0
- #device msubcircuit pnp_05p00x05p00 pnp pwell,space/w *pdiff error a2>24.0 a2<26.0
+ device msubcircuit pnp_10p00x00p42 0np pwell,space/w *pdiff error a2>4.1 a2<4.3
+ device msubcircuit pnp_05p00x00p42 pnp pwell,space/w *pdiff error a>2.0 a<2.2 a=a
+ device msubcircuit pnp_10p00x10p00 pnp pwell,space/w *pdiff error a2>99.0 a2<101.0
+ device msubcircuit pnp_05p00x05p00 pnp pwell,space/w *pdiff error a2>24.0 a2<26.0
 
- device msubcircuit nfet_10v0_asym mvnfet *mvndiff *ldndiff \
+ device msubcircuit nfet_10v0_asym mvnfet *mvndiff *ldndiff allpsub error \
 	l=l w=w a1=as p1=ps a2=ad p2=pd
- device msubcircuit pfet_10v0_asym mvpfet *mvpdiff *ldpdiff \
+ device msubcircuit pfet_10v0_asym mvpfet *mvpdiff *ldpdiff allnwell error \
 	l=l w=w a1=as p1=ps a2=ad p2=pd
 
  device rsubcircuit efuse efuse *poly
@@ -4109,32 +4109,32 @@ variants *
 
  device rsubcircuit tm11k rm5 *m5 l=r_length w=r_width
 
- device rsubcircuit ppolyf_s  rpps   *poly l=r_length w=r_width
- device rsubcircuit npolyf_s  rnps   *poly l=r_length w=r_width
- device rsubcircuit ppolyf_u  rpp    *poly l=r_length w=r_width
- device rsubcircuit npolyf_u  rnp    *poly l=r_length w=r_width
- device rsubcircuit ppolyf_u_1k hires *poly l=r_length w=r_width
- device rsubcircuit ppolyf_u_1k_6p0 mvhires *poly l=r_length w=r_width
- device rsubcircuit pplus_u  rpd  *pdiff l=r_length w=r_width
- device rsubcircuit nplus_u  rnd  *ndiff l=r_length w=r_width
- device rsubcircuit pplus_s  rpds *pdiff l=r_length w=r_width
- device rsubcircuit nplus_s  rnds *ndiff l=r_length w=r_width
- device rsubcircuit pplus_u  mvpdiffres *mvpdiff l=r_length w=r_width
- device rsubcircuit nplus_u  mvndiffres *mvndiff l=r_length w=r_width
-# device rsubcircuit nwell rnw   nwell allpsub error l=r_length w=r_width
+ device rsubcircuit ppolyf_s  rpps   *poly allnwell,allpsub error l=r_length w=r_width
+ device rsubcircuit npolyf_s  rnps   *poly allnwell,allpsub error l=r_length w=r_width
+ device rsubcircuit ppolyf_u  rpp    *poly allnwell,allpsub error l=r_length w=r_width
+ device rsubcircuit npolyf_u  rnp    *poly allnwell,allpsub error l=r_length w=r_width
+ device rsubcircuit ppolyf_u_1k hires *poly allnwell,allpsub error l=r_length w=r_width
+ device rsubcircuit ppolyf_u_1k_6p0 mvhires *poly allnwell,allpsub error l=r_length w=r_width
+ device rsubcircuit pplus_u  rpd  *pdiff allnwell error l=r_length w=r_width
+ device rsubcircuit nplus_u  rnd  *ndiff allpsub error l=r_length w=r_width
+ device rsubcircuit pplus_s  rpds *pdiff allnwell error l=r_length w=r_width
+ device rsubcircuit nplus_s  rnds *ndiff allpsub error l=r_length w=r_width
+ device rsubcircuit pplus_u  mvpdiffres *mvpdiff allnwell error l=r_length w=r_width
+ device rsubcircuit nplus_u  mvndiffres *mvndiff allpsub error l=r_length w=r_width
+ device rsubcircuit nwell rnw   nwell allpsub error l=r_length w=r_width
 
  # The following absorbs the source/drain resistor into a *_dss FET device
- device subcircuit Short mvndiffres *mvndiff hvnfet 
- device subcircuit Short mvpdiffres *mvpdiff hvpfet 
- device subcircuit Short ndiffres *ndiff nfet 
- device subcircuit Short pdiffres *pdiff pfet 
+ device subcircuit Short mvndiffres *mvndiff hvnfet allpsub error
+ device subcircuit Short mvpdiffres *mvpdiff hvpfet allnwell error
+ device subcircuit Short ndiffres *ndiff nfet allpsub error
+ device subcircuit Short pdiffres *pdiff pfet allnwell error
 
- #device pdiode diode_pd2nw_03v3     *pdiode allnwell a=area p=pj
- #device ndiode diode_nd2ps_03v3     *ndiode allpsub a=area p=pj
- #device pdiode diode_pd2nw_06v0     *mvpdiode allnwell a=area p=pj
- #device ndiode diode_nd2ps_06v0     *mvndiode allpsub a=area p=pj
- #device ndiode diode_nd2ps_06v0_nvt *mvnndiode allpsub a=area p=pj
- #device pdiode sc_diode		    *schottky *nsd a=area p=pj
+ device pdiode diode_pd2nw_03v3     *pdiode allnwell a=area p=pj
+ device ndiode diode_nd2ps_03v3     *ndiode allpsub a=area p=pj
+ device pdiode diode_pd2nw_06v0     *mvpdiode allnwell a=area p=pj
+ device ndiode diode_nd2ps_06v0     *mvndiode allpsub a=area p=pj
+ device ndiode diode_nd2ps_06v0_nvt *mvnndiode allpsub a=area p=pj
+ device pdiode sc_diode		    *schottky *nsd a=area p=pj
 
  device csubcircuit cap_mim_2f0_m4m5_noshield *mimcap  *m4   l=c_length w=c_width
 

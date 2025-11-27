@@ -219,26 +219,26 @@ while read cell; do
 done <$WORK_ROOT/ignore.glob
 
 cat >$WORK_ROOT/lvs.script <<-script
-	puts "Reading layout $WORK_ROOT/ext/$TOP_LAYOUT.layout.spice..."
-	set layout [readnet spice $WORK_ROOT/ext/$TOP_LAYOUT.layout.spice]
+	puts {Reading layout $WORK_ROOT/ext/$TOP_LAYOUT.layout.spice...}
+	set layout [readnet spice {$WORK_ROOT/ext/$TOP_LAYOUT.layout.spice}]
 	set source [readnet spice /dev/null]
 script
 
 while read spice_file; do
 	cat >>$WORK_ROOT/lvs.script <<-spice
-		puts "Reading source $spice_file..."
-		readnet spice $spice_file \$source
+		puts {Reading source $spice_file...}
+		readnet spice {$spice_file} \$source
 	spice
 done <$WORK_ROOT/spice_files
 while read verilog_file; do
 	cat >>$WORK_ROOT/lvs.script <<-verilog
-		puts "Reading source $verilog_file..."
-		readnet verilog $verilog_file \$source
+		puts {Reading source $verilog_file...}"
+		readnet verilog {$verilog_file} \$source
 	verilog
 done <$WORK_ROOT/verilog_files
 
 cat >>$WORK_ROOT/lvs.script <<-lvs
-	lvs "\$layout $TOP_LAYOUT" "\$source $TOP_SOURCE" $WORK_ROOT/${PDK}_setup.tcl $WORK_ROOT/lvs.report -blackbox -json -noflatten=$WORK_ROOT/noflatten.glob
+	lvs [string cat \$layout { $TOP_LAYOUT}] "\$source $TOP_SOURCE" $WORK_ROOT/${PDK}_setup.tcl $WORK_ROOT/lvs.report -blackbox -json -noflatten=$WORK_ROOT/noflatten.glob
 lvs
 
 date "+BEGIN: %c" >$WORK_ROOT/lvs.log
