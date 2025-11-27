@@ -57,6 +57,12 @@ layout_cell_file=$WORK_ROOT/layout.cells
 
 echo " "
 echo "Running hierarchical comparison between verilog and layout..."
+echo "Top source             : $TOP_SOURCE"
+echo "Source files           : $SOURCE_FILES"
+echo "Top layout             : $TOP_LAYOUT"
+echo "Layout file            : $LAYOUT_FILE"
+echo "Primitive prefix filter: $PRIMITIVE_PREFIX_FILTER"
+echo "GDS prefix filter      : $GDS_PREFIX_FILTER"
 
 date "+BEGIN: %c" >$WORK_ROOT/hier.log
 start_time=$SECONDS
