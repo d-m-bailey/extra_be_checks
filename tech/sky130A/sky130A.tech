@@ -14,7 +14,7 @@ tech
 end
 
 version
- version 1.0.493-0-g0fe599b
+ version 1.0.536-1-g40cee97
  description "SkyWater SKY130: Open Source rules and DRC"
  requires magic-8.3.411
 end
@@ -40,6 +40,7 @@ end
 # sky130_fd_pr__special_nfet_latch npd		special nFET in SRAM cell
 # sky130_fd_pr__special_nfet_pass  npass	special nFET in SRAM cell
 # sky130_fd_pr__nfet_01v8_lvt	nfetlvt		low Vt nFET
+# sky130_fd_pr__nfet_01v8_lvt	scnfetlvt	low Vt nFET in standard cell**
 # sky130_fd_bs_flash__special_sonosfet_star nsonos SONOS nFET
 # sky130_fd_pr__pfet_01v8	pfet		standard pFET
 # sky130_fd_pr__pfet_01v8	scpfet		standard pFET in standard cell**
@@ -154,7 +155,6 @@ types
  -active npass,npassfet,srampassfet
   active pmos,ptransistor,pfet
  -active scpmos,scptransistor,scpfet
- -active scpmoshvt,scpfethvt
  -active ppu,ppufet,srampfet
   active nnmos,nntransistor,nnfet
   active mvnmos,mvntransistor,mvnfet
@@ -168,7 +168,9 @@ types
   active pmoslvt,pfetlvt
   active pmosmvt,pfetmvt
   active pmoshvt,pfethvt
+ -active scpmoshvt,scpfethvt
   active nmoslvt,nfetlvt
+ -active scnmoslvt,scnfetlvt
   active varactorhvt,varacthvt,varhvt
  -active nsonos,sonos
  -active sramnvar,corenvar,corenvaractor
@@ -345,11 +347,11 @@ aliases
   allwellplane     nwell
   allnwell	   nwell,obswell,pnp
 
-  allnfets	   nfet,npass,npd,scnfet,mvnfet,mvnfetesd,mvnnfet,nnfet,nfetlvt,nsonos
+  allnfets	   nfet,npass,npd,scnfet,mvnfet,mvnfetesd,mvnnfet,nnfet,nfetlvt,scnfetlvt,nsonos
   allpfets	   pfet,ppu,scpfet,scpfethvt,mvpfet,mvpfetesd,pfethvt,pfetlvt,pfetmvt
   allfets	   allnfets,allpfets,varactor,mvvaractor,varhvt,corenvar,corepvar
   allfetsstd	   nfet,mvnfet,mvnfetesd,mvnnfet,nnfet,nfetlvt,pfet,mvpfet,mvpfetesd,pfethvt,pfetlvt,pfetmvt
-  allfetsspecial   scnfet,scpfet,scpfethvt
+  allfetsspecial   scnfet,scpfet,scpfethvt,scnfetlvt
   allfetscore	   npass,npd,nsonos,ppu,corenvar,corepvar
   allfetsnolvt	   nfet,npass,npd,scnfet,mvnfet,mvnfetesd,mvnnfet,nnfet,nsonos,pfet,ppu,scpfet,scpfethvt,mvpfet,mvpfetesd,pfethvt,pfetmvt,varactor,mvvaractor,varhvt,corenvar
 
@@ -368,7 +370,7 @@ aliases
 
   allactiveres	   ndiffres,pdiffres,mvndiffres,mvpdiffres
 
-  allndifflv       *ndif,*nsd,*ndiode,ndiffres,nfet,npass,npd,scnfet,nfetlvt,nsonos
+  allndifflv       *ndif,*nsd,*ndiode,ndiffres,nfet,npass,npd,scnfet,scnfetlvt,nfetlvt,nsonos
   allpdifflv       *pdif,*psd,*pdiode,pdiffres,pfet,ppu,scpfet,scpfethvt,pfetlvt,pfetmvt,pfethvt
   alldifflv        allndifflv,allpdifflv
   allndifflvnonfet *ndif,*nsd,*ndiode,*nndiode,ndiffres,*ndiodelvt
@@ -442,6 +444,7 @@ styles
   psd       pdiff_in_pwell
   nfet      ntransistor    ntransistor_stripes
   scnfet    ntransistor    ntransistor_stripes
+  scnfetlvt ntransistor    ntransistor_stripes implant1
   npass	    ntransistor	   ntransistor_stripes
   npd	    ntransistor	   ntransistor_stripes
   pfet      ptransistor    ptransistor_stripes
@@ -586,11 +589,12 @@ compose
   compose  pfet  poly  pdiff
   compose  var   poly  nsd
 
-  decompose npass   poly ndiff
-  decompose npd     poly ndiff
-  decompose scnfet  poly ndiff
-  decompose nfetlvt poly ndiff
-  decompose nsonos  poly ndiff
+  decompose npass     poly ndiff
+  decompose npd       poly ndiff
+  decompose scnfet    poly ndiff
+  decompose scnfetlvt poly ndiff
+  decompose nfetlvt   poly ndiff
+  decompose nsonos    poly ndiff
 
   decompose ppu       poly pdiff
   decompose scpfet    poly pdiff
@@ -691,7 +695,7 @@ end
 cifoutput
 
 #----------------------------------------------------------------
-style gdsii
+style gdsii variants (),(origfill)
 # NOTE: This section is used for actual GDS output
 #----------------------------------------------------------------
  scalefactor 10  nanometers
@@ -884,7 +888,7 @@ style gdsii
 # LVTN
 #----------------------------------------------------------------
 
- layer LVTN  pfetlvt,nfetlvt,mvvar,mvnnfet,nnfet,nsonos,*pdiodelvt,*ndiodelvt,*nndiode
+ layer LVTN  pfetlvt,nfetlvt,scnfetlvt,mvvar,mvnnfet,nnfet,nsonos,*pdiodelvt,*ndiodelvt,*nndiode
         grow 180
 	bridge	380 380
 	grow	185
@@ -946,7 +950,7 @@ style gdsii
 #----------------------------------------------------------------
 
  layer STDCELL scnfet
-	bloat-all scpfet,scpfethvt,scnfet CELLBOUND
+	bloat-all scpfet,scpfethvt,scnfet,scnfetlvt CELLBOUND
 	mask-hints STDCELL
 	calma 81 4
 
@@ -988,10 +992,9 @@ style gdsii
 
  layer RPM
 	bloat-all xhrpoly xpc
-	grow 200
-	grow-min 1270
-	grow 420
+	grow 620
 	shrink 420
+	mask-hints RPM
 	calma 86 20
 
 #----------------------------------------------------------------
@@ -1000,10 +1003,9 @@ style gdsii
 
  layer URPM
 	bloat-all uhrpoly xpc
-	grow 200
-	grow-min 1270
-	grow 420
+	grow 620
 	shrink 420
+	mask-hints URPM
 	calma 79 20
 
 #----------------------------------------------------------------
@@ -1015,6 +1017,7 @@ style gdsii
 	grow 185
  	grow 	345
  	shrink 	345
+	mask-hints LDNTM
 	calma 11 44
 
 #----------------------------------------------------------------
@@ -1397,8 +1400,13 @@ style gdsii
 #----------------------------------------------------------------
 # FILLBLOCK
 #----------------------------------------------------------------
+ variants (origfill)
+
  layer FILLOBSFOM  obsactive
 	calma	22 24
+
+ layer FILLOBSLI fillblock,obsli
+	calma	67 10
 
  layer FILLOBSM1 fillblock,obsm1
  	calma 	62 24
@@ -1414,6 +1422,33 @@ style gdsii
 
  layer FILLOBSM5 fillblock,obsm5
 	calma	117 4
+
+ variants ()
+
+ layer FILLOBSFOM  obsactive
+	calma	65 98
+
+ # NOTE: should there be an "obspoly" layer?
+
+ layer FILLOBSLI fillblock,obsli
+	calma	67 98
+
+ layer FILLOBSM1 fillblock,obsm1
+ 	calma 	68 98
+
+ layer FILLOBSM2 fillblock,obsm2
+ 	calma 	69 98
+
+ layer FILLOBSM3 fillblock,obsm3
+ 	calma 	70 98
+
+ layer FILLOBSM4 fillblock,obsm4
+ 	calma 	71 98
+
+ layer FILLOBSM5 fillblock,obsm5
+	calma	72 98
+
+ variants *
 
  render	DNWELL 	cwell       -0.1    0.1
  render	NWELL	nwell        0.0    0.2062
@@ -1632,25 +1667,42 @@ style drc
  and allpdifflv,allpdiffmv
 
  # MV nwell must be 2um from any other nwell
- templayer mvnwell
+ templayer mvnwell_simple
  bloat-all alldiffmv nwell
+
+ templayer mvnwell mvnwell_simple
  grow-min 840
  bridge	700 600
+
+ # Diffusion spacing to mvnwell.  Note:  mvdiff to any well
+ # (mv or lv) is the same rule and can be checked by regular
+ # edge-based rules.  Only mvwell to lvdiff needs a CIF rule.
+ templayer difftap_near_mvnwell mvnwell_simple
+ grow 430
+ and alldifflv,*mvpsd
 
  # Simple spacing checks to lvnwell must use CIF-DRC rule
  # Note that HVI may *abut* lvnwell;  this can only be handled
  # with mask-hints layers.
 
  templayer drawn_hvi
-	mask-hints HVI
+ mask-hints HVI
 
  templayer allmvdiffnowell *mvndiff,*mvpsd
  and-not drawn_hvi
 
- templayer nwell_or_hvi nwell,drawn_hvi
-
  templayer lvnwell nwell
  and-not mvnwell
+
+ templayer hvi_abut_lvnwell lvnwell
+ grow 5
+ and drawn_hvi
+ grow 695
+
+ templayer hvi_to_lvnwell drawn_hvi
+ and-not hvi_abut_lvnwell
+ grow 700
+ and lvnwell
 
  # Check for low-voltage diffusion in high-voltage well
  templayer lvdiff_in_mvnwell *pdiff,*pdiode,pdiffres,*nsd
@@ -1689,13 +1741,13 @@ style drc
  shrink  345
  and-not hvntm_block
 
- # RPM spacing checks require recreating RPM
+ # Generate RPM for DRC checks
  templayer rpm_generate
  bloat-all xhrpoly,uhrpoly xpc
- grow 200
- grow-min 1270
- grow 420
+ grow 620
  shrink 420
+ mask-hints RPM
+ mask-hints URPM
 
  # Check distance RPM to NSDM
  templayer rpm_nsd_check rpm_generate
@@ -1792,6 +1844,10 @@ style wafflefill variants (),(tiled)
 #----------------------------------------------------------------
 # Style used by scripts for automatically generating fill layers
 # NOTE: Be sure to generate output on flattened layout.
+# Also note:  This fill generator script uses the older GDS
+# layer assignments for fill layers.  The generator script that
+# uses the sky130gds.tech (e.g., sky130A-GDS.tech) technology file
+# is preferred.
 #----------------------------------------------------------------
  scalefactor 10  nanometers
  options calma-permissive-labels
@@ -1978,12 +2034,24 @@ style wafflefill variants (),(tiled)
 # LI fill
 # Note requirement that LI fill may not overlap (non-fill)
 # diff or poly.
+#
+# Important note:  sky130 does not define an LI mask fill
+# blockage layer, because LI fill requirements were added
+# to the process after the open PDK was made.  While
+# obstruction layers can be used in magic to block LI
+# fill, this does not translate into GDS, so running fill
+# on a GDS top level cell will result in LI fill shapes
+# being placed in the corner and under the seal ring.  To
+# work around this, I have added obsm1 to the layers that
+# obstruct LI, which is a bit of a hack but should not
+# cause issues in practice.
 #---------------------------------------------------------
 
  templayer      obstruct_li_coarse allli,obsli,lifill,fillblock
         grow    2800
 	or	alldiff,allpoly
 	grow	200
+	or	obsm1
  templayer	lifill_coarse topbox
         # slots   0 3000 650 0 3000 650 700 0
         slots   0 3000 900 0 3000 900 700 0
@@ -1998,6 +2066,7 @@ style wafflefill variants (),(tiled)
 	grow	300
 	or	alldiff,allpoly
         grow    200
+	or	obsm1
  templayer	lifill_medium topbox
         slots   0 1500 500 0 1500 500 700 0
         and-not obstruct_li_medium
@@ -2010,6 +2079,7 @@ style wafflefill variants (),(tiled)
 	grow	300
 	or	alldiff,allpoly
         grow    200
+	or	obsm1
  templayer	lifill_fine topbox
         slots   0 580 500 0 580 500 700 0
         and-not obstruct_li_fine
@@ -2298,7 +2368,7 @@ cifinput
 # or else magic will scale below the allowed layout grid size
 #-----------------------------------------------------------------------
 
-style  sky130 variants (),(vendor),(nowell)
+style  sky130 variants (),(vendor),(nowell),(subcut)
  scalefactor 10 nanometers
  gridlimit 5
 
@@ -2311,7 +2381,6 @@ style  sky130 variants (),(vendor),(nowell)
  ignore HVNTM
  ignore POLYMOD
  ignore LOWTAPDENSITY
- ignore MET5BLOCK
  ignore OUTLINE
  ignore POLYCUT
  ignore POLYGATE
@@ -2323,6 +2392,7 @@ style  sky130 variants (),(vendor),(nowell)
 variants (nowell)
  ignore DNWELL
  ignore SUBCUT
+variants (nowell),(subcut)
  ignore NWELL
  ignore PWRES
  ignore NPNID
@@ -2332,7 +2402,107 @@ variants (nowell)
  ignore WELLTXT
  ignore SUBPIN
  ignore WELLPIN
-
+variants (subcut)
+ ignore DIFF
+ ignore TAP
+ ignore LVTN
+ ignore HVTR
+ ignore HVTP
+ ignore SONOS
+ ignore NSDM
+ ignore PSDM
+ ignore HVI
+ ignore EDID
+ ignore RPM
+ ignore URPM
+ ignore POLYRES
+ ignore DIFFRES
+ ignore POLY
+ ignore LVID
+ ignore DIODE
+ ignore COREID
+ ignore STDCELL
+ ignore PADCELL
+ ignore ESDID
+ ignore CONT
+ ignore LI
+ ignore MCON
+ ignore MET1
+ ignore VIA1
+ ignore MET2
+ ignore VIA2
+ ignore MET3
+ ignore VIA3
+ ignore MET4
+ ignore VIA4
+ ignore MET5
+ ignore RDL
+ ignore GLASS
+ ignore PADTXT
+ ignore DIFFTXT
+ ignore TAPTXT
+ ignore LITXT
+ ignore POLYTXT
+ ignore MET1TXT
+ ignore MET2TXT
+ ignore MET3TXT
+ ignore MET4TXT
+ ignore MET5TXT
+ ignore RDLTXT
+ ignore LIRES
+ ignore MET1RES
+ ignore MET2RES
+ ignore MET3RES
+ ignore MET4RES
+ ignore MET5RES
+ ignore LIFILL
+ ignore MET1FILL
+ ignore MET2FILL
+ ignore MET3FILL
+ ignore MET4FILL
+ ignore MET5FILL
+ ignore POLYSHORT
+ ignore LISHORT
+ ignore MET1SHORT
+ ignore MET2SHORT
+ ignore MET3SHORT
+ ignore MET4SHORT
+ ignore MET5SHORT
+ ignore PADPIN
+ ignore DIFFPIN
+ ignore POLYPIN
+ ignore LIPIN
+ ignore MET1PIN
+ ignore MET2PIN
+ ignore MET3PIN
+ ignore MET4PIN
+ ignore MET5PIN
+ ignore RDLPIN
+ ignore LVSTEXT
+ ignore CAPM
+ ignore CAPM2
+ ignore FILLOBSM1
+ ignore FILLOBSM2
+ ignore FILLOBSM3
+ ignore FILLOBSM4
+ ignore FILLOBSM5
+ ignore DIFFFILLALT
+ ignore POLYFILLALT
+ ignore LIFILLALT
+ ignore MET1FILLALT
+ ignore MET2FILLALT
+ ignore MET3FILLALT
+ ignore MET4FILLALT
+ ignore MET5FILLALT
+ ignore DIFFBLOCK
+ ignore POLYBLOCK
+ ignore LIBLOCK
+ ignore MET1BLOCK
+ ignore MET2BLOCK
+ ignore MET3BLOCK
+ ignore MET4BLOCK
+ ignore MET5BLOCK
+ 
 variants (),(vendor)
 
  layer pnp NWELL,WELLTXT,WELLPIN
@@ -2382,7 +2552,7 @@ variants (),(vendor)
  and DNWELL
  labels PWRES
 
-variants *
+variants (),(vendor),(nowell)
  templayer hvarea HVI
  copyup hvcheck
 
@@ -2504,6 +2674,7 @@ variants *
  and HVI,hvcheck
  labels DIFF
 
+ # Note: Not checking PSDM specifically, just lack of NSDM
  templayer mvpdiffarea DIFF,DIFFTXT,DIFFPIN,barediff
  and-not POLY
  and NWELL,nwelcheck
@@ -2511,7 +2682,6 @@ variants *
  and HVI,hvcheck
  and-not DIODE
  and-not DIFFRES
- and PSDM
  copyup mvpdifcheck
  labels DIFF
  labels DIFFPIN port
@@ -2689,6 +2859,18 @@ variants *
  and STDCELL
  labels DIFF
 
+ layer scnfetlvt DIFF,barediff
+ and POLY
+ or baretrans
+ and-not PSDM
+ and NSDM
+ and-not NWELL,nwelcheck
+ and-not HVI,hvcheck
+ and LVTN
+ and-not SONOS
+ and STDCELL
+ labels DIFF
+
  layer npass DIFF,barediff
  and POLY
  or baretrans
@@ -2729,6 +2911,7 @@ variants *
  and-not HVI,hvcheck
  and LVTN
  and-not SONOS
+ and-not STDCELL
  labels DIFF
 
  layer nsonos DIFF,barediff
@@ -3324,12 +3507,13 @@ variants *
  or mvnscbase
  labels CONT
 
+ # See note above:  Not checking PSDM
  templayer mvpdcbase CONT
  or barecont
  and LI
  or barelicont
  and DIFF
- and PSDM
+ and-not NSDM
  and NWELL,nwelcheck
  and HVI,hvcheck
 
@@ -3359,12 +3543,13 @@ variants *
  or mvpdcnowell
  labels CONT
 
+ # Note: Not checking PSDM specifically, just lack of NSDM
  templayer mvpscbase CONT
  or barecont
  and LI
  or barelicont
  and DIFF,TAP
- and PSDM
+ and-not NSDM
  and-not NWELL,nwelcheck
  and-not mvpfetexpand
  and HVI,hvcheck
@@ -3437,10 +3622,12 @@ variants *
  labels CONT
 
  layer	fomfill  FOMFILL
- labels FOMFILL
+ or DIFFFILLALT
+ labels FOMFILL,DIFFFILLALT
 
  layer	polyfill POLYFILL
- labels POLYFILL
+ or POLYFILLALT
+ labels POLYFILL,POLYFILLALT
 
  layer coreli LI,LITXT,LIPIN
  and-not LIRES,LISHORT
@@ -3461,7 +3648,8 @@ variants *
  labels LIRES,LISHORT
 
  layer	lifill LIFILL
- labels LIFILL
+ or LIFILLALT
+ labels LIFILL,LIFILLALT
 
  layer mcon MCON
  grow 95
@@ -3482,7 +3670,8 @@ variants *
  labels MET1RES,MET1SHORT
 
  layer m1fill MET1FILL
- labels MET1FILL
+ or MET1FILLALT
+ labels MET1FILL,MET1FILLALT
 
  layer mimcap MET3
  and CAPM
@@ -3532,7 +3721,8 @@ variants *
  labels MET2RES,MET2SHORT
 
  layer m2fill MET2FILL
- labels MET2FILL
+ or MET2FILLALT
+ labels MET2FILL,MET2FILLALT
 
  templayer m3cbase VIA2
  grow 40
@@ -3555,7 +3745,8 @@ variants *
  labels MET3RES,MET3SHORT
 
  layer m3fill MET3FILL
- labels MET3FILL
+ or MET3FILLALT
+ labels MET3FILL,MET3FILLALT
 
 
  templayer via3base VIA3
@@ -3580,7 +3771,8 @@ variants *
  labels MET4RES,MET4SHORT
 
  layer m4fill MET4FILL
- labels MET4FILL
+ or MET4FILLALT
+ labels MET4FILL,MET4FILLALT
 
  layer m5 MET5,MET5TXT,MET5PIN
  and-not MET5RES,MET5SHORT
@@ -3593,7 +3785,8 @@ variants *
  labels MET5RES,MET5SHORT
 
  layer m5fill MET5FILL
- labels MET5FILL
+ or MET5FILLALT
+ labels MET5FILL,MET5FILLALT
 
  templayer via4base VIA4
  and-not CAPM2
@@ -3836,33 +4029,38 @@ variants *
 # and FILLOBSM1,FILLOBSM2,FILLOBSM3,FILLOBSM4
 
 # Use the obstruction types for fill block on individual layers
- templayer obspoly FILLOBSPOLY
+ templayer obspoly FILLOBSPOLY,POLYBLOCK
  and-not POLY
+ labels FILLOBSPOLY
 
- layer obsactive FILLOBSFOM
+ layer obsactive FILLOBSFOM,DIFFBLOCK
  and-not DIFF,TAP
  or obspoly
- labels FILLOBSFOM,FILLOBSPOLY
+ labels FILLOBSFOM
 
- layer obsm1 FILLOBSM1
+ layer obsli LIBLOCK
+ and-not LI
+ labels LIBLOCK
+
+ layer obsm1 FILLOBSM1,MET1BLOCK
  and-not MET1
- labels FILLOBSM1
+ labels FILLOBSM1,MET1BLOCK
 
- layer obsm2 FILLOBSM2
+ layer obsm2 FILLOBSM2,MET2BLOCK
  and-not MET2
- labels FILLOBSM2
+ labels FILLOBSM2,MET2BLOCK
 
- layer obsm3 FILLOBSM3
+ layer obsm3 FILLOBSM3,MET3BLOCK
  and-not MET3
- labels FILLOBSM3
+ labels FILLOBSM3,MET3BLOCK
 
- layer obsm4 FILLOBSM4
+ layer obsm4 FILLOBSM4,MET4BLOCK
  and-not MET4
- labels FILLOBSM4
+ labels FILLOBSM4,MET4BLOCK
 
- layer obsm5 FILLOBSM5
+ layer obsm5 FILLOBSM5,MET5BLOCK
  and-not MET5
- labels FILLOBSM5
+ labels FILLOBSM5,MET5BLOCK
 
 # MOS Varactor
 
@@ -3956,7 +4154,6 @@ variants *
  calma POLYGATE 66 9
  calma DIFFCUT 65 14
  calma HVNWELLID 81 63
- calma MET5BLOCK 72 10
  calma PADDIFFID 81 6
  calma PADMETALID 81 8
  calma PADCENTERID 81 20
@@ -3999,6 +4196,8 @@ variants *
  calma MET4RES 71 13
  calma MET5RES 72 13
 
+ calma FOMFILL	23 28
+ calma POLYFILL	28 28
  calma LIFILL   56 28
  calma MET1FILL 36 28
  calma MET2FILL 41 28
@@ -4034,22 +4233,35 @@ variants *
  calma CAPM 89 44
  calma CAPM2 97 44
 
+ # Obstruction (fill block) layers
+ calma FILLOBSFOM  22 24
+ calma FILLOBSPOLY 33 24
  calma FILLOBSM1  62  24
  calma FILLOBSM2  105 52
  calma FILLOBSM3  107 24
  calma FILLOBSM4  112  4
  calma FILLOBSM5  117  4
- calma FILLOBSFOM  22 24
- calma FILLOBSPOLY 33 24
 
- calma FOMFILL	  23  28
- calma POLYFILL	  28  28
- calma LIFILL	  56  28
- calma MET1FILL	  36  28
- calma MET2FILL	  41  28
- calma MET3FILL	  34  28
- calma MET4FILL	  51  28
- calma MET5FILL	  59  28
+ # Alternate layer purpose used for fill
+ # which uses the regular layer numbers.
+ calma DIFFFILLALT 65 99
+ calma POLYFILLALT 66 99
+ calma LIFILLALT   67 99
+ calma MET1FILLALT 68 99
+ calma MET2FILLALT 69 99
+ calma MET3FILLALT 70 99
+ calma MET4FILLALT 71 99
+ calma MET5FILLALT 72 99
+
+ # Alternate layer purpose used for obstruction (fill block)
+ calma DIFFBLOCK  65 98
+ calma POLYBLOCK  66 98
+ calma LIBLOCK    67 98
+ calma MET1BLOCK  68 98
+ calma MET2BLOCK  69 98
+ calma MET3BLOCK  70 98
+ calma MET4BLOCK  71 98
+ calma MET5BLOCK  72 98
 
 #-----------------------------------------------------------------------
 
@@ -4137,7 +4349,7 @@ drc
 # DIFF
 #-----------------------------
 
- width *ndiff,nfet,scnfet,npd,npass,*nsd,*ndiode,ndiffres,*pdiff,pfet,scpfet,scpfethvt,ppu,*psd,*pdiode,pdiffres,fomfill \
+ width *ndiff,nfet,scnfet,scnfetlvt,npd,npass,*nsd,*ndiode,ndiffres,*pdiff,pfet,scpfet,scpfethvt,ppu,*psd,*pdiode,pdiffres,fomfill \
 	150 "Diffusion width < %d (diff/tap.1)"
  width *mvndiff,mvnfet,mvnfetesd,mvnnfet,nnfet,*mvndiode,*nndiode,mvndiffres,*mvpdiff,mvpfet,mvpfetesd,*mvpdiode,mvpdiffres 290 \
 	"MV Diffusion width < %d (diff/tap.14)"
@@ -4157,14 +4369,16 @@ drc
 	"MV Diffusion spacing < %d (diff/tap.15a)"
  spacing alldiffmv *mvnsd,*mvpsd 270 touching_ok \
 	"MV Diffusion to MV tap spacing < %d (diff/tap.3)"
- spacing *mvndiff,mvnfet,mvnfetesd,mvnnfet,nnfet,*mvndiode,*nndiode,mvndiffres,mvvar *mvpsd 370 \
-	touching_ok "MV P-Diffusion to MV N-tap spacing < %d (diff/tap.15b)"
- spacing *mvnsd,*mvpdiff,mvpfet,mvpfetesd,mvvar,*mvpdiode *mvpsd,*psd 760 touching_illegal \
+ spacing *mvndiff,mvnfet,mvnfetesd,mvnnfet,nnfet,*mvndiode,*nndiode,mvndiffres,mvvar \
+	*mvpsd 370 touching_ok \
+	"MV P-Diffusion to MV N-tap spacing < %d (diff/tap.15b)"
+ spacing *mvnsd,*mvpdiff,mvpfet,mvpfetesd,mvvar,*mvpdiode *mvpsd,*psd 760 \
+	touching_illegal \
 	"MV Diffusion in N-well to P-tap spacing < %d (diff/tap.20 + diff/tap.17,19)"
  spacing *ndiff,*ndiode,nfet allnwell 340 touching_illegal \
 	"N-Diffusion spacing to N-well < %d (diff/tap.9)"
- spacing *mvndiff,*mvndiode,mvnfet,mvnnfet,nnfet allnwell 340 touching_illegal \
-	"N-Diffusion spacing to N-well < %d (diff/tap.9)"
+ spacing *mvndiff,*mvndiode,mvnfet,mvnnfet,nnfet allnwell 430 touching_illegal \
+	"N-Diffusion spacing to N-well < %d (diff/tap.24)"
  spacing *psd allnwell 130 touching_illegal \
 	"P-tap spacing to N-well < %d (diff/tap.11)"
  spacing *mvpsd allnwell 130 touching_illegal \
@@ -4185,8 +4399,12 @@ drc
 variants (full)
  cifspacing allmvdiffnowell lvnwell 825 touching_illegal \
 	"MV diffusion to LV nwell spacing < %d (hvi.5 + nsd/psd.5)"
- cifspacing nwell_or_hvi nwell_or_hvi 700 touching_ok \
-	"HVI to HVI or LV nwell spacing < %d (hvi.5)"
+ cifspacing drawn_hvi drawn_hvi 700 touching_ok \
+	"HVI to HVI spacing < %d (hvi.5)"
+ cifmaxwidth hvi_to_lvnwell 0 bend_illegal \
+	"HVI to LV nwell spacing < 0.7um (hvi.5)"
+ cifmaxwidth difftap_near_mvnwell 0 bend_illegal \
+	"Spacing of N-Diffusion or P-tap to MV nwell < 0.43um (diff/tap.18,20)"
 variants (fast),(full)
 
  spacing allnfets allpactivenonfet 270 touching_illegal \
@@ -4257,7 +4475,7 @@ variants (fast),(full)
 	"poly spacing to Diffusion < %d (poly.4)"
  spacing npres *nsd 480 touching_illegal \
 	"poly resistor spacing to N-tap < %d (poly.9)"
- overhang *ndiff,rndiff nfet,scnfet,npd,npass,nsonos 250 "N-Diffusion overhang of nFET < %d (poly.7)"
+ overhang *ndiff,rndiff nfet,scnfet,scnfetlvt,npd,npass,nsonos 250 "N-Diffusion overhang of nFET < %d (poly.7)"
  overhang *mvndiff,mvrndiff mvnfet,mvnnfet,nnfet 250 \
 	"N-Diffusion overhang of nFET < %d (poly.7)"
  overhang *pdiff,rpdiff pfet,scpfet,ppu 250 "P-Diffusion overhang of pmos < %d (poly.7)"
@@ -4337,6 +4555,17 @@ variants (full)
 variants *
 
 #--------------------------------------------------------------------
+# RPM, URPM
+#--------------------------------------------------------------------
+
+variants (full)
+ # This requires extra spacing of poly resistors if a ptap is in between
+ cifwidth rpm_generate 1270 "Width of RPM/URPM < %d (rpm.1)"
+ cifspacing rpm_generate rpm_generate 840 touching_ok \
+	"RPM spacing < %d (rpm.2)"
+variants *
+
+#--------------------------------------------------------------------
 # NPC (Nitride poly Cut)
 #--------------------------------------------------------------------
 
@@ -4380,7 +4609,7 @@ variants *
 
  spacing ndc,pdc nfet,nfetlvt,pfet,pfethvt,pfetlvt,pfetmvt 55 touching_illegal \
 	"Diffusion contact to gate < %d (licon.11)"
- spacing ndc,pdc scnfet,scpfet,scpfethvt 50 touching_illegal \
+ spacing ndc,pdc scnfet,scpfet,scnfetlvt,scpfethvt 50 touching_illegal \
 	"Diffusion contact to standard cell gate < %d (licon.11)"
  spacing ndc,pdc npd,npass,ppu 40 touching_illegal \
 	"Diffusion contact to SRAM gate < %d (licon.11)"
@@ -4393,7 +4622,7 @@ variants *
  spacing mvnsc mvvar 250 touching_illegal \
 	"Diffusion contact to varactor gate < %d (licon.10)"
 
- surround ndc/a *ndiff,nfet,scnfet,npd,npass,nfetlvt,rnd 40 absence_illegal \
+ surround ndc/a *ndiff,nfet,scnfet,scnfetlvt,npd,npass,nfetlvt,rnd 40 absence_illegal \
 	"N-diffusion overlap of N-diffusion contact < %d (licon.5a)"
  surround pdc/a *pdiff,pfet,scpfet,scpfethvt,ppu,pfethvt,pfetmvt,pfetlvt,rpd \
 	40 absence_illegal \
@@ -4408,7 +4637,7 @@ variants *
  spacing nsc/a allpactivenontap 60 touching_illegal \
 	"Min. space between N-tap contact and butting P diffusion < %d (licon.5b)"
 
- surround ndc/a *ndiff,nfet,scnfet,npd,npass,nfetlvt,rnd 60 directional \
+ surround ndc/a *ndiff,nfet,scnfet,scnfetlvt,npd,npass,nfetlvt,rnd 60 directional \
 	"N-diffusion overlap of N-diffusion contact < %d in one direction (licon.5c)"
  surround pdc/a *pdiff,pfet,scpfet,scpfethvt,ppu,pfethvt,pfetmvt,pfetlvt,rpd \
 	 60 directional \
@@ -4696,7 +4925,7 @@ variants (fast),(full)
  spacing allpolynonfet,polyfill *mvpsd 55 touching_illegal \
 	"poly spacing to diffusion tap < %d (poly.5)"
 
- edge4way *psd *ndiff 300 ~(nfet,npass,npd,scnfet,nfetlvt,nsonos)/a *psd 300 \
+ edge4way *psd *ndiff 300 ~(nfet,npass,npd,scnfet,scnfetlvt,nfetlvt,nsonos)/a *psd 300 \
 	"Butting P-tap spacing to NMOS gate < %d (poly.6)"
  edge4way *nsd *pdiff 300 ~(pfet,ppu,scpfet,scpfethvt,pfetlvt,pfetmvt)/a *nsd 300 \
 	"Butting N-tap spacing to PMOS gate < %d (poly.6)"
@@ -4709,7 +4938,7 @@ variants (fast),(full)
  spacing pfet,scpfet,scpfethvt,ppu,pfetlvt,pfetmvt,pfethvt,*pdiff *mvpdiff 360 touching_illegal \
 	"LV P-diffusion to MV P-diffusion < %d (diff/tap.23 + diff/tap.22)"
 
- spacing nfet,scnfet,npd,npass,nfetlvt,varactor,varhvt,*ndiff *mvndiff 360 touching_illegal \
+ spacing nfet,scnfet,scnfetlvt,npd,npass,nfetlvt,varactor,varhvt,*ndiff *mvndiff 360 touching_illegal \
 	"LV N-diffusion to MV N-diffusion < %d (diff/tap.23 + diff/tap.22)"
 
  # No HV FETs in LV diff
@@ -5867,7 +6096,7 @@ variants (),(si),(hrhc),(lrhc),(hrlc),(lrlc)
  device msubcircuit sky130_fd_pr__special_nfet_pass npass \
 	*ndiff,ndiffres *ndiff,ndiffres pwell,space/w error l=l w=w \
 	a1=as p1=ps a2=ad p2=pd
- device msubcircuit sky130_fd_pr__nfet_01v8_lvt nfetlvt \
+ device msubcircuit sky130_fd_pr__nfet_01v8_lvt nfetlvt,scnfetlvt \
 	*ndiff,ndiffres *ndiff,ndiffres pwell,space/w error l=l w=w \
 	a1=as p1=ps a2=ad p2=pd
  device msubcircuit sky130_fd_bs_flash__special_sonosfet_star nsonos \
@@ -6030,7 +6259,7 @@ variants (nowell)
  device msubcircuit sky130_fd_pr__special_nfet_pass npass \
 	*ndiff,ndiffres *ndiff,ndiffres l=l w=w \
 	a1=as p1=ps a2=ad p2=pd
- device msubcircuit sky130_fd_pr__nfet_01v8_lvt nfetlvt \
+ device msubcircuit sky130_fd_pr__nfet_01v8_lvt nfetlvt,scnfetlvt \
 	*ndiff,ndiffres *ndiff,ndiffres l=l w=w \
 	a1=as p1=ps a2=ad p2=pd
  device msubcircuit sky130_fd_bs_flash__special_sonosfet_star nsonos \
@@ -6167,7 +6396,7 @@ variants (nowell)
  device mosfet sky130_fd_pr__nfet_01v8 scnfet,nfet ndiff,ndiffres,ndc pwell,space/w
  device mosfet sky130_fd_pr__special_nfet_pass  npass ndiff,ndiffres,ndc pwell,space/w
  device mosfet sky130_fd_pr__special_nfet_latch npd ndiff,ndiffres,ndc pwell,space/w
- device mosfet sky130_fd_pr__nfet_01v8_lvt nfetlvt ndiff,ndiffres,ndc pwell,space/w
+ device mosfet sky130_fd_pr__nfet_01v8_lvt scnfetlvt,nfetlvt ndiff,ndiffres,ndc pwell,space/w
  device mosfet sky130_fd_bs_flash__special_sonosfet_star nsonos ndiff,ndiffres,ndc \
 	pwell,space/w
 

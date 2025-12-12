@@ -1,14 +1,8 @@
 BEGIN {
         top = TOP;
 }
-FILENAME != last_file {
-        split(FILENAME, path, "/");
-        sub(/.ext$/, "", path[length(path)]);
-        subckt = path[length(path)];
-        last_file = FILENAME;
-}
-/^use / {
-        subcells[subckt, $2] += 1;
+ {
+        subcells[$1, $2] += 1;
 }
 END {
         print top;

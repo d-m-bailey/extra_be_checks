@@ -178,22 +178,33 @@ awk '
 	/^> gn gpio_inp_dis/ {
 		getline; getline;
 		GetLevel(inp_dis_connections, inp_dis_min, inp_dis_sim, inp_dis_max, net);
-		#print "inp_dis", net, inp_dis_sim[net];
 		next;
 	}
 	/^> gn gpio_in/ {
 		getline; getline;
-		in_connections[net] += $3 + $5 + $7;
+		GetLevel(in_connections, in_min, in_sim, in_max, net);
+		if ( in_min[net] != "" && in_min[net] == in_sim[net] && in_sim[net] == in_max[net] ) {
+			fixed_in[net] = ReplaceLoopback(in_sim[net]);
+		} else {
+			fixed_in[net] = "";
+		}
 	}
 	/^> gn analog_io/ || /^> gn analog_noesd_io/ {
 		getline; getline;
-		analog_connections[net] += $3 + $5 + $7;
+		GetLevel(analog_connections, analog_min, analog_sim, analog_max, net);
+		if ( analog_min[net] != "" && analog_min[net] == analog_sim[net] && analog_sim[net] == analog_max[net] ) {
+			fixed_analog[net] = ReplaceLoopback(analog_sim[net]);
+		} else {
+			fixed_analog[net] = "";
+		}
 	}
 	/^> gn gpio_out/ {
 		getline; getline;
 		GetLevel(out_connections, out_min, out_sim, out_max, net);
 		if ( out_min[net] != "" && out_min[net] == out_sim[net] && out_sim[net] == out_max[net] ) {
-			fixed[net] = ReplaceLoopback(out_sim[net]);
+			fixed_out[net] = ReplaceLoopback(out_sim[net]);
+		} else {
+			fixed_out[net] = "";
 		}
 	}
 	/^> gn gpio_oeb/ {
@@ -242,21 +253,24 @@ awk '
 	}
 	function GetLevel(connections, min, sim, max, net) {
 		# 2 blank lines mark the end of a segment
-		connections[net] = $3 + $5 + $7;
+		connections[net] += $3 + $5 + $7;
+		min_net = "";
+		sim_net = "";
+		max_net = "";
 		while ( NF > 0 ) {
-			if ( /^Min path/ ) {
+			if ( /^Initial min path/ ) {
 				while ( NF > 0 ) {
-					min[net] = $1;
+					min_net = $1;
 					getline;
 				}
 			} else if ( /^Sim path/ ) {
 				while ( NF > 0 ) {
-					sim[net] = $1;
+					sim_net = $1;
 					getline;
 				}
-			} else if ( /^Max path/ ) {
+			} else if ( /^Initial max path/ ) {
 				while ( NF > 0 ) {
-					max[net] = $1;
+					max_net = $1;
 					getline;
 				}
 			} else {
@@ -266,11 +280,25 @@ awk '
 			}
 			getline;
 		}
+		min[net] = ReplaceLoopback(min_net);
+		sim[net] = ReplaceLoopback(sim_net);
+		max[net] = ReplaceLoopback(max_net);
 	}
 	function ReplaceLoopback(net) {
 		if ( net ~ /gpio_loopback_zero/ ) return "vssd1";
 		if ( net ~ /gpio_loopback_one/ ) return "vccd1";
 		return net;
+	}
+	function GetBit(bit, connections) {
+		if ( bit ~ /gpio_loopback_zero/ || bit ~ /vssd*/ ) {
+			return "0";
+		} else if ( bit ~ /gpio_loopback_one/ || bit ~ /vccd*/ ) {
+			return "1";
+		} else if ( connections == 0 ) {
+			return "x";
+		} else {
+			return "?";
+		}
 	}
 	function PrintBit(bit, connections) {
 		if ( bit ~ /gpio_loopback_zero/ || bit ~ /vssd*/ ) {
@@ -284,47 +312,110 @@ awk '
 		}
 	}
 	END {
-		#print "oeb connections:", length(oeb_connections);
-		print " gpio |   in   |   out  | analog |  oeb min/sim/max  | Message";
-		     #"  xx  | xxxxxx | xxxxxx | xxxxxx | vxxx*/vxxx*/vxxx* |
+		configuration["00100000000"] = "INPUT_NOPULL";
+		configuration["01100000000"] = "INPUT_PULLDOWN";
+		configuration["01000000000"] = "INPUT_PULLUP";
+		configuration["11000000010"] = "OUTPUT";
+		configuration["11000000000"] = "BIDIRECTIONAL";
+		configuration["110000000?0"] = "BIDIRECTIONAL";
+		configuration["00000000000"] = "ANALOG";
+		configuration["00000000010"] = "ANALOG";
+		driveStrength["010"] = "strong-low/weak-high";
+		driveStrength["011"] = "weak-low/strong-high";
+		driveStrength["100"] = "strong-low/open-high";
+		driveStrength["101"] = "open-low/strong-high";
+		driveStrength["110"] = "strong-low/strong-high";
+		driveStrength["111"] = "weak-low/weak-high";
+		print " gpio |   in   |   out  | analog |  oeb min/sim/max  |   Control   Usage          | Message ";
+		     #"  xx  | xxxxxx | xxxxxx | xxxxxx | vxxx*/vxxx*/vxxx* | xxxxxxxxxxx xxxxxxxxxxxxxx | x..."
 		for ( i in oeb_connections ) {
 			oeb_min[i] = ReplaceLoopback(oeb_min[i]);
 			oeb_sim[i] = ReplaceLoopback(oeb_sim[i]);
 			oeb_max[i] = ReplaceLoopback(oeb_max[i]);
-			printf "  %2d  | %6s | %6s | %6s | %5s/%5s/%5s | ", \
-				i, (in_connections[i] == 0) ? "" : sprintf("%6d", in_connections[i]), \
-				(out_connections[i] == 0 && ! (i in fixed)) ? "" :
-					(i in fixed) ? fixed[i] : sprintf("%6d", out_connections[i]), \
-				(analog_connections[i] == 0) ? "" : sprintf("%6d", analog_connections[i]), \
-				oeb_min[i], oeb_sim[i], oeb_max[i];
-			if ( analog_connections[i] > 0 ) {
-				if ( in_connections[i] > 0 || (out_connections[i] > 0 && ! (i in fixed)) ) {  # both digital and analog
-					printf "Warning: both analog and digital connections";
-				} else if ( ! ( oeb_sim[i] ~ /vccd/ || oeb_sim[i] ~ /vdd/ ) ) {  # analog signals should disable output
-					printf "Warning: oeb expected high for analog";
-				}
-			} else if ( in_connections[i] > 0 && out_connections[i] == 0 ) {
-				if ( ! ( oeb_sim[i] ~ /vccd/ || oeb_sim[i] ~ /vdd/ ) ) {  # input only signals should never enable output
-					printf "Warning: oeb expected high for input only";
-				}
-			} else if ( out_connections[i] > 0 && ! (i in fixed) ) {
-				if ( oeb_min[i] !~ /vss/ ) {  # output signals must be enable-able
-					printf "ERROR: oeb must have possible low for output";
-				} else if ( in_connections[i] > 0 && oeb_sim[i] ~ /vss/ ) {  # input is always driven by user output in user mode
-					printf "Warning: output always drives input. sky130: OK for pull up/down.";
+			controlBits = GetBit(dm2_sim[i], dm2_connections[i]) \
+				GetBit(dm1_sim[i], dm1_connections[i]) \
+				GetBit(dm0_sim[i], dm0_connections[i]) \
+				GetBit(vtrip_sim[i], vtrip_connections[i]) \
+				GetBit(slow_sim[i], slow_connections[i]) \
+				GetBit(analog_pol_sim[i], analog_pol_connections[i]) \
+				GetBit(analog_sel_sim[i], analog_sel_connections[i]) \
+				GetBit(analog_en_sim[i], analog_en_connections[i]) \
+				GetBit(ib_mode_sim[i], ib_mode_connections[i]) \
+				GetBit(inp_dis_sim[i], inp_dis_connections[i]) \
+				GetBit(holdover_sim[i], holdover_connections[i]);
+			if ( ! (controlBits in configuration) ) {
+				configuration[controlBits] = "UNKNOWN";
+			}
+			printf "  %2d  | %6s | %6s | %6s | %5s/%5s/%5s | %s %-14s |", i, \
+				(fixed_in[i] != "") ? fixed_in[i] : ((in_connections[i] > 0) ? sprintf("%6d", in_connections[i]) : ""), \
+				(fixed_out[i] != "") ? fixed_out[i] : ((out_connections[i] > 0) ? sprintf("%6d", out_connections[i]) : ""), \
+				(fixed_analog[i] != "") ? fixed_analog[i] : ((analog_connections[i] > 0) ? sprintf("%6d", analog_connections[i]) : ""), \
+				oeb_min[i], oeb_sim[i], oeb_max[i], controlBits, configuration[controlBits];
+			if ( out_connections[i] == 0 && fixed_out[i] == "" ) {
+				printf " gpio_out is floating ";
+			}
+			if ( oeb_min[i] == "" ) {
+				printf " gpio_oeb is floating ";
+			}
+			if ( substr(controlBits, 1, 3) != "000" ) {
+				if ( analog_connections[i] > 0 || analog_fixed[i] != "" ) {
+					printf " analog connections on non-analog gpio ";
 				}
 			}
-			PrintBit(dm2_sim[i], dm2_connections[i]);
-			PrintBit(dm1_sim[i], dm1_connections[i]);
-			PrintBit(dm0_sim[i], dm0_connections[i]);
-			PrintBit(vtrip_sim[i], vtrip_connections[i]);
-			PrintBit(slow_sim[i], slow_connections[i]);
-			PrintBit(analog_pol_sim[i], analog_pol_connections[i]);
-			PrintBit(analog_sel_sim[i], analog_sel_connections[i]);
-			PrintBit(analog_en_sim[i], analog_en_connections[i]);
-			PrintBit(ib_mode_sim[i], ib_mode_connections[i]);
-			PrintBit(inp_dis_sim[i], inp_dis_connections[i]);
-			PrintBit(holdover_sim[i], holdover_connections[i]);
+			switch ( configuration[controlBits] ) {
+			case "INPUT_NOPULL":
+				if ( fixed_in[i] != "" ) { 
+					printf " fixed input ";
+				} else if ( in_connections[i] == 0 ) { 
+					printf " unused ";
+				}
+				break;
+			case "INPUT_PULLDOWN":
+				if ( in_connections[i] == 0 || fixed_in[i] != "" ) { 
+					printf " unconnected or fixed input ";
+				}
+				if ( out_sim[i] !~ /vss*/ || oeb_sim[i] !~ /vss*/ ) {
+					printf " pulldown requires enabled low output ";
+				}
+				break;
+			case "INPUT_PULLUP":
+				if ( in_connections[i] == 0 || fixed_in[i] != "" ) { 
+					printf " unconnected or fixed input ";
+				}
+				if ( ( out_sim[i] !~ /vcc*/ && out_sim[i] !~ /vcc*/ ) || oeb_sim[i] !~ /vss*/ ) {
+					printf " pullup requires enabled high output ";
+				}
+				break;
+			case "OUTPUT":
+				if ( in_connections[i] > 0 || fixed_in[i] != "" ) { 
+					printf " disabled input connection ";
+				}
+				if ( oeb_min[i] !~ /vss*/ || oeb_sim[i] ~ /vcc*/ || oeb_sim[i] ~ /vdd*/ ) {
+					printf " output never enabled ";
+				}
+				break;
+			case "BIDIRECTIONAL":
+				if ( in_connections[i] == 0 ) { 
+					printf " no input on bidirectional gpio ";
+				}
+				if ( oeb_min[i] !~ /vss*/ || oeb_sim[i] ~ /vcc*/ || oeb_sim[i] ~ /vdd*/ ) {
+					printf " output never enabled ";
+				}
+				break;
+			case "ANALOG":
+				if ( in_connections[i] > 0 || fixed_in[i] != "" ) {
+					printf " disabled input connection ";
+				}
+				if ( fixed_analog[i] != "" ) { 
+					printf " fixed analog ";
+				} else if ( analog_connections[i] == 0 ) { 
+					printf " unused ";
+				}
+				break;
+			default:
+				printf " unknown configuration ";
+				printf " %s ", driveStrength[substr(controlBits, 1, 3)];
+			}
 			printf "\n";
 		}
 	}' $LOG_ROOT/cvc.oeb.log |

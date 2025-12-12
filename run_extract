@@ -44,8 +44,9 @@ echo "Running extract..."
 
 echo "TOP LAYOUT: $TOP_LAYOUT"
 echo "LAYOUT FILE: $LAYOUT_FILE"
-echo "EXTRACT_FLATGLOB: $(echo $EXTRACT_FLATGLOB | sed -e 's/#[^ ]*//g' -e 's/ /\n /g')"
-echo "EXTRACT_ABSTRACT: $(echo $EXTRACT_ABSTRACT | sed -e 's/#[^ ]*//g' -e 's/ /\n /g')"
+echo "EXTRACT_FLATGLOB: $(echo \"$EXTRACT_FLATGLOB\" | sed -e 's/#[^ ]*//g' -e 's/ /\n /g')"
+echo "EXTRACT_ABSTRACT: $(echo \"$EXTRACT_ABSTRACT\" | sed -e 's/#[^ ]*//g' -e 's/ /\n /g')"
+echo "EXTRACT_CREATE_SUBCUT: $(echo \"$EXTRACT_CREATE_SUBCUT\" | sed -e 's/#[^ ]*//g' -e 's/ /\n /g')"
 
 echo "WORK_ROOT   : ${WORK_ROOT:=$(pwd)/$TOP_SOURCE}"
 echo "LOG_ROOT    : ${LOG_ROOT:=$WORK_ROOT}"
@@ -86,7 +87,7 @@ mkdir -p $EXT_DIR
 
 # create work abstract file based on actual cells used (pseudo globbing)
 # Will work with wildcards directly, but use pseudo globbing to check later.
-echo $EXTRACT_FLATGLOB |
+echo "$EXTRACT_FLATGLOB" |
 	sed 's/  */\n/g' >$EXT_DIR/flatglob
 if [[ -f $WORK_ROOT/layout.cells ]]; then
 	sed -e 's/\*/.*/g' -e 's/^/^/' -e 's/$/$/' $EXT_DIR/flatglob |
@@ -96,7 +97,7 @@ else
 fi
 
 # create work abstract file based on actual cells used (pseudo globbing)
-echo $EXTRACT_ABSTRACT |
+echo "$EXTRACT_ABSTRACT" |
 	sed 's/  */\n/g' >$EXT_DIR/abstract
 if [[ -f $WORK_ROOT/layout.cells ]]; then
 	sed -e 's/\*/.*/g' -e 's/^/^/' -e 's/$/$/' $EXT_DIR/abstract |
@@ -106,7 +107,7 @@ else
 fi
 
 # create work subcut file based on actual cells used (pseudo globbing)
-echo $EXTRACT_CREATE_SUBCUT |
+echo "$EXTRACT_CREATE_SUBCUT" |
 	sed 's/  */\n/g' >$EXT_DIR/subcut
 if [[ -f $WORK_ROOT/layout.cells ]]; then
 	sed -e 's/\*/.*/g' -e 's/^/^/' -e 's/$/$/' $EXT_DIR/subcut |
@@ -208,6 +209,8 @@ foreach cell { $SUBCUT_CELLS } {
 	load \$subcut_cell_name
 	property FIXED_BBOX \$cellboundary ;# Reset the boundary after flattening.
 	cif ostyle subcutout
+        cif *hier write disable
+        cif *array write disable
 	gds write \$subcut_cell_name ;# Write just the subcut layer.
 }
 set current_time [orig_clock seconds]
@@ -430,7 +433,11 @@ fi
 
 # Create extracted hierarchy
 echo "Creating layout hierarchy in $EXT_DIR/$TOP_LAYOUT.hier..."
-awk -f $LVS_ROOT/scripts/ext.hier.awk -v TOP=$TOP_LAYOUT $EXT_DIR/*.ext >$EXT_DIR/$TOP_LAYOUT.hier
+#awk -f $LVS_ROOT/scripts/ext.hier.awk -v TOP=$TOP_LAYOUT $EXT_DIR/*.ext >$EXT_DIR/$TOP_LAYOUT.hier
+find $EXT_DIR -name '*.ext' -exec awk '/use / {print FILENAME, $2}' {} \; |
+	sed -e 's,[^ ]*/,,' -e 's/.ext / /' |
+	awk -f $LVS_ROOT/scripts/ext.hier.awk -v TOP=$TOP_LAYOUT - >$EXT_DIR/$TOP_LAYOUT.hier
+
 
 # Compress large ext files
 find $EXT_DIR -name '*.ext' -size +1M -exec gzip {} \;

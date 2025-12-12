@@ -1,0 +1,40 @@
+{
+	"INCLUDE_CONFIGS": [
+		"$LVS_ROOT/tech/$PDK/lvs_config.chip_io_alt.json",
+		"$LVS_ROOT/tech/$PDK/lvs_config.caravan_core-upw.json"
+	],
+	"TOP_SOURCE": "caravan",
+	"TOP_LAYOUT": "$TOP_SOURCE",
+	"EXTRACT_FLATGLOB": [
+		""
+	],
+	"EXTRACT_ABSTRACT": [
+		""
+	],
+	"EXTRACT_CREATE_SUBCUT": [
+		""
+	],
+	"LVS_FLATTEN": [
+		"caravan_logo",
+		"caravan_motto",
+		"copyright_block_a"
+	],
+	"LVS_NOFLATTEN": [
+		""
+	],
+	"LVS_IGNORE": [
+		""
+	],
+	"LVS_SPICE_FILES": [
+		""
+	],
+	"LVS_VERILOG_FILES": [
+		"$CARAVEL_ROOT/verilog/gl/caravan_logo.v",
+		"$CARAVEL_ROOT/verilog/gl/caravan_motto.v",
+		"$CARAVEL_ROOT/verilog/gl/copyright_block.v",
+		"$CARAVEL_ROOT/verilog/gl/open_source.v",
+		"$CARAVEL_ROOT/verilog/gl/user_id_textblock.v",
+		"$CARAVEL_ROOT/verilog/gl/caravan.v"
+	],
+	"LAYOUT_FILE": "$UPRJ_ROOT/gds/caravan.gds"
+}
