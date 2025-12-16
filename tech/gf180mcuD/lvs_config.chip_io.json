@@ -8,10 +8,11 @@
 	"EXTRACT_FLATGLOB": [
 		"*PMOS_*",
 		"*NMOS_*",
+		"*GR_NMOS*",
 		"*moscap_*",
 		"*nmos_clamp_*",
-		"*nmos_4T_metal_stack*",
-		"*pmos_6p0_esd_*",
+		"*nmos_*metal_stack*",
+		"*pmos_6p0_esd*",
 		"*comp018green*",
 		"*POWER_RAIL_COR*",
 		"*top_route*",

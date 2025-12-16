@@ -1,0 +1,2 @@
+grep um_iw cvc.*.expect.out | sed -e 's/cvc.//' -e 's/.expect.out:.*branch../\t/' -e 's/...check.*um_iw./\t/' -e 's/. =.*//' | sort -k1,1n -k3,3rn | awk -f um_iw.awk
+

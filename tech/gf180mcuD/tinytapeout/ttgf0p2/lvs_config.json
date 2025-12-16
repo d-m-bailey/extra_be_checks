@@ -1,0 +1,102 @@
+{
+        "STD_CELL_LIBRARY": "gf180mcu_fd_sc_mcu7t5v0",
+        "INCLUDE_CONFIGS": [
+                "$LVS_ROOT/tech/$PDK/lvs_config.chip_io.json",
+                "$LVS_ROOT/tech/$PDK/lvs_config.base.json"
+        ],
+        "TOP_SOURCE": "tt_gf_wrapper",
+        "TOP_LAYOUT": "$TOP_SOURCE",
+        "EXTRACT_FLATGLOB": [
+                ""
+        ],
+        "EXTRACT_ABSTRACT": [
+                "#gf180mcu_fd_io__asig_5p0",
+                "#gf180mcu_fd_io__bi_24t",
+                "#gf180mcu_fd_io__cor",
+                "#gf180mcu_fd_io__dvdd",
+                "#gf180mcu_fd_io__dvss",
+                "#gf180mcu_fd_io__fill*",
+                "#gf180mcu_fd_io__in_c",
+                "#gf180mcu_fd_io__in_s",
+                "*fill_cell"
+        ],
+        "LVS_FLATTEN": [
+		"*gf180mcu_fd_sc_mcu7t5v0__antenna",
+		"*gf180mcu_fd_sc_mcu7t5v0__and2_1",
+		"*gf180mcu_fd_sc_mcu7t5v0__and2_2",
+		"*gf180mcu_fd_sc_mcu7t5v0__and3_1",
+		"*gf180mcu_fd_sc_mcu7t5v0__and4_1",
+		"*gf180mcu_fd_sc_mcu7t5v0__aoi21_1",
+		"*gf180mcu_fd_sc_mcu7t5v0__aoi211_1",
+		"*gf180mcu_fd_sc_mcu7t5v0__aoi22_1",
+		"*gf180mcu_fd_sc_mcu7t5v0__aoi221_1",
+		"*gf180mcu_fd_sc_mcu7t5v0__aoi22_2",
+		"*gf180mcu_fd_sc_mcu7t5v0__aoi222_1",
+		"*gf180mcu_fd_sc_mcu7t5v0__buf_2",
+		"*gf180mcu_fd_sc_mcu7t5v0__buf_20",
+		"*gf180mcu_fd_sc_mcu7t5v0__buf_3",
+		"*gf180mcu_fd_sc_mcu7t5v0__buf_4",
+		"*gf180mcu_fd_sc_mcu7t5v0__buf_8",
+		"*gf180mcu_fd_sc_mcu7t5v0__bufz_1",
+		"*gf180mcu_fd_sc_mcu7t5v0__bufz_12",
+		"*gf180mcu_fd_sc_mcu7t5v0__bufz_16",
+		"*gf180mcu_fd_sc_mcu7t5v0__clkbuf_1",
+		"*gf180mcu_fd_sc_mcu7t5v0__clkbuf_12",
+		"*gf180mcu_fd_sc_mcu7t5v0__clkbuf_16",
+		"*gf180mcu_fd_sc_mcu7t5v0__clkbuf_2",
+		"*gf180mcu_fd_sc_mcu7t5v0__clkbuf_20",
+		"*gf180mcu_fd_sc_mcu7t5v0__clkinv_1",
+		"*gf180mcu_fd_sc_mcu7t5v0__clkinv_12",
+		"*gf180mcu_fd_sc_mcu7t5v0__clkinv_16",
+		"*gf180mcu_fd_sc_mcu7t5v0__dffrnq_1",
+		"*gf180mcu_fd_sc_mcu7t5v0__dffrnq_2",
+		"*gf180mcu_fd_sc_mcu7t5v0__dlya_1",
+		"*gf180mcu_fd_sc_mcu7t5v0__dlyb_1",
+		"*gf180mcu_fd_sc_mcu7t5v0__inv_2",
+		"*gf180mcu_fd_sc_mcu7t5v0__inv_20",
+		"*gf180mcu_fd_sc_mcu7t5v0__inv_8",
+		"*gf180mcu_fd_sc_mcu7t5v0__mux2_2",
+		"*gf180mcu_fd_sc_mcu7t5v0__mux4_2",
+		"*gf180mcu_fd_sc_mcu7t5v0__nand2_1",
+		"*gf180mcu_fd_sc_mcu7t5v0__nand3_1",
+		"*gf180mcu_fd_sc_mcu7t5v0__nor2_1",
+		"*gf180mcu_fd_sc_mcu7t5v0__nor2_2",
+		"*gf180mcu_fd_sc_mcu7t5v0__nor3_1",
+		"*gf180mcu_fd_sc_mcu7t5v0__nor4_1",
+		"*gf180mcu_fd_sc_mcu7t5v0__oai21_1",
+		"*gf180mcu_fd_sc_mcu7t5v0__oai211_1",
+		"*gf180mcu_fd_sc_mcu7t5v0__oai22_1",
+		"*gf180mcu_fd_sc_mcu7t5v0__oai221_1",
+		"*gf180mcu_fd_sc_mcu7t5v0__oai32_1",
+		"*gf180mcu_fd_sc_mcu7t5v0__oai33_1",
+		"*gf180mcu_fd_sc_mcu7t5v0__oai33_4",
+		"*gf180mcu_fd_sc_mcu7t5v0__or2_1",
+		"*gf180mcu_fd_sc_mcu7t5v0__tieh",
+		"*gf180mcu_fd_sc_mcu7t5v0__tiel",
+		"*gf180mcu_fd_sc_mcu7t5v0__xnor2_1",
+		"*gf180mcu_fd_sc_mcu7t5v0__xor2_1"
+        ],
+        "LVS_NOFLATTEN": [
+        ],
+        "LVS_IGNORE": [
+                "*gf180mcu_fd_sc_mcu7t5v0__endcap",
+                "*gf180mcu_fd_sc_mcu7t5v0__fill_*",
+                "*gf180mcu_fd_sc_mcu7t5v0__fillcap_*",
+                "*gf180mcu_fd_sc_mcu7t5v0__filltie",
+                "*gf180mcu_fd_sc_mcu7t5v0__endcap",
+                "*gf180mcu_ws_ip__id",
+                "*fill_cell"
+        ],
+        "LVS_SPICE_FILES": [
+                "$PDK_ROOT/$PDK/libs.ref/gf180mcu_fd_sc_mcu9t5v0/spice/*.spice"
+        ],
+        "LVS_VERILOG_FILES": [
+        	"$UPRJ_ROOT/macros/ol2/tt_top/verilog/tt_mux.v",
+        	"$UPRJ_ROOT/macros/ol2/tt_top/verilog/tt_um_chip_rom.v",
+        	"$UPRJ_ROOT/macros/ol2/tt_top/verilog/tt_ctrl.v",
+        	"$UPRJ_ROOT/tinytapeout-gf-0p2/projects/*/*.v",
+        	"$UPRJ_ROOT/foundry_submission/verilog/gl/tt_gf_wrapper.v"
+        ],
+        "LAYOUT_FILE": "$UPRJ_ROOT/gds/tt_gf_wrapper.gds.gz"
+}
+

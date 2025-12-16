@@ -349,7 +349,7 @@ foreach cell { $FLATGLOB_CELLS } {
 }
 # list cells to be flattened
 puts "Flattening [string map {" " "\n"} [gds flatglob]]"
-gds flatten yes ;# Flattens cells with few layers
+gds flatten 5 ;# Flattens cells with few layers
 gds noduplicates yes ;# keep abstract views
 puts "\nExtracting $LAYOUT_FILE"
 gds read $LAYOUT_FILE
@@ -391,7 +391,7 @@ puts "\nTIME: add subcut: [orig_clock format [expr {\$current_time - \$last_time
 set last_time \$current_time
 
 foreach cell { $ABSTRACT_CELLS } { ;# Set abstract cells
-	load \$cell
+	load \$cell -fail
 	property LEFview true
 	puts "Abstracting \$cell"
 }

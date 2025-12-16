@@ -1,0 +1,2 @@
+grep spine_..._ow cvc.*.expect.out | sed -e 's/cvc.//' -e 's/.expect.out:.*spine_..._ow./\t/' -e 's/. =.* found / /' | sort -k1,1n -k2,2rn | awk -f um_ow.awk
+

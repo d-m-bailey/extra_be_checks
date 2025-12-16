@@ -1,0 +1,106 @@
+#! /usr/bin/env bash
+
+# run CVC-RV with each project enabled separately.
+# projects are enabled when the spine_iw[20:2] matches the project id and the chip is enabled spice_iw[1];
+
+cat > $WORK_ROOT/cvcrc <<EOF
+CVC_TOP = 'tt_gf_wrapper'
+CVC_NETLIST = '$WORK_ROOT/ext/tt_gf_wrapper.cdl.gz'
+CVC_MODE = 'tt_gf_wrapper'
+CVC_MODEL_FILE = '/home/kanobailey/extra_be_checks/tech/gf180mcuD/cvc.models'
+CVC_POWER_FILE = "$WORK_ROOT/cvc.power.\$PROJECT"
+CVC_FUSE_FILE = ''
+CVC_REPORT_FILE = "$WORK_ROOT/cvc.\$PROJECT.log"
+CVC_REPORT_TITLE = "CVC tt_gf_wrapper project \$PROJECT"
+CVC_CIRCUIT_ERROR_LIMIT = '100'
+CVC_SEARCH_LIMIT = '100'
+CVC_LEAK_LIMIT = '0.0002'
+CVC_SOI = 'false'
+CVC_SCRC = 'false'
+CVC_VTH_GATES = 'false'
+CVC_MIN_VTH_GATES = 'false'
+CVC_IGNORE_VTH_FLOATING = 'false'
+CVC_IGNORE_NO_LEAK_FLOATING = 'false'
+CVC_LEAK_OVERVOLTAGE = 'true'
+CVC_LOGIC_DIODES = 'false'
+CVC_ANALOG_GATES = 'true'
+CVC_BACKUP_RESULTS = 'false'
+CVC_MOS_DIODE_ERROR_THRESHOLD = '0'
+CVC_SHORT_ERROR_THRESHOLD = '0'
+CVC_BIAS_ERROR_THRESHOLD = '0'
+CVC_FORWARD_ERROR_THRESHOLD = '0'
+CVC_FLOATING_ERROR_THRESHOLD = '0'
+CVC_GATE_ERROR_THRESHOLD = '0'
+CVC_LEAK?_ERROR_THRESHOLD = '0'
+CVC_EXPECTED_ERROR_THRESHOLD = '0'
+CVC_OVERVOLTAGE_ERROR_THRESHOLD = '0'
+CVC_PARALLEL_CIRCUIT_PORT_LIMIT = '0'
+CVC_CELL_ERROR_LIMIT_FILE = ''
+CVC_CELL_CHECKSUM_FILE = ''
+CVC_LARGE_CIRCUIT_SIZE = '10000000'
+CVC_NET_CHECK_FILE = ''
+CVC_MODEL_CHECK_FILE = ''
+EOF
+
+while IFS= read -r project; do
+	bits=$(printf "%010d" "$(echo "obase=2; $project" | bc)")
+	echo "
+==> Checking project $project($bits)..."
+
+cat > $WORK_ROOT/cvc.power.$project <<EOF
+# Project $project=$bits
+
+vgnd* power 0.0
+vdpwr power 5.0
+
+*(gf180mcu_fd_io__in_c)/PAD input min@0.0 max@5.0
+*(gf180mcu_fd_io__bi_24t)/PAD input min@0.0 max@5.0
+
+*(tt_mux)/um_iw[*] expectSim@0.0
+*(tt_mux)/um_ena[*] expectSim@0.0
+*(tt_mux)/um_pg_ena[*] expectSim@0.0
+*(tt_mux)/spine_ow[*] expectSim@0.0
+
+pad_raw[0] input sim@5.0
+pad_raw[2] input sim@5.0
+
+#*(tt_ctrl)/spine_bot_iw[10] sim@5*${bits:0:1}
+#*(tt_ctrl)/spine_bot_iw[9] sim@5*${bits:1:1}
+#*(tt_ctrl)/spine_bot_iw[8] sim@5*${bits:2:1}
+#*(tt_ctrl)/spine_bot_iw[7] sim@5*${bits:3:1}
+#*(tt_ctrl)/spine_bot_iw[6] sim@5*${bits:5:1}
+#*(tt_ctrl)/spine_bot_iw[5] sim@5*${bits:6:1}
+#*(tt_ctrl)/spine_bot_iw[4] sim@5*${bits:7:1}
+#*(tt_ctrl)/spine_bot_iw[3] sim@5*${bits:8:1}
+#*(tt_ctrl)/spine_bot_iw[2] sim@5*${bits:9:1}
+#*(tt_ctrl)/spine_bot_iw[1] sim@5*(1-${bits:4:1})
+#
+#*(tt_ctrl)/spine_top_iw[10] sim@5*${bits:0:1}
+#*(tt_ctrl)/spine_top_iw[9] sim@5*${bits:1:1}
+#*(tt_ctrl)/spine_top_iw[8] sim@5*${bits:2:1}
+#*(tt_ctrl)/spine_top_iw[7] sim@5*${bits:3:1}
+#*(tt_ctrl)/spine_top_iw[6] sim@5*${bits:5:1}
+#*(tt_ctrl)/spine_top_iw[5] sim@5*${bits:6:1}
+#*(tt_ctrl)/spine_top_iw[4] sim@5*${bits:7:1}
+#*(tt_ctrl)/spine_top_iw[3] sim@5*${bits:8:1}
+#*(tt_ctrl)/spine_top_iw[2] sim@5*${bits:9:1}
+#*(tt_ctrl)/spine_top_iw[1] sim@5*${bits:4:1}
+
+/Xtop_I.ctrl_I/Xsel_cnt_gen\[0\].cnt_bit_I.cell0_I/Q sim@5*${bits:9:1}
+/Xtop_I.ctrl_I/Xsel_cnt_gen\[1\].cnt_bit_I.cell0_I/Q sim@5*${bits:8:1}
+/Xtop_I.ctrl_I/Xsel_cnt_gen\[2\].cnt_bit_I.cell0_I/Q sim@5*${bits:7:1}
+/Xtop_I.ctrl_I/Xsel_cnt_gen\[3\].cnt_bit_I.cell0_I/Q sim@5*${bits:6:1}
+/Xtop_I.ctrl_I/Xsel_cnt_gen\[4\].cnt_bit_I.cell0_I/Q sim@5*${bits:5:1}
+/Xtop_I.ctrl_I/Xsel_cnt_gen\[5\].cnt_bit_I.cell0_I/Q sim@5*${bits:4:1}
+/Xtop_I.ctrl_I/Xsel_cnt_gen\[6\].cnt_bit_I.cell0_I/Q sim@5*${bits:3:1}
+/Xtop_I.ctrl_I/Xsel_cnt_gen\[7\].cnt_bit_I.cell0_I/Q sim@5*${bits:2:1}
+/Xtop_I.ctrl_I/Xsel_cnt_gen\[8\].cnt_bit_I.cell0_I/Q sim@5*${bits:1:1}
+/Xtop_I.ctrl_I/Xsel_cnt_gen\[9\].cnt_bit_I.cell0_I/Q sim@5*${bits:0:1}
+EOF
+
+	PROJECT=$project cvc_rv -p "$1" $WORK_ROOT/cvcrc
+	zgrep '^Expected ' $WORK_ROOT/cvc.$project.error.gz |
+		sort >$WORK_ROOT/cvc.$project.expect.out
+	zegrep '^(I|!)' $WORK_ROOT/cvc.$project.error.gz >$WORK_ROOT/cvc.$project.info.out
+
+done
