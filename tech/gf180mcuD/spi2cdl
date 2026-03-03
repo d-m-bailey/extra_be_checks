@@ -1,7 +1,7 @@
 #! /bin/bash
 
 awk '
-/^X.*pr__diode.*=/ {
+/^X.*pr__diode.*=/ || /^X.* diode_.*=/ {
         print "D" $0;
         next;
 }
@@ -9,7 +9,7 @@ awk '
         print "M" $0;
         next;
 }
-/^X.*pr__pnp_.*=/ {
+/^X.*pr__pnp_.*=/ || /^X.* pnp_.*/ {
         print "Q" $0;
         next;
 }
@@ -23,13 +23,13 @@ awk '
         print "C" $0, "$SUB=" bulk;
         next;
 }
-/^X.*pr__res_.*=/ || /^X.*ppolyf_u/ {
+/^X.*pr__res_.*=/ || /^X.*ppolyf_/ {
 	bulk = $4;
 	$4 = "";
         print "R" $0, "$SUB=" bulk;
         next;
 }
-/^X.*sky130_fd_pr__reram_reram_cell.*=/ {
+/^X.* efuse *$/ {
         print "R" $0;
         next;
 }

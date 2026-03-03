@@ -64,9 +64,9 @@ if cmp -s $PDK_ROOT/$PDK/libs.tech/magic/$PDK.tech $LVS_ROOT/tech/$PDK/$PDK.tech
 	awk 'NF > 1 && /version/' $LVS_ROOT/tech/$PDK/$PDK.tech
 else
 	echo "WARNING: Tech files do not match:"
-	grep version $PDK_ROOT/$PDK/libs.tech/magic/$PDK.tech $LVS_ROOT/tech/$PDK/$PDK.tech |
+	grep version $PDK_ROOT/$PDK/libs.tech/magic/$PDK.tech $LVS_ROOT/tech/$PDK/$PDK.nowell.tech |
 		awk 'NF > 2 && ! /^ *#/'
-	echo "Results may be incorrect. Contact efabless to update the soft connection rules."
+	echo "Results may be incorrect. Contact maintainer to update the soft connection rules."
 	#exit 1
 fi
 

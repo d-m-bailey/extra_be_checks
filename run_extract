@@ -113,12 +113,15 @@ echo "Extracting to ${EXT_DIR:=$WORK_ROOT/ext}"
 rm -rf $EXT_DIR
 mkdir -p $EXT_DIR
 
-# create work abstract file based on actual cells used (pseudo globbing)
+# sed options to change glob style string with '?' and '"' to regex string
+GLOB_TO_REGEX="-e s/\?/./g -e s/\*/.*/g -e s/^/^/ -e s/$/$/"
+
+# create work flatglob file based on actual cells used (pseudo globbing)
 # Will work with wildcards directly, but use pseudo globbing to check later.
 echo $EXTRACT_FLATGLOB |
 	sed 's/  */\n/g' >$EXT_DIR/flatglob
 if [[ -f $WORK_ROOT/layout.cells ]]; then
-	sed -e 's/\*/.*/g' -e 's/^/^/' -e 's/$/$/' $EXT_DIR/flatglob |
+	sed $GLOB_TO_REGEX $EXT_DIR/flatglob |
 		grep -f - $WORK_ROOT/layout.cells >$EXT_DIR/flatglob.glob
 else
 	cp $EXT_DIR/flatglob $EXT_DIR/flatglob.glob
@@ -128,7 +131,7 @@ fi
 echo $EXTRACT_ABSTRACT |
 	sed 's/  */\n/g' >$EXT_DIR/abstract
 if [[ -f $WORK_ROOT/layout.cells ]]; then
-	sed -e 's/\*/.*/g' -e 's/^/^/' -e 's/$/$/' $EXT_DIR/abstract |
+	sed $GLOB_TO_REGEX $EXT_DIR/abstract |
 		grep -f - $WORK_ROOT/layout.cells >$EXT_DIR/abstract.glob
 else
 	cp $EXT_DIR/abstract $EXT_DIR/abstract.glob
@@ -138,7 +141,7 @@ fi
 echo $EXTRACT_CREATE_SUBCUT |
 	sed 's/  */\n/g' >$EXT_DIR/subcut
 if [[ -f $WORK_ROOT/layout.cells ]]; then
-	sed -e 's/\*/.*/g' -e 's/^/^/' -e 's/$/$/' $EXT_DIR/subcut |
+	sed $GLOB_TO_REGEX $EXT_DIR/subcut |
 		grep -f - $WORK_ROOT/layout.cells >$EXT_DIR/subcut.glob
 else
 	cp $EXT_DIR/subcut $EXT_DIR/subcut.glob
@@ -244,7 +247,7 @@ foreach cell { $ABSTRACT_CELLS } { ;# Set abstract cells and delete all their su
 	select visible
 	set port_list [lindex [what -list] 1]
 	puts "instance count:\$instance_count port count:[llength \$port_list]"
-	if { \$instance_count > 0 || [llength \$port_list] > 10 } {
+	if { \$instance_count > 0 } {
 		# When an abstract cell has child, all the children are extracted.
 		# To avoid this, delete the child instances.
 		# If there are many instances this can take hours.
@@ -265,7 +268,7 @@ foreach cell { $ABSTRACT_CELLS } { ;# Set abstract cells and delete all their su
 		# Coordinates returned from box are in internal units.
 		# Without qualifiers, arguments to box are in lambda units. Force internal units with i suffix.
 		# Search for a region where the subcells can be deleted in under 12 seconds. Region is increased 4x each loop.
-		while { [expr \$current_time - \$start_time] < 3 && \$window_size < \$cell_height && \$window_size < \$cell_width } {
+		while { [expr \$current_time - \$start_time] < 3 && ( \$window_size < \$cell_height || \$window_size < \$cell_width ) } {
 			set start_time \$current_time
 			incr window_size \$window_size
 			box size \${window_size}i \${window_size}i
@@ -293,7 +296,8 @@ foreach cell { $ABSTRACT_CELLS } { ;# Set abstract cells and delete all their su
 		select less area *
 		puts "Deleting [llength [lindex [what -list] 2]] final objects"
 		delete
-
+	}
+	if { \$instance_count > 0 || [llength \$port_list] > 10 } {
 		# Delete non-port layers. Shorted ports can cause problems in parent hierarchy.
 		# Deleting non-port layers should eliminate the shorts.
 		see *
@@ -362,7 +366,7 @@ set flatglob_error 0
 foreach cell { $FLATGLOB_CELLS } { ;# Check for unflattened flatglob cells.
 	if { [llength [cellname list children \$cell]] > 0 } {
 		set flatglob_error 1
-		puts "Could not flatten \$cell because it contains these subcells:"
+		puts "Could not flatten \$cell because it contains [llength [cellname list children \$cell]] subcells:"
 		foreach subcell [cellname list children \$cell] {
 			puts "  \$subcell"
 		}
