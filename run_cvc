@@ -47,7 +47,7 @@ fi
 CONFIG_FILE=$1
 DESIGN_NAME=${2:+"-d $2"}
 
-if [[ $# -ne 0 ]]; then  # if config file not specified, skip and use current environment
+if [[ $# -ne 0 ]]; then # if config file not specified, skip and use current environment
 	source <($LVS_ROOT/set_lvs_env.py -c $CONFIG_FILE $DESIGN_NAME)
 fi
 if [[ ! -v EXTRACT_FLATGLOB ]]; then
@@ -75,20 +75,22 @@ export RESULTS_DIR=$WORK_ROOT/ext
 if [[ $EXTRACT_LAYOUT == yes ]]; then
 	env RUN_DIR=$RESULTS_DIR CIFIN_STYLE= EXTRACT_STYLE= LOG_FILE=ext.log $LVS_ROOT/run_extract
 	ext_status=$?
+	gzip -c -f $RESULTS_DIR/$DESIGN_NAME.gds.spice > $SIGNOFF_ROOT/$DESIGN_NAME.gds.spice.gz
 fi
 
 echo " "
 echo "Running CVC..."
 
 # Create cdl file from extracted spice file if it doesn't exist
-if [[ ! -f $RESULTS_DIR/$DESIGN_NAME.cdl.gz || $RESULTS_DIR/$DESIGN_NAME.gds.spice -nt $RESULTS_DIR/$DESIGN_NAME.cdl.gz ]]; then
-	if [[ ! -f $RESULTS_DIR/$DESIGN_NAME.gds.spice ]]; then
-		echo "Could not create cdl file from $RESULTS_DIR/$DESIGN_NAME.gds.spice"
+if [[ ! -f $WORK_ROOT/$DESIGN_NAME.cdl.gz || $SIGNOFF_ROOT/$DESIGN_NAME.gds.spice.gz -nt $WORK_ROOT/$DESIGN_NAME.cdl.gz ]]; then
+	if [[ ! -f $SIGNOFF_ROOT/$DESIGN_NAME.gds.spice.gz ]]; then
+		echo "Could not create cdl file from $SIGNOFF_ROOT/$DESIGN_NAME.gds.spice.gz"
 		exit 2
 	else
-		echo "Creating $RESULTS_DIR/$DESIGN_NAME.cdl"
-		$LVS_ROOT/tech/$PDK/spi2cdl $RESULTS_DIR/$DESIGN_NAME.gds.spice |
-			gzip -c >$RESULTS_DIR/$DESIGN_NAME.cdl.gz
+		echo "Creating $WORK_ROOT/$DESIGN_NAME.cdl.gz"
+		gunzip -c $SIGNOFF_ROOT/$DESIGN_NAME.gds.spice.gz |
+			$LVS_ROOT/tech/$PDK/spi2cdl - |
+			gzip -c >$WORK_ROOT/$DESIGN_NAME.cdl.gz
 	fi
 fi
 

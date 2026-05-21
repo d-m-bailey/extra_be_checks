@@ -296,6 +296,7 @@ if [[ $WORK_ROOT != $LOG_ROOT ]]; then
 fi
 if [[ $WORK_ROOT != $SIGNOFF_ROOT ]]; then
 	cp $WORK_ROOT/lvs.report $WORK_ROOT/lvs.unflattened $SIGNOFF_ROOT/.
+	gzip -c $WORK_ROOT/ext/$TOP_LAYOUT.gds.spice > $SIGNOFF_ROOT/$TOP_LAYOUT.gds.spice.gz
 fi
 
 # Set exit code

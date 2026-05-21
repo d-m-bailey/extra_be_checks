@@ -66,14 +66,32 @@ fi
 echo "LOG FILE: $LOG_ROOT/${LOG_FILE:=ext.log}"
 rm -f $LOG_ROOT/$LOG_FILE $WORK_ROOT/$LOG_FILE
 
-if cmp -s $PDK_ROOT/$PDK/libs.tech/magic/$PDK.tech $LVS_ROOT/tech/$PDK/$PDK.tech; then
-	awk 'NF > 1 && /version/' $LVS_ROOT/tech/$PDK/$PDK.tech
+# Add subcut output to tech file, if needed
+if grep -q '^style subcutout' $PDK_ROOT/$PDK/libs.tech/magic/${PDK}.tech; then
+	echo "Tech file already contains subcutout style. Patch not necessary."
+	cp $PDK_ROOT/$PDK/libs.tech/magic/${PDK}.tech $WORK_ROOT/.
 else
-	echo "Tech files do not match:"
-	grep version $PDK_ROOT/$PDK/libs.tech/magic/$PDK.tech $LVS_ROOT/tech/$PDK/$PDK.tech |
-		awk 'NF > 2 && ! /^ *#/'
-	echo "Results may be incorrect. Contact efabless to update the soft connection rules."
-	#exit 1
+	echo "Adding subcutout style to tech file."
+	awk '
+	/^cifoutput/ {searching=1}
+	searching && /^end$/ {
+		print BLOCK
+		searching=0
+	}
+	{print}
+	' BLOCK="$(cat $LVS_ROOT/tech/$PDK/subcutout.txt)" $PDK_ROOT/$PDK/libs.tech/magic/$PDK.tech >$WORK_ROOT/$PDK.tech
+fi
+
+grep -H version $PDK_ROOT/$PDK/libs.tech/magic/$PDK.tech |
+	awk 'NF > 2 && ! /^ *#/'
+if [[ "${EXTRACT_STYLE:-}" == "nowell" ]]; then
+	if ! cmp -s $PDK_ROOT/$PDK/libs.tech/magic/$PDK.tech $LVS_ROOT/tech/$PDK/$PDK.tech; then
+		grep -H version $LVS_ROOT/tech/$PDK/$PDK.tech |
+			awk 'NF > 2 && ! /^ *#/'
+		echo "Tech files do not match:"
+		echo "Results may be incorrect. Contact support to update the soft connection rules."
+		#exit 1
+	fi
 fi
 
 if [[ ! -f $WORK_ROOT/layout.cells ]]; then
@@ -286,7 +304,7 @@ foreach cell { $ABSTRACT_CELLS } { ;# Set abstract cells and delete all their su
 		see no *
 		foreach layer [lindex \$select_list 0] {
 			select area \$layer ;# select ports
-			if { [llength [lindex [what -list] 1]] == 0 } {	
+			if { [llength [lindex [what -list] 1]] == 0 } {
 				see \$layer
 				select visible \$layer
 				puts "Deleting \$layer"
@@ -360,7 +378,7 @@ foreach cell { $FLATGLOB_CELLS } { ;# Check for unflattened flatglob cells.
 		foreach subcell [cellname list children \$cell] {
 			puts "  \$subcell"
 		}
-	}	
+	}
 }
 if { \$flatglob_error } { ;# Quit if there are unflattened flatglob cells.
 	exit 1

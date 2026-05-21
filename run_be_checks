@@ -32,6 +32,7 @@ SKIP_OEB=no
 while [[ "$1" == "--"* ]]; do
 	if [[ "$1" == "--noextract" ]]; then
 		export EXTRACT_LAYOUT=no
+		extract_option="--noextract"
 		shift
 	elif [[ "$1" == "--nooeb" ]]; then
 		SKIP_OEB=yes
@@ -122,15 +123,17 @@ hier_status=$?
 if ! [[ -z "${SINGLE_THREAD_EXTRACTION+x}" ]]; then
 	thread_flag=--single-thread
 fi
-if [[ $EXTRACT_LAYOUT == yes ]]; then
-	$LVS_ROOT/run_scheck $thread_flag
+# Default is to not run softcheck - only run softcheck if RUN_SOFTCHECK is set to 1.
+# If softcheck is run, subsequent extractions are not needed.
+if [[ "$RUN_SOFTCHECK" == 1 ]]; then
+	$LVS_ROOT/run_scheck $extract_option $thread_flag
 	scheck_status=$?
+	extract_option="--noextract"
 else
-	$LVS_ROOT/run_scheck --noextract $thread_flag
-	scheck_status=$?
+	scheck_status=""
 fi
 
-$LVS_ROOT/run_full_lvs --noextract
+$LVS_ROOT/run_full_lvs $extract_option
 lvs_status=$?
 
 if [[ -f $LVS_ROOT/tech/$PDK/cvc.power.$TOP_SOURCE || -f ${CONFIG_FILE%/*}/cvc.power.$TOP_SOURCE ]]; then
@@ -146,15 +149,17 @@ if [[ $TOP_SOURCE == *user_*project* && $SKIP_OEB == no ]]; then
 	oeb_status=$?
 fi
 
-echo "
+if [[ -f $LOG_ROOT/soft.log ]]; then
+	echo "
 Soft check result:"
-tail -n 20 $LOG_ROOT/soft.log | awk '/Final result/,/Logging/' | grep -v ^Logging
-if [[ $scheck_status -ne 0 ]]; then
-	echo "Soft check problem: check the following files
+	tail -n 20 $LOG_ROOT/soft.log | awk '/Final result/,/Logging/' | grep -v ^Logging
+	if [[ $scheck_status -ne 0 ]]; then
+		echo "Soft check problem: check the following files
 $LOG_ROOT/ext.log
 $LOG_ROOT/nowell.ext.log
 $LOG_ROOT/soft.log
 $SIGNOFF_ROOT/soft.report"
+	fi
 fi
 
 echo "
@@ -188,23 +193,19 @@ printf "\nRuntime: %d:%02d:%02d (hh:mm:ss)\n" $hours $minutes $seconds
 
 # If any of the checks had an error, set return code.
 # NOTE: ignores hierarchy check errors
-# NOTE: cvc_status and oeb_status ignored if not run
-if [[ $scheck_status -eq 0 && $lvs_status -eq 0 && ${cvc_status:=0} -eq 0 && ${oeb_status:=0} -eq 0 ]]; then
+# NOTE: scheck_status, cvc_status and oeb_status ignored if not run
+if [[ ${scheck_status:-0} -eq 0 && $lvs_status -eq 0 && ${cvc_status:-0} -eq 0 && ${oeb_status:-0} -eq 0 ]]; then
 	echo "
 No errors detected"
 	exit 0
 
-elif [[ $scheck_status -eq 0 && $lvs_status -eq 0 && ${cvc_status:=0} -eq 4 && ${oeb_status:=0} -eq 0 ]]; then
+elif [[ ${scheck_status:-0} -eq 0 && $lvs_status -eq 0 && ${cvc_status:-0} -ne 0 && ${oeb_status:-0} -eq 0 ]]; then
 	echo "
 WARNING: possible errors CVC $cvc_status"
 	exit 4
 
-elif [[ $SKIP_OEB == no ]]; then
-	echo "
-WARNING: possible errors SOFT $scheck_status LVS $lvs_status CVC $cvc_status OEB $oeb_status"
-	exit 1
 else
 	echo "
-WARNING: possible errors SOFT $scheck_status LVS $lvs_status CVC $cvc_status"
+WARNING: possible errors SOFT ${scheck_status:--} LVS $lvs_status CVC ${cvc_status:--} OEB ${oeb_status:--}"
 	exit 1
 fi
